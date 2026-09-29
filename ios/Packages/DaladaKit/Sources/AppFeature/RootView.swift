@@ -32,7 +32,7 @@ public struct RootView: View {
                 MapHomeView(environment: environment)
             }
             Tab("tab.places", systemImage: "mappin.and.ellipse", value: AppTab.places) {
-                PlacesHomeView()
+                PlacesHomeView(environment: environment)
             }
             Tab("tab.lifehacks", systemImage: "lightbulb", value: AppTab.lifehacks) {
                 LifehacksHomeView()
