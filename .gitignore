@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Xcode / SwiftPM
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+*.xcresult
+
+# Секреты iOS (пример — ios/Config/Secrets.example.xcconfig)
+ios/Config/Secrets.xcconfig
+
+# Node / Deno
+node_modules/
+
+# Локальные env-файлы
+.env
+.env.*
+!.env.example

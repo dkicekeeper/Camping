@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Остальные ключи генерирует Xcode (GENERATE_INFOPLIST_FILE) из project.yml. -->
+	<key>SupabaseHost</key>
+	<string>$(SUPABASE_HOST)</string>
+	<key>SupabaseKey</key>
+	<string>$(SUPABASE_KEY)</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- Только для локального Supabase (http://127.0.0.1:54321) при разработке. -->
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

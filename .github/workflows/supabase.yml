@@ -1,0 +1,34 @@
+name: Supabase
+
+on:
+  push:
+    paths:
+      - "supabase/**"
+      - ".github/workflows/supabase.yml"
+  pull_request:
+    paths:
+      - "supabase/**"
+      - ".github/workflows/supabase.yml"
+
+jobs:
+  test:
+    name: Migrations, lint and pgTAP tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local database
+        run: supabase db start
+
+      - name: Apply migrations from scratch
+        run: supabase db reset
+
+      - name: Lint project schemas
+        run: supabase db lint --level warning --fail-on warning -s public,private
+
+      - name: Run database tests
+        run: supabase test db

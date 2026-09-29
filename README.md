@@ -24,8 +24,7 @@
 | 1. Анализ рынка и конкурентов | [`docs/01-market-analysis.md`](docs/01-market-analysis.md) | ✅ готово |
 | 2. План по каждому разделу | [`docs/02-plan/`](docs/02-plan/README.md) | ✅ готово, решения приняты |
 | 3. Архитектура и стек | [`docs/03-architecture/`](docs/03-architecture/README.md) | ✅ готово, решения приняты (Supabase, TypeScript, MapLibre) |
-| 4. Спецификации | `docs/04-*` | ⏭ следующий |
-| 5. Реализация | код | — |
+| 4–5. Спецификации и реализация по вехам | [`docs/04-beta/`](docs/04-beta/README.md) | 🔨 M0 «Фундамент» готов, дальше M1 «Вход и места» |
 
 ## Документы
 
@@ -34,7 +33,14 @@
 - [`docs/02-plan/`](docs/02-plan/README.md) — план продукта: принципы, навигация, модель данных, релизы,
   планы по вкладкам и сквозным темам
 - [`docs/03-architecture/`](docs/03-architecture/README.md) — архитектура и стек: iOS, бэкенд на Supabase, карты, инфраструктура и переезд в РК
+- [`docs/04-beta/`](docs/04-beta/README.md) — путь к бете: вехи M0–M6, что сделано, что нужно от владельца
 - [`docs/naming.md`](docs/naming.md) — название: выбор Dalada и оставшиеся проверки
+
+## Код
+
+- [`supabase/`](supabase) — миграции базы, тесты приватности (pgTAP)
+- [`ios/`](ios) — iOS-приложение: `project.yml` (XcodeGen) и модули `Packages/DaladaKit`
+- Как собрать и проверить — в [`docs/04-beta/README.md`](docs/04-beta/README.md#что-нужно-от-вас) и [`CLAUDE.md`](CLAUDE.md)
 
 ## Дизайн-система
 

@@ -1,0 +1,10 @@
+// Общие настройки сборки Dalada.
+//
+// Адрес и ключ Supabase — в Secrets.xcconfig (не хранится в git).
+// Скопируйте Secrets.example.xcconfig → Secrets.xcconfig и впишите свои значения.
+// Без него приложение соберётся, но на экране профиля будет «Сервер не настроен».
+
+SUPABASE_HOST =
+SUPABASE_KEY =
+
+#include? "Secrets.xcconfig"
