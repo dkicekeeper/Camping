@@ -14,11 +14,13 @@ enum AppTab: Hashable {
 public struct RootView: View {
     private let environment: AppEnvironment
 
+    @State private var session: SessionStore
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
 
     public init(environment: AppEnvironment) {
         self.environment = environment
+        _session = State(initialValue: SessionStore(backend: environment.backend))
     }
 
     public var body: some View {
@@ -51,6 +53,13 @@ public struct RootView: View {
             QuickActionsSheet()
                 .presentationDetents([.medium])
         }
+        // После первого входа — выбор username, пока он не сохранён.
+        .fullScreenCover(isPresented: $session.isUsernameOnboardingPresented) {
+            UsernameOnboardingView()
+                .environment(session)
+        }
+        .environment(session)
+        .task { await session.start() }
     }
 }
 

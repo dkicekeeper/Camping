@@ -1,27 +1,115 @@
 import Backend
+import DaladaCore
 import DaladaUI
+import DesignComponents
 import DesignTokens
 import SwiftUI
 
-/// Вкладка «Профиль» (главная). Пока — заглушка и статус соединения с сервером для беты.
+/// Вкладка «Профиль» (главная): вход для гостя, шапка профиля, статус сервера.
 struct ProfileHomeView: View {
     let environment: AppEnvironment
+
+    @Environment(SessionStore.self) private var session
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.xl) {
-                    PlaceholderScreen(
-                        icon: "figure.fishing",
-                        title: String(localized: "profile.empty.title"),
-                        description: String(localized: "profile.empty.description")
-                    )
+                    content
                     BackendStatusCard(backend: environment.backend)
                 }
                 .screenPadding()
             }
             .navigationTitle("tab.profile")
+            .toolbar {
+                if session.profile != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button("profile.signOut", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                                Task { await session.signOut() }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .accessibilityLabel(Text("profile.menu"))
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch session.state {
+        case .loading:
+            ProgressView()
+                .padding(AppSpacing.xxl)
+        case .guest:
+            SignInCard()
+            historyPlaceholder
+        case .needsUsername, .signedIn:
+            if let profile = session.profile {
+                ProfileHeader(profile: profile)
+            }
+            historyPlaceholder
+        case .profileUnavailable(let message):
+            EmptyStateView(
+                icon: "wifi.slash",
+                title: String(localized: "profile.unavailable"),
+                description: message,
+                actionTitle: String(localized: "common.retry"),
+                action: { Task { await session.reloadProfile() } },
+                style: .error
+            )
+        }
+    }
+
+    private var historyPlaceholder: some View {
+        PlaceholderScreen(
+            icon: "figure.fishing",
+            title: String(localized: "profile.empty.title"),
+            description: String(localized: "profile.empty.description")
+        )
+    }
+}
+
+/// Шапка профиля: инициалы вместо аватара (фото — позже), имя, @username, город.
+struct ProfileHeader: View {
+    let profile: UserProfile
+
+    var body: some View {
+        HStack(spacing: AppSpacing.lg) {
+            Circle()
+                .fill(AppColors.accent.opacity(0.15))
+                .frame(width: AppIconSize.mega, height: AppIconSize.mega)
+                .overlay {
+                    Text(verbatim: initials)
+                        .font(AppTypography.h3)
+                        .foregroundStyle(AppColors.accent)
+                }
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(verbatim: profile.displayName ?? String(localized: "profile.noName"))
+                    .font(AppTypography.h4)
+                if let username = profile.username {
+                    Text(verbatim: "@" + username)
+                        .font(AppTypography.bodySmall)
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+                if let city = profile.city {
+                    Text(verbatim: city)
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .cardContentPadding()
+        .cardStyle()
+    }
+
+    private var initials: String {
+        let source = profile.displayName ?? profile.username ?? "?"
+        return source.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
     }
 }
 
@@ -84,4 +172,5 @@ struct BackendStatusCard: View {
 
 #Preview {
     ProfileHomeView(environment: .preview)
+        .environment(SessionStore(backend: nil))
 }
