@@ -4,13 +4,18 @@ import DesignComponents
 import DesignTokens
 import SwiftUI
 
-/// Карточка места (RPC `place_card`): тип, название, видимость, описание, автор, маршрут.
+/// Карточка места (RPC `place_card`): тип, название, видимость, описание, автор, маршрут,
+/// «Я здесь» и свежие отчёты (RPC `place_reports`).
 struct PlaceCardView: View {
     let placeID: UUID
     let backend: BackendClient?
 
     @Environment(\.openURL) private var openURL
+    @Environment(SessionStore.self) private var session
+    @Environment(SpeciesStore.self) private var speciesStore
     @State private var state: LoadState = .loading
+    @State private var reports: [PlaceReport] = []
+    @State private var showsCheckin = false
 
     enum LoadState {
         case loading
@@ -48,6 +53,15 @@ struct PlaceCardView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .task { await load() }
+        .task { await speciesStore.loadIfNeeded() }
+        .sheet(isPresented: $showsCheckin) {
+            if case .loaded(let place) = state {
+                CheckinFormView(placeID: place.id, placeName: place.name, backend: backend) {
+                    Task { await loadReports() }
+                }
+                .environment(speciesStore)
+            }
+        }
     }
 
     private func content(_ place: PlaceDetails) -> some View {
@@ -90,18 +104,47 @@ struct PlaceCardView: View {
                         .foregroundStyle(AppColors.textTertiary)
                 }
 
-                if let destination = routeDestination(place) {
-                    Button {
-                        openURL(Self.appleMapsURL(to: destination))
-                    } label: {
-                        Label("place.card.route", systemImage: "arrow.triangle.turn.up.right.diamond")
-                            .frame(maxWidth: .infinity)
+                HStack(spacing: AppSpacing.md) {
+                    if session.profile != nil {
+                        Button {
+                            showsCheckin = true
+                        } label: {
+                            Label("place.card.checkin", systemImage: "mappin.circle")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .primaryButton()
                     }
-                    .primaryButton()
+                    if let destination = routeDestination(place) {
+                        Button {
+                            openURL(Self.appleMapsURL(to: destination))
+                        } label: {
+                            Label("place.card.route", systemImage: "arrow.triangle.turn.up.right.diamond")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .secondaryButton()
+                    }
                 }
+
+                reportsSection
             }
             .screenPadding()
             .padding(.vertical, AppSpacing.lg)
+        }
+    }
+
+    @ViewBuilder
+    private var reportsSection: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            SectionHeaderView(String(localized: "place.card.reports"), systemImage: "clock")
+            if reports.isEmpty {
+                Text("place.card.reports.empty")
+                    .font(AppTypography.bodySmall)
+                    .foregroundStyle(AppColors.textSecondary)
+            } else {
+                ForEach(reports) { report in
+                    ReportRow(report: report)
+                }
+            }
         }
     }
 
@@ -125,11 +168,92 @@ struct PlaceCardView: View {
         do {
             if let place = try await backend.placeDetails(id: placeID) {
                 state = .loaded(place)
+                await loadReports()
             } else {
                 state = .notFound
             }
         } catch {
             state = .failed(error.localizedDescription)
         }
+    }
+
+    private func loadReports() async {
+        guard let backend else { return }
+        if let loaded = try? await backend.placeReports(placeID: placeID) {
+            reports = loaded
+        }
+    }
+}
+
+/// Отчёт в карточке места: автор, время, подтверждение, условия, заметка, уловы.
+struct ReportRow: View {
+    let report: PlaceReport
+
+    @Environment(SpeciesStore.self) private var speciesStore
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacing.xs) {
+                Text(verbatim: author)
+                    .font(AppTypography.bodyEmphasis)
+                if report.verified {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(AppColors.success)
+                        .accessibilityLabel(Text("report.verified"))
+                }
+                Spacer(minLength: 0)
+                Text(report.at, style: .relative)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+            }
+
+            if let conditionsText {
+                Text(verbatim: conditionsText)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+
+            if let note = report.note {
+                Text(verbatim: note)
+                    .font(AppTypography.bodySmall)
+            }
+
+            ForEach(report.catches) { item in
+                CatchSummaryRow(
+                    speciesName: speciesStore.name(for: item.speciesID),
+                    count: item.count,
+                    weightGrams: item.weightGrams,
+                    lengthMillimeters: item.lengthMillimeters,
+                    released: item.released
+                )
+            }
+        }
+        .cardContentPadding()
+        .cardStyle()
+    }
+
+    private var author: String {
+        if report.isOwn { return String(localized: "report.you") }
+        if let username = report.authorUsername { return "@" + username }
+        return report.authorDisplayName ?? String(localized: "profile.noName")
+    }
+
+    /// «Клёв: хороший · Людей: немного · Вода: мутная».
+    private var conditionsText: String? {
+        let conditions = report.conditions
+        let pairs: [(String, String?)] = [
+            ("conditions.bite", conditions.bite?.titleKey),
+            ("conditions.crowd", conditions.crowd?.titleKey),
+            ("conditions.water", conditions.water?.titleKey),
+            ("conditions.road", conditions.road?.titleKey),
+        ]
+        let parts = pairs.compactMap { pair -> String? in
+            let (category, value) = pair
+            guard let value else { return nil }
+            let categoryTitle = String(localized: String.LocalizationValue(category))
+            let valueTitle = String(localized: String.LocalizationValue(value)).lowercased()
+            return categoryTitle + ": " + valueTitle
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }

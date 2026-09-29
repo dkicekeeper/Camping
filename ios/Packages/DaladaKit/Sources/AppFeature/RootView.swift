@@ -15,12 +15,14 @@ public struct RootView: View {
     private let environment: AppEnvironment
 
     @State private var session: SessionStore
+    @State private var species: SpeciesStore
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
 
     public init(environment: AppEnvironment) {
         self.environment = environment
         _session = State(initialValue: SessionStore(backend: environment.backend))
+        _species = State(initialValue: SpeciesStore(backend: environment.backend))
     }
 
     public var body: some View {
@@ -59,6 +61,7 @@ public struct RootView: View {
                 .environment(session)
         }
         .environment(session)
+        .environment(species)
         .task { await session.start() }
     }
 }

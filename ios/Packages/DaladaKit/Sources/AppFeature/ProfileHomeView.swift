@@ -50,8 +50,12 @@ struct ProfileHomeView: View {
         case .needsUsername, .signedIn:
             if let profile = session.profile {
                 ProfileHeader(profile: profile)
+                MyCatchesSection(backend: environment.backend, userID: profile.id) {
+                    historyPlaceholder
+                }
+            } else {
+                historyPlaceholder
             }
-            historyPlaceholder
         case .profileUnavailable(let message):
             EmptyStateView(
                 icon: "wifi.slash",
@@ -70,6 +74,75 @@ struct ProfileHomeView: View {
             title: String(localized: "profile.empty.title"),
             description: String(localized: "profile.empty.description")
         )
+    }
+}
+
+/// «Мои уловы» (RPC `my_catches`): последние уловы с местом и датой. Пока уловов нет —
+/// показывает `placeholder`. Обновляется при каждом возврате на вкладку.
+struct MyCatchesSection<Placeholder: View>: View {
+    let backend: BackendClient?
+    let userID: UUID
+    let placeholder: Placeholder
+
+    @Environment(SpeciesStore.self) private var speciesStore
+    @State private var catches: [MyCatch] = []
+    @State private var isLoaded = false
+
+    init(backend: BackendClient?, userID: UUID, @ViewBuilder placeholder: () -> Placeholder) {
+        self.backend = backend
+        self.userID = userID
+        self.placeholder = placeholder()
+    }
+
+    var body: some View {
+        Group {
+            if catches.isEmpty {
+                if isLoaded {
+                    placeholder
+                } else {
+                    ProgressView()
+                        .padding(AppSpacing.xl)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
+                    SectionHeaderView(String(localized: "profile.catches.title"), systemImage: "fish")
+                    VStack(alignment: .leading, spacing: AppSpacing.md) {
+                        ForEach(catches) { item in
+                            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                                CatchSummaryRow(
+                                    speciesName: speciesStore.name(for: item.speciesID),
+                                    count: item.count,
+                                    weightGrams: item.weightGrams,
+                                    lengthMillimeters: item.lengthMillimeters,
+                                    released: item.released
+                                )
+                                HStack(spacing: AppSpacing.xs) {
+                                    if let placeName = item.placeName {
+                                        Text(verbatim: placeName)
+                                        Text(verbatim: "·")
+                                    }
+                                    Text(item.at, format: .dateTime.day().month().year())
+                                }
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.textSecondary)
+                            }
+                        }
+                    }
+                    .cardContentPadding()
+                    .cardStyle()
+                }
+            }
+        }
+        .task(id: userID) { await load() }
+        .task { await speciesStore.loadIfNeeded() }
+    }
+
+    private func load() async {
+        defer { isLoaded = true }
+        guard let backend else { return }
+        if let loaded = try? await backend.myCatches(limit: 20) {
+            catches = loaded
+        }
     }
 }
 
@@ -173,4 +246,5 @@ struct BackendStatusCard: View {
 #Preview {
     ProfileHomeView(environment: .preview)
         .environment(SessionStore(backend: nil))
+        .environment(SpeciesStore(backend: nil))
 }
