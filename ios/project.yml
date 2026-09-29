@@ -21,6 +21,7 @@ targets:
       - path: Dalada
         excludes:
           - Info.plist
+          - Dalada.entitlements
     configFiles:
       Debug: Config/Dalada.xcconfig
       Release: Config/Dalada.xcconfig
@@ -39,6 +40,7 @@ targets:
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: Dalada/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Dalada/Dalada.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: Dalada
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.travel
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
