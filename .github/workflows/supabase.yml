@@ -28,7 +28,7 @@ jobs:
         run: supabase db reset
 
       - name: Lint project schemas
-        run: supabase db lint --level warning --fail-on warning -s public,private
+        run: supabase db lint --level warning --fail-on warning -s public,private,rls
 
       - name: Run database tests
         run: supabase test db

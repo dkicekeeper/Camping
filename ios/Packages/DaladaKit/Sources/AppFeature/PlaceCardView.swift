@@ -15,6 +15,8 @@ struct PlaceCardView: View {
     @Environment(SpeciesStore.self) private var speciesStore
     @State private var state: LoadState = .loading
     @State private var reports: [PlaceReport] = []
+    /// Подписанные ссылки на фото отчётов: путь в хранилище → ссылка (действует час).
+    @State private var photoURLs: [String: URL] = [:]
     @State private var showsCheckin = false
 
     enum LoadState {
@@ -142,7 +144,7 @@ struct PlaceCardView: View {
                     .foregroundStyle(AppColors.textSecondary)
             } else {
                 ForEach(reports) { report in
-                    ReportRow(report: report)
+                    ReportRow(report: report, photoURLs: photoURLs)
                 }
             }
         }
@@ -178,16 +180,20 @@ struct PlaceCardView: View {
     }
 
     private func loadReports() async {
-        guard let backend else { return }
-        if let loaded = try? await backend.placeReports(placeID: placeID) {
-            reports = loaded
-        }
+        guard let backend,
+              let loaded = try? await backend.placeReports(placeID: placeID)
+        else { return }
+        let paths = loaded.flatMap { report in report.media.flatMap { [$0.thumbnailPath, $0.path] } }
+        let urls = (try? await backend.signedMediaURLs(paths: paths)) ?? [:]
+        photoURLs = urls
+        reports = loaded
     }
 }
 
-/// Отчёт в карточке места: автор, время, подтверждение, условия, заметка, уловы.
+/// Отчёт в карточке места: автор, время, подтверждение, условия, заметка, уловы, фото.
 struct ReportRow: View {
     let report: PlaceReport
+    let photoURLs: [String: URL]
 
     @Environment(SpeciesStore.self) private var speciesStore
 
@@ -226,6 +232,10 @@ struct ReportRow: View {
                     lengthMillimeters: item.lengthMillimeters,
                     released: item.released
                 )
+            }
+
+            if !report.media.isEmpty {
+                ReportPhotoStrip(media: report.media, urls: photoURLs)
             }
         }
         .cardContentPadding()

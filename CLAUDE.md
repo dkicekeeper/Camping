@@ -27,6 +27,9 @@ iOS-приложение для рыбалки и отдыха на природ
 - Каждая новая таблица: `enable row level security`, `revoke all … from anon, authenticated`,
   затем явные права (для записи — только разрешённые колонки). Служебные поля выставляют триггеры.
 - Внутри функций с пустым `search_path` — полные имена: `extensions.st_*`, `public.*`, `private.*`.
+- Файлы (фото) — в закрытом бакете `media`, путь `<owner_id>/<media_id>.jpg`. Своей видимости у фото
+  нет: оно видно тем, кто видит чекин, место и улов. Политики `storage.objects` вызывают функции из
+  схемы `rls` (схема `private` для клиента закрыта, а политики выполняются от его имени).
 - Любая новая таблица или RPC с чужими данными → тесты в `supabase/tests/database/` (матрица
   «зритель × объект × видимость»).
 - Миграции только добавляются; уже применённые не редактировать.
@@ -37,7 +40,7 @@ iOS-приложение для рыбалки и отдыха на природ
 # В облачном контейнере Docker может быть не запущен: nohup dockerd >/tmp/dockerd.log 2>&1 &
 supabase db start
 supabase db reset                                   # миграции с нуля
-supabase db lint --level warning --fail-on warning -s public,private
+supabase db lint --level warning --fail-on warning -s public,private,rls
 supabase test db                                    # pgTAP
 ```
 

@@ -31,13 +31,57 @@ extension BackendClient {
             .value
     }
 
-    /// Создаёт чекин и его уловы. ID задаёт клиент: при повторной отправке уже созданные
-    /// записи упираются в первичный ключ (23505) — это считается успехом.
+    /// Создаёт чекин, уловы и фото. ID задаёт клиент: при повторной отправке уже созданные
+    /// записи упираются в первичный ключ (23505), а файлы — в «уже существует» (409); это
+    /// считается успехом, поэтому после сбоя сохранение можно просто повторить.
     public func createCheckin(_ draft: CheckinDraft) async throws {
         try await insertIgnoringDuplicates(into: "checkins", CheckinInsert(draft))
-        guard !draft.catches.isEmpty else { return }
-        let catches = draft.catches.map { CatchInsert($0, checkinID: draft.id, visibility: draft.visibility) }
-        try await insertIgnoringDuplicates(into: "catches", catches)
+        if !draft.catches.isEmpty {
+            let catches = draft.catches.map { CatchInsert($0, checkinID: draft.id, visibility: draft.visibility) }
+            try await insertIgnoringDuplicates(into: "catches", catches)
+        }
+        let uploads = draft.photoUploads
+        guard !uploads.isEmpty else { return }
+        guard let owner = supabase.auth.currentUser?.id else { throw AuthError.sessionMissing }
+        // Сначала файлы, потом строки: строка `media` появляется, только когда файлы на месте.
+        for upload in uploads {
+            try await uploadPhoto(upload.photo, owner: owner)
+        }
+        let rows = uploads.map { MediaInsert($0, checkinID: draft.id) }
+        try await insertIgnoringDuplicates(into: "media", rows)
+    }
+
+    /// Подписанные ссылки на файлы бакета `media` (путь → ссылка). Файлы, которые зритель не
+    /// видит, в ответ не попадают.
+    public func signedMediaURLs(paths: [String], expiresIn: Int = 3600) async throws -> [String: URL] {
+        let unique = Array(Set(paths))
+        guard !unique.isEmpty else { return [:] }
+        let results = try await supabase.storage
+            .from(MediaPath.bucket)
+            .createSignedURLs(paths: unique, expiresIn: expiresIn)
+        var urls: [String: URL] = [:]
+        for result in results {
+            if let url = result.signedURL {
+                urls[result.path] = url
+            }
+        }
+        return urls
+    }
+
+    private func uploadPhoto(_ photo: PhotoDraft, owner: UUID) async throws {
+        let files = [
+            (MediaPath.full(owner: owner, media: photo.id), photo.full),
+            (MediaPath.thumbnail(owner: owner, media: photo.id), photo.thumbnail),
+        ]
+        for (path, data) in files {
+            do {
+                try await supabase.storage
+                    .from(MediaPath.bucket)
+                    .upload(path, data: data, options: FileOptions(cacheControl: "31536000", contentType: "image/jpeg"))
+            } catch let error as StorageError where error.statusCode == "409" || error.error == "Duplicate" {
+                continue
+            }
+        }
     }
 
     private func insertIgnoringDuplicates(into table: String, _ values: some Encodable & Sendable) async throws {
@@ -96,6 +140,40 @@ struct CheckinInsert: Encodable, Sendable {
         try c.encode(conditions, forKey: .conditions)
         try c.encode(note, forKey: .note)
         try c.encode(visibility, forKey: .visibility)
+    }
+}
+
+/// Строка `media`. Путь к файлу база вычисляет сама из автора и id.
+struct MediaInsert: Encodable, Sendable {
+    let id: UUID
+    let checkinID: UUID
+    let catchID: UUID?
+    let width: Int
+    let height: Int
+
+    init(_ upload: PhotoUpload, checkinID: UUID) {
+        id = upload.photo.id
+        self.checkinID = checkinID
+        catchID = upload.catchID
+        width = upload.photo.width
+        height = upload.photo.height
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case checkinID = "checkin_id"
+        case catchID = "catch_id"
+        case width
+        case height
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(checkinID, forKey: .checkinID)
+        try c.encode(catchID, forKey: .catchID)
+        try c.encode(width, forKey: .width)
+        try c.encode(height, forKey: .height)
     }
 }
 

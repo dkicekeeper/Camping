@@ -1,9 +1,10 @@
 import Backend
 import DaladaCore
 import DesignTokens
+import PhotosUI
 import SwiftUI
 
-/// Чекин «Я здесь»: как клюёт, людность, вода, дорога, уловы, заметка, видимость.
+/// Чекин «Я здесь»: как клюёт, людность, вода, дорога, уловы, фото, заметка, видимость.
 /// Всё, кроме места, необязательно — чекин должен занимать 10 секунд.
 struct CheckinFormView: View {
     let placeName: String
@@ -17,6 +18,9 @@ struct CheckinFormView: View {
     @State private var locationState: LocationState = .locating
     @State private var isSaving = false
     @State private var saveError: String?
+    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var isProcessingPhotos = false
+    @State private var photoFailed = false
 
     enum LocationState: Equatable {
         case locating
@@ -53,7 +57,8 @@ struct CheckinFormView: View {
                                 count: catchDraft.count,
                                 weightGrams: catchDraft.weightGrams,
                                 lengthMillimeters: catchDraft.lengthMillimeters,
-                                released: catchDraft.released
+                                released: catchDraft.released,
+                                hasPhoto: catchDraft.photo != nil
                             )
                         }
                         .buttonStyle(.plain)
@@ -64,6 +69,34 @@ struct CheckinFormView: View {
                         editingCatch = CatchDraft(speciesID: speciesStore.species.first?.id ?? "common_carp")
                     } label: {
                         Label("checkin.form.addCatch", systemImage: "plus.circle")
+                    }
+                }
+
+                Section {
+                    if !draft.photos.isEmpty {
+                        PhotoDraftStrip(photos: draft.photos) { id in
+                            draft.photos.removeAll { $0.id == id }
+                        }
+                    }
+                    if isProcessingPhotos {
+                        ProgressView()
+                    } else if draft.photos.count < CheckinDraft.photoLimit {
+                        PhotosPicker(
+                            selection: $pickerItems,
+                            maxSelectionCount: CheckinDraft.photoLimit - draft.photos.count,
+                            matching: .images
+                        ) {
+                            Label("checkin.form.addPhotos", systemImage: "photo.on.rectangle.angled")
+                        }
+                    }
+                } header: {
+                    Text("checkin.form.photos")
+                } footer: {
+                    if photoFailed {
+                        Text("photo.failed")
+                            .foregroundStyle(AppColors.destructive)
+                    } else {
+                        Text("checkin.form.photosFooter")
                     }
                 }
 
@@ -105,7 +138,7 @@ struct CheckinFormView: View {
                         Button("checkin.form.save") {
                             Task { await save() }
                         }
-                        .disabled(!draft.isValid)
+                        .disabled(!draft.isValid || isProcessingPhotos)
                     }
                 }
             }
@@ -118,6 +151,10 @@ struct CheckinFormView: View {
                     }
                 }
                 .environment(speciesStore)
+            }
+            .onChange(of: pickerItems) { _, items in
+                guard !items.isEmpty else { return }
+                Task { await addPhotos(items) }
             }
             .interactiveDismissDisabled(isSaving)
             .task { await locate() }
@@ -143,6 +180,22 @@ struct CheckinFormView: View {
             locationState = .found
         } else {
             locationState = .unavailable
+        }
+    }
+
+    /// Сжимает выбранные фото по одному и добавляет в чекин (не больше лимита).
+    private func addPhotos(_ items: [PhotosPickerItem]) async {
+        pickerItems = []
+        isProcessingPhotos = true
+        photoFailed = false
+        defer { isProcessingPhotos = false }
+        for item in items {
+            guard draft.photos.count < CheckinDraft.photoLimit else { break }
+            if let photo = await PhotoCompressor.draft(from: item) {
+                draft.photos.append(photo)
+            } else {
+                photoFailed = true
+            }
         }
     }
 
@@ -210,6 +263,7 @@ struct CatchSummaryRow: View {
     let weightGrams: Int?
     let lengthMillimeters: Int?
     let released: Bool
+    var hasPhoto = false
 
     var body: some View {
         HStack(spacing: AppSpacing.sm) {
@@ -219,6 +273,12 @@ struct CatchSummaryRow: View {
                 .font(AppTypography.bodySmall)
                 .foregroundStyle(AppColors.textPrimary)
             Spacer(minLength: 0)
+            if hasPhoto {
+                Image(systemName: "camera.fill")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textTertiary)
+                    .accessibilityLabel(Text("catch.form.photo"))
+            }
         }
         .contentShape(Rectangle())
     }

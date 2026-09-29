@@ -1,14 +1,18 @@
 import DaladaCore
 import DesignTokens
+import PhotosUI
 import SwiftUI
 
-/// Форма улова: вид, вес, длина, количество, способ, приманка, отпущена, скрыть размер.
+/// Форма улова: вид, вес, длина, количество, фото, способ, приманка, отпущена, скрыть размер.
 struct CatchFormView: View {
     let onDone: @MainActor (CatchDraft) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SpeciesStore.self) private var speciesStore
     @State private var draft: CatchDraft
+    @State private var pickerItem: PhotosPickerItem?
+    @State private var isProcessingPhoto = false
+    @State private var photoFailed = false
 
     init(draft: CatchDraft, onDone: @escaping @MainActor (CatchDraft) -> Void) {
         self.onDone = onDone
@@ -47,6 +51,32 @@ struct CatchFormView: View {
                 }
 
                 Section {
+                    if let photo = draft.photo {
+                        HStack(spacing: AppSpacing.md) {
+                            PhotoDraftThumbnail(photo: photo)
+                            Spacer(minLength: 0)
+                            Button("photo.remove", role: .destructive) {
+                                draft.photo = nil
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    } else if isProcessingPhoto {
+                        ProgressView()
+                    } else {
+                        PhotosPicker(selection: $pickerItem, matching: .images) {
+                            Label("catch.form.addPhoto", systemImage: "camera")
+                        }
+                    }
+                } header: {
+                    Text("catch.form.photo")
+                } footer: {
+                    if photoFailed {
+                        Text("photo.failed")
+                            .foregroundStyle(AppColors.destructive)
+                    }
+                }
+
+                Section {
                     Picker("catch.form.method", selection: $draft.method) {
                         Text("common.notSpecified").tag(FishingMethod?.none)
                         ForEach(FishingMethod.allCases) { method in
@@ -71,10 +101,26 @@ struct CatchFormView: View {
                         onDone(draft)
                         dismiss()
                     }
-                    .disabled(!draft.isValid)
+                    .disabled(!draft.isValid || isProcessingPhoto)
                 }
             }
             .task { await speciesStore.loadIfNeeded() }
+            .onChange(of: pickerItem) { _, item in
+                guard let item else { return }
+                Task { await loadPhoto(item) }
+            }
+        }
+    }
+
+    private func loadPhoto(_ item: PhotosPickerItem) async {
+        pickerItem = nil
+        isProcessingPhoto = true
+        photoFailed = false
+        defer { isProcessingPhoto = false }
+        if let photo = await PhotoCompressor.draft(from: item) {
+            draft.photo = photo
+        } else {
+            photoFailed = true
         }
     }
 }

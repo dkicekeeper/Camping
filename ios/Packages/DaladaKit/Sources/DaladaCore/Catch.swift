@@ -118,6 +118,8 @@ public struct CatchDraft: Identifiable, Equatable, Sendable {
     public var bait: String
     public var released: Bool
     public var hideSize: Bool
+    /// Фото улова (одно).
+    public var photo: PhotoDraft?
 
     public init(
         id: UUID = UUID(),
@@ -128,7 +130,8 @@ public struct CatchDraft: Identifiable, Equatable, Sendable {
         method: FishingMethod? = nil,
         bait: String = "",
         released: Bool = false,
-        hideSize: Bool = false
+        hideSize: Bool = false,
+        photo: PhotoDraft? = nil
     ) {
         self.id = id
         self.speciesID = speciesID
@@ -139,6 +142,7 @@ public struct CatchDraft: Identifiable, Equatable, Sendable {
         self.bait = bait
         self.released = released
         self.hideSize = hideSize
+        self.photo = photo
     }
 
     public var weightGrams: Int? { weightKg.map { Int(($0 * 1000).rounded()) } }
@@ -154,6 +158,8 @@ public struct CatchDraft: Identifiable, Equatable, Sendable {
 /// Черновик чекина: место, условия, заметка, уловы.
 public struct CheckinDraft: Equatable, Sendable {
     public static let noteLimit = 2000
+    /// Фото к самому чекину; к каждому улову — ещё по одному.
+    public static let photoLimit = 5
 
     public var id: UUID
     public var placeID: UUID
@@ -161,6 +167,8 @@ public struct CheckinDraft: Equatable, Sendable {
     public var note: String
     public var visibility: Visibility
     public var catches: [CatchDraft]
+    /// Фото к чекину (не к улову).
+    public var photos: [PhotoDraft]
     /// Где был телефон в момент чекина — по ней база подтверждает чекин (до 500 м от места).
     public var deviceLocation: GeoPoint?
 
@@ -171,6 +179,7 @@ public struct CheckinDraft: Equatable, Sendable {
         note: String = "",
         visibility: Visibility = .friends,
         catches: [CatchDraft] = [],
+        photos: [PhotoDraft] = [],
         deviceLocation: GeoPoint? = nil
     ) {
         self.id = id
@@ -179,13 +188,36 @@ public struct CheckinDraft: Equatable, Sendable {
         self.note = note
         self.visibility = visibility
         self.catches = catches
+        self.photos = photos
         self.deviceLocation = deviceLocation
     }
 
     public var trimmedNote: String { note.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     public var isValid: Bool {
-        trimmedNote.count <= Self.noteLimit && catches.allSatisfy(\.isValid)
+        trimmedNote.count <= Self.noteLimit
+            && catches.allSatisfy(\.isValid)
+            && photos.count <= Self.photoLimit
+    }
+
+    /// Все фото для загрузки: сначала к чекину, потом к уловам (с id улова).
+    public var photoUploads: [PhotoUpload] {
+        let checkinPhotos = photos.map { PhotoUpload(photo: $0, catchID: nil) }
+        let catchPhotos = catches.compactMap { item in
+            item.photo.map { PhotoUpload(photo: $0, catchID: item.id) }
+        }
+        return checkinPhotos + catchPhotos
+    }
+}
+
+/// Фото к загрузке: к чекину (`catchID == nil`) или к улову.
+public struct PhotoUpload: Equatable, Sendable {
+    public let photo: PhotoDraft
+    public let catchID: UUID?
+
+    public init(photo: PhotoDraft, catchID: UUID?) {
+        self.photo = photo
+        self.catchID = catchID
     }
 }
 
@@ -220,6 +252,7 @@ public struct PlaceReport: Decodable, Identifiable, Hashable, Sendable {
     public let note: String?
     public let isOwn: Bool
     public let catches: [ReportCatch]
+    public let media: [ReportMedia]
 
     enum CodingKeys: String, CodingKey {
         case id = "checkin_id"
@@ -232,6 +265,23 @@ public struct PlaceReport: Decodable, Identifiable, Hashable, Sendable {
         case note
         case isOwn = "is_own"
         case catches
+        case media
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        authorID = try c.decode(UUID.self, forKey: .authorID)
+        authorUsername = try c.decodeIfPresent(String.self, forKey: .authorUsername)
+        authorDisplayName = try c.decodeIfPresent(String.self, forKey: .authorDisplayName)
+        at = try c.decode(Date.self, forKey: .at)
+        verified = try c.decode(Bool.self, forKey: .verified)
+        conditions = try c.decode(CheckinConditions.self, forKey: .conditions)
+        note = try c.decodeIfPresent(String.self, forKey: .note)
+        isOwn = try c.decode(Bool.self, forKey: .isOwn)
+        catches = try c.decode([ReportCatch].self, forKey: .catches)
+        // До миграции с фото сервер поля не отдавал.
+        media = try c.decodeIfPresent([ReportMedia].self, forKey: .media) ?? []
     }
 }
 
