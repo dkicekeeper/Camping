@@ -2,9 +2,11 @@ import Backend
 import DaladaCore
 import DaladaUI
 import DesignTokens
+import Persistence
 import SwiftUI
 
 /// Вкладка «Места». Пока — «Мои места»; подборки (популярные, где были друзья) — в M4.
+/// Без сети — сохранённый список.
 struct PlacesHomeView: View {
     let environment: AppEnvironment
 
@@ -21,7 +23,7 @@ struct PlacesHomeView: View {
                 .task(id: session.profile?.id) { await load() }
                 .refreshable { await load() }
                 .sheet(item: $selected, onDismiss: { Task { await load() } }) { selection in
-                    PlaceCardView(placeID: selection.id, backend: environment.backend)
+                    PlaceCardView(placeID: selection.id, environment: environment)
                         .presentationDetents([.medium, .large])
                 }
         }
@@ -63,17 +65,23 @@ struct PlacesHomeView: View {
     }
 
     private func load() async {
-        guard session.profile != nil, let backend = environment.backend else {
+        guard let userID = session.profile?.id, let backend = environment.backend else {
             places = []
             return
         }
         isLoading = true
         defer { isLoading = false }
+        let key = CacheKey.myPlaces(userID)
         do {
             places = try await backend.myPlaces()
             loadError = nil
+            try? await environment.cache.save(places, for: key)
         } catch {
-            loadError = error.localizedDescription
+            if let saved = try? await environment.cache.load([PlaceSummary].self, for: key) {
+                places = saved
+            } else {
+                loadError = error.localizedDescription
+            }
         }
     }
 }

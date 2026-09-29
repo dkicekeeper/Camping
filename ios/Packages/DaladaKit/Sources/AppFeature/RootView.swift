@@ -1,5 +1,7 @@
+import DaladaCore
 import DesignComponents
 import SwiftUI
+import Sync
 
 /// Вкладки приложения. `quickAction` — не экран, а кнопка «+» с быстрыми действиями.
 enum AppTab: Hashable {
@@ -14,15 +16,24 @@ enum AppTab: Hashable {
 public struct RootView: View {
     private let environment: AppEnvironment
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var session: SessionStore
     @State private var species: SpeciesStore
+    @State private var sync: SyncEngine
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
 
     public init(environment: AppEnvironment) {
         self.environment = environment
-        _session = State(initialValue: SessionStore(backend: environment.backend))
-        _species = State(initialValue: SpeciesStore(backend: environment.backend))
+        _session = State(initialValue: SessionStore(backend: environment.backend, cache: environment.cache))
+        _species = State(initialValue: SpeciesStore(backend: environment.backend, cache: environment.cache))
+        let sender: any CheckinSending
+        if let backend = environment.backend {
+            sender = backend
+        } else {
+            sender = UnavailableSender()
+        }
+        _sync = State(initialValue: SyncEngine(outbox: environment.database.outbox, sender: sender))
     }
 
     public var body: some View {
@@ -62,7 +73,23 @@ public struct RootView: View {
         }
         .environment(session)
         .environment(species)
+        .environment(sync)
         .task { await session.start() }
+        // Офлайн-очередь: отправляем при появлении сети, возврате в приложение и входе.
+        .task {
+            for await _ in NetworkMonitor.becameAvailable() {
+                sync.kick(force: true)
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { sync.kick(force: true) }
+        }
+        .onChange(of: session.profile?.id, initial: true) { _, _ in
+            Task {
+                await sync.refresh()
+                sync.kick(force: true)
+            }
+        }
     }
 }
 

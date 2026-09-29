@@ -2,22 +2,32 @@ import Backend
 import DaladaCore
 import DesignComponents
 import DesignTokens
+import Persistence
 import SwiftUI
+import Sync
 
 /// Карточка места (RPC `place_card`): тип, название, видимость, описание, автор, маршрут,
-/// «Я здесь» и свежие отчёты (RPC `place_reports`).
+/// «Я здесь» и свежие отчёты (RPC `place_reports`). Без сети — сохранённая карточка и отчёты,
+/// а свои чекины из очереди — с пометкой «Ожидает отправки».
 struct PlaceCardView: View {
     let placeID: UUID
-    let backend: BackendClient?
+    let environment: AppEnvironment
 
     @Environment(\.openURL) private var openURL
     @Environment(SessionStore.self) private var session
     @Environment(SpeciesStore.self) private var speciesStore
+    @Environment(SyncEngine.self) private var sync
     @State private var state: LoadState = .loading
     @State private var reports: [PlaceReport] = []
     /// Подписанные ссылки на фото отчётов: путь в хранилище → ссылка (действует час).
     @State private var photoURLs: [String: URL] = [:]
     @State private var showsCheckin = false
+    /// Показана сохранённая копия — сервер недоступен.
+    @State private var isShowingSavedCopy = false
+
+    private var backend: BackendClient? { environment.backend }
+    private var cache: CacheStore { environment.cache }
+    private var viewerID: UUID? { session.profile?.id }
 
     enum LoadState {
         case loading
@@ -56,12 +66,15 @@ struct PlaceCardView: View {
         }
         .task { await load() }
         .task { await speciesStore.loadIfNeeded() }
+        // Чекин из очереди принят сервером — он появится среди обычных отчётов.
+        .onChange(of: sync.sentCount) { _, _ in
+            Task { await loadReports() }
+        }
         .sheet(isPresented: $showsCheckin) {
             if case .loaded(let place) = state {
-                CheckinFormView(placeID: place.id, placeName: place.name, backend: backend) {
-                    Task { await loadReports() }
-                }
-                .environment(speciesStore)
+                CheckinFormView(placeID: place.id, placeName: place.name) {}
+                    .environment(speciesStore)
+                    .environment(sync)
             }
         }
     }
@@ -86,6 +99,12 @@ struct PlaceCardView: View {
                 }
                 .font(AppTypography.caption)
                 .foregroundStyle(AppColors.textSecondary)
+
+                if isShowingSavedCopy {
+                    Label("offline.savedCopy", systemImage: "icloud.slash")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                }
 
                 if place.isApproximate {
                     RecommendationBox(
@@ -138,7 +157,10 @@ struct PlaceCardView: View {
     private var reportsSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             SectionHeaderView(String(localized: "place.card.reports"), systemImage: "clock")
-            if reports.isEmpty {
+            ForEach(pendingHere) { item in
+                PendingReportRow(item: item)
+            }
+            if reports.isEmpty && pendingHere.isEmpty {
                 Text("place.card.reports.empty")
                     .font(AppTypography.bodySmall)
                     .foregroundStyle(AppColors.textSecondary)
@@ -148,6 +170,11 @@ struct PlaceCardView: View {
                 }
             }
         }
+    }
+
+    /// Свои чекины в этом месте, ещё не принятые сервером.
+    private var pendingHere: [PendingCheckin] {
+        sync.pending.filter { $0.placeID == placeID }
     }
 
     /// Куда строить маршрут: точка подъезда, иначе само место. Для огрублённого места без точки
@@ -167,15 +194,25 @@ struct PlaceCardView: View {
             return
         }
         state = .loading
+        let key = CacheKey.place(placeID, viewer: viewerID)
         do {
             if let place = try await backend.placeDetails(id: placeID) {
                 state = .loaded(place)
+                isShowingSavedCopy = false
+                try? await cache.save(place, for: key)
                 await loadReports()
             } else {
                 state = .notFound
             }
         } catch {
-            state = .failed(error.localizedDescription)
+            // Нет сети — показываем сохранённую карточку: из неё можно отметиться.
+            if let saved = try? await cache.load(PlaceDetails.self, for: key) {
+                state = .loaded(saved)
+                isShowingSavedCopy = true
+                reports = (try? await cache.load([PlaceReport].self, for: .reports(placeID, viewer: viewerID))) ?? []
+            } else {
+                state = .failed(error.localizedDescription)
+            }
         }
     }
 
@@ -187,6 +224,7 @@ struct PlaceCardView: View {
         let urls = (try? await backend.signedMediaURLs(paths: paths)) ?? [:]
         photoURLs = urls
         reports = loaded
+        try? await cache.save(loaded, for: .reports(placeID, viewer: viewerID))
     }
 }
 
@@ -248,22 +286,7 @@ struct ReportRow: View {
         return report.authorDisplayName ?? String(localized: "profile.noName")
     }
 
-    /// «Клёв: хороший · Людей: немного · Вода: мутная».
     private var conditionsText: String? {
-        let conditions = report.conditions
-        let pairs: [(String, String?)] = [
-            ("conditions.bite", conditions.bite?.titleKey),
-            ("conditions.crowd", conditions.crowd?.titleKey),
-            ("conditions.water", conditions.water?.titleKey),
-            ("conditions.road", conditions.road?.titleKey),
-        ]
-        let parts = pairs.compactMap { pair -> String? in
-            let (category, value) = pair
-            guard let value else { return nil }
-            let categoryTitle = String(localized: String.LocalizationValue(category))
-            let valueTitle = String(localized: String.LocalizationValue(value)).lowercased()
-            return categoryTitle + ": " + valueTitle
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        ConditionsText.make(report.conditions)
     }
 }

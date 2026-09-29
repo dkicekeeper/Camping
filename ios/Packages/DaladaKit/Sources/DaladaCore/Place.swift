@@ -58,7 +58,7 @@ public enum PlaceStatus: String, Codable, Sendable {
 }
 
 /// Место на карте или в списке — строка `places_in_bbox` / `my_places`.
-public struct PlaceSummary: Decodable, Identifiable, Hashable, Sendable {
+public struct PlaceSummary: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
     public let ownerID: UUID
     public let type: PlaceType
@@ -102,10 +102,26 @@ public struct PlaceSummary: Decodable, Identifiable, Hashable, Sendable {
         status = try c.decode(PlaceStatus.self, forKey: .status)
         isOwn = try c.decode(Bool.self, forKey: .isOwn)
     }
+
+    /// В том же виде, что приходит с сервера, — для локального кэша.
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(ownerID, forKey: .ownerID)
+        try c.encode(type, forKey: .type)
+        try c.encode(name, forKey: .name)
+        try c.encode(coordinate.longitude, forKey: .lon)
+        try c.encode(coordinate.latitude, forKey: .lat)
+        try c.encode(isApproximate, forKey: .isApproximate)
+        try c.encode(radiusM, forKey: .radiusM)
+        try c.encode(visibility, forKey: .visibility)
+        try c.encode(status, forKey: .status)
+        try c.encode(isOwn, forKey: .isOwn)
+    }
 }
 
 /// Карточка места — строка `place_card`.
-public struct PlaceDetails: Decodable, Identifiable, Hashable, Sendable {
+public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
     public let ownerID: UUID
     public let ownerUsername: String?
@@ -162,6 +178,26 @@ public struct PlaceDetails: Decodable, Identifiable, Hashable, Sendable {
         visibility = try c.decode(Visibility.self, forKey: .visibility)
         status = try c.decode(PlaceStatus.self, forKey: .status)
         isOwn = try c.decode(Bool.self, forKey: .isOwn)
+    }
+
+    /// В том же виде, что приходит с сервера, — для локального кэша.
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(ownerID, forKey: .ownerID)
+        try c.encode(ownerUsername, forKey: .ownerUsername)
+        try c.encode(type, forKey: .type)
+        try c.encode(name, forKey: .name)
+        try c.encode(description, forKey: .description)
+        try c.encode(coordinate.longitude, forKey: .lon)
+        try c.encode(coordinate.latitude, forKey: .lat)
+        try c.encode(isApproximate, forKey: .isApproximate)
+        try c.encode(radiusM, forKey: .radiusM)
+        try c.encode(accessPoint?.longitude, forKey: .accessLon)
+        try c.encode(accessPoint?.latitude, forKey: .accessLat)
+        try c.encode(visibility, forKey: .visibility)
+        try c.encode(status, forKey: .status)
+        try c.encode(isOwn, forKey: .isOwn)
     }
 }
 

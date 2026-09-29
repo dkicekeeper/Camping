@@ -3,7 +3,9 @@ import DaladaCore
 import DaladaUI
 import DesignComponents
 import DesignTokens
+import Persistence
 import SwiftUI
+import Sync
 
 /// Вкладка «Профиль» (главная): вход для гостя, шапка профиля, уловы. Карточка сервера —
 /// только когда с ним проблема.
@@ -55,7 +57,8 @@ struct ProfileHomeView: View {
         case .needsUsername, .signedIn:
             if let profile = session.profile {
                 ProfileHeader(profile: profile)
-                MyCatchesSection(backend: environment.backend, userID: profile.id) {
+                PendingQueueSection()
+                MyCatchesSection(backend: environment.backend, cache: environment.cache, userID: profile.id) {
                     historyPlaceholder
                 }
             } else {
@@ -91,18 +94,22 @@ struct ProfileHomeView: View {
 }
 
 /// «Мои уловы» (RPC `my_catches`): последние уловы с местом и датой. Пока уловов нет —
-/// показывает `placeholder`. Обновляется при каждом возврате на вкладку.
+/// показывает `placeholder`. Обновляется при каждом возврате на вкладку и после отправки очереди;
+/// без сети — сохранённый список.
 struct MyCatchesSection<Placeholder: View>: View {
     let backend: BackendClient?
+    let cache: CacheStore
     let userID: UUID
     let placeholder: Placeholder
 
     @Environment(SpeciesStore.self) private var speciesStore
+    @Environment(SyncEngine.self) private var sync
     @State private var catches: [MyCatch] = []
     @State private var isLoaded = false
 
-    init(backend: BackendClient?, userID: UUID, @ViewBuilder placeholder: () -> Placeholder) {
+    init(backend: BackendClient?, cache: CacheStore, userID: UUID, @ViewBuilder placeholder: () -> Placeholder) {
         self.backend = backend
+        self.cache = cache
         self.userID = userID
         self.placeholder = placeholder()
     }
@@ -148,13 +155,19 @@ struct MyCatchesSection<Placeholder: View>: View {
         }
         .task(id: userID) { await load() }
         .task { await speciesStore.loadIfNeeded() }
+        .onChange(of: sync.sentCount) { _, _ in
+            Task { await load() }
+        }
     }
 
     private func load() async {
         defer { isLoaded = true }
-        guard let backend else { return }
-        if let loaded = try? await backend.myCatches(limit: 20) {
+        let key = CacheKey.myCatches(userID)
+        if let backend, let loaded = try? await backend.myCatches(limit: 20) {
             catches = loaded
+            try? await cache.save(loaded, for: key)
+        } else if catches.isEmpty, let saved = try? await cache.load([MyCatch].self, for: key) {
+            catches = saved
         }
     }
 }
@@ -260,4 +273,5 @@ struct BackendStatusCard: View {
     ProfileHomeView(environment: .preview)
         .environment(SessionStore(backend: nil))
         .environment(SpeciesStore(backend: nil))
+        .environment(SyncEngine(outbox: AppEnvironment.preview.database.outbox, sender: UnavailableSender()))
 }

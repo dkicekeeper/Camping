@@ -2,25 +2,34 @@ import Backend
 import DaladaCore
 import Foundation
 import Observation
+import Persistence
 
 /// Справочник рыб в памяти: загружается один раз, передаётся через `.environment`.
+/// Без сети — из кэша, чтобы форма улова работала на водоёме.
 @MainActor
 @Observable
 final class SpeciesStore {
     private(set) var species: [FishSpecies] = []
     private let backend: BackendClient?
+    private let cache: CacheStore?
     private var isLoading = false
 
-    init(backend: BackendClient?) {
+    init(backend: BackendClient?, cache: CacheStore? = nil) {
         self.backend = backend
+        self.cache = cache
     }
 
     func loadIfNeeded() async {
-        guard species.isEmpty, !isLoading, let backend else { return }
+        guard species.isEmpty, !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
-        if let loaded = try? await backend.fishSpecies() {
+        if let cached = try? await cache?.load([FishSpecies].self, for: .species), !cached.isEmpty {
+            species = cached
+        }
+        guard let backend else { return }
+        if let loaded = try? await backend.fishSpecies(), !loaded.isEmpty {
             species = loaded
+            try? await cache?.save(loaded, for: .species)
         }
     }
 

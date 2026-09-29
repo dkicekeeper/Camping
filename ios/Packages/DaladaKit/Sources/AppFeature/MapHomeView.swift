@@ -14,7 +14,7 @@ struct MapHomeView: View {
 
     init(environment: AppEnvironment) {
         self.environment = environment
-        _model = State(initialValue: MapScreenModel(backend: environment.backend))
+        _model = State(initialValue: MapScreenModel(backend: environment.backend, cache: environment.cache))
     }
 
     var body: some View {
@@ -24,7 +24,7 @@ struct MapHomeView: View {
             initialZoom: 8,
             places: model.mapPlaces,
             draftPin: model.newPlace?.coordinate,
-            onRegionChange: { model.visibleAreaChanged($0) },
+            onRegionChange: { model.visibleAreaChanged($0, viewer: session.profile?.id) },
             onPlaceTap: { model.selectedPlace = PlaceSelection(id: $0) },
             onLongPress: { startNewPlace(at: $0) }
         )
@@ -41,7 +41,7 @@ struct MapHomeView: View {
             .padding(.top, AppSpacing.sm)
         }
         .sheet(item: $model.selectedPlace) { selection in
-            PlaceCardView(placeID: selection.id, backend: environment.backend)
+            PlaceCardView(placeID: selection.id, environment: environment)
                 .presentationDetents([.medium, .large])
         }
         .sheet(item: $model.newPlace) { request in

@@ -48,7 +48,9 @@ iOS собирается только на Mac (Xcode 26, iOS 26): `cd ios && xc
 (включаются `git config core.hooksPath .githooks`) пересоздают проект после `git pull`, если изменился
 `ios/project.yml` или состав файлов `ios/Dalada/`. Новые файлы кладём в пакет `DaladaKit`, где
 генерация не нужна. На Linux можно
-проверить синтаксис (`swiftc -parse`) и модули без UI (`DaladaCore`, `Backend`) отдельным пакетом.
+проверить синтаксис (`swiftc -parse`) и модули без UI (`DaladaCore`, `Persistence`, `Sync`, `Backend`) отдельным
+пакетом: у `DaladaKit` платформа только iOS, поэтому для Linux — свой `Package.swift` со ссылками на
+папки исходников.
 
 ## Секреты
 

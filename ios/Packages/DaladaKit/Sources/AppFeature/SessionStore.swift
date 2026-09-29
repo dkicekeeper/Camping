@@ -4,6 +4,7 @@ import CryptoKit
 import DaladaCore
 import Foundation
 import Observation
+import Persistence
 
 /// Состояние входа и свой профиль. Один экземпляр на приложение, передаётся через `.environment`.
 @MainActor
@@ -17,7 +18,7 @@ final class SessionStore {
         /// Вошёл, но ещё не выбрал username — показываем онбординг.
         case needsUsername(UserProfile)
         case signedIn(UserProfile)
-        /// Вошёл, но профиль не загрузился (например, нет сети).
+        /// Вошёл, но профиль не загрузился и сохранённого нет (например, первый запуск без сети).
         case profileUnavailable(String)
     }
 
@@ -26,10 +27,13 @@ final class SessionStore {
     var errorMessage: String?
 
     let backend: BackendClient?
+    /// Профиль на случай запуска без сети.
+    private let cache: CacheStore?
     private var appleNonce: String?
 
-    init(backend: BackendClient?) {
+    init(backend: BackendClient?, cache: CacheStore? = nil) {
         self.backend = backend
+        self.cache = cache
     }
 
     var profile: UserProfile? {
@@ -74,10 +78,21 @@ final class SessionStore {
         guard let backend else { return }
         do {
             let profile = try await backend.myProfile()
-            state = profile.username == nil ? .needsUsername(profile) : .signedIn(profile)
+            apply(profile)
+            try? await cache?.save(profile, for: .profile(profile.id))
         } catch {
-            state = .profileUnavailable(error.localizedDescription)
+            // Нет сети — работаем с сохранённым профилем: чекины уйдут в очередь.
+            if let userID = backend.currentUserID,
+               let cached = try? await cache?.load(UserProfile.self, for: .profile(userID)) {
+                apply(cached)
+            } else {
+                state = .profileUnavailable(error.localizedDescription)
+            }
         }
+    }
+
+    private func apply(_ profile: UserProfile) {
+        state = profile.username == nil ? .needsUsername(profile) : .signedIn(profile)
     }
 
     // MARK: Apple
@@ -131,7 +146,13 @@ final class SessionStore {
 
     func signOut() async {
         guard let backend else { return }
+        let userID = backend.currentUserID
         await perform { try await backend.signOut() }
+        // Сохранённые данные аккаунта на телефоне не остаются. Неотправленные чекины остаются
+        // в очереди и уйдут, когда этот пользователь войдёт снова.
+        if let userID, !backend.isSignedIn {
+            try? await cache?.removeUserData(userID)
+        }
     }
 
     // MARK: Username
@@ -144,6 +165,7 @@ final class SessionStore {
         do {
             let profile = try await backend.updateProfile(username: username)
             state = .signedIn(profile)
+            try? await cache?.save(profile, for: .profile(profile.id))
             return nil
         } catch ProfileUpdateError.usernameTaken {
             return String(localized: "onboarding.username.taken")

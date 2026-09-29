@@ -1,7 +1,7 @@
 import Foundation
 
 /// Вид рыбы из справочника (`public.fish_species`).
-public struct FishSpecies: Decodable, Identifiable, Hashable, Sendable {
+public struct FishSpecies: Codable, Identifiable, Hashable, Sendable {
     public let id: String
     public let nameRu: String
     public let nameKk: String
@@ -163,6 +163,8 @@ public struct CheckinDraft: Equatable, Sendable {
 
     public var id: UUID
     public var placeID: UUID
+    /// Когда человек был на месте. Из офлайн-очереди чекин может уйти позже — время остаётся этим.
+    public var at: Date
     public var conditions: CheckinConditions
     public var note: String
     public var visibility: Visibility
@@ -175,6 +177,7 @@ public struct CheckinDraft: Equatable, Sendable {
     public init(
         id: UUID = UUID(),
         placeID: UUID,
+        at: Date = Date(),
         conditions: CheckinConditions = CheckinConditions(),
         note: String = "",
         visibility: Visibility = .friends,
@@ -184,6 +187,7 @@ public struct CheckinDraft: Equatable, Sendable {
     ) {
         self.id = id
         self.placeID = placeID
+        self.at = at
         self.conditions = conditions
         self.note = note
         self.visibility = visibility
@@ -222,7 +226,7 @@ public struct PhotoUpload: Equatable, Sendable {
 }
 
 /// Улов в отчёте места. Вес и длина `nil`, если их нет или автор их скрыл.
-public struct ReportCatch: Decodable, Identifiable, Hashable, Sendable {
+public struct ReportCatch: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
     public let speciesID: String
     public let count: Int
@@ -241,7 +245,7 @@ public struct ReportCatch: Decodable, Identifiable, Hashable, Sendable {
 }
 
 /// Свежий отчёт места — строка `place_reports`.
-public struct PlaceReport: Decodable, Identifiable, Hashable, Sendable {
+public struct PlaceReport: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
     public let authorID: UUID
     public let authorUsername: String?
@@ -286,7 +290,7 @@ public struct PlaceReport: Decodable, Identifiable, Hashable, Sendable {
 }
 
 /// Свой улов — строка `my_catches`.
-public struct MyCatch: Decodable, Identifiable, Hashable, Sendable {
+public struct MyCatch: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
     public let speciesID: String
     public let weightGrams: Int?

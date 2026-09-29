@@ -1,18 +1,19 @@
-import Backend
 import DaladaCore
 import DesignTokens
 import PhotosUI
 import SwiftUI
+import Sync
 
 /// Чекин «Я здесь»: как клюёт, людность, вода, дорога, уловы, фото, заметка, видимость.
 /// Всё, кроме места, необязательно — чекин должен занимать 10 секунд.
+/// Сохраняется в офлайн-очередь и уходит на сервер сразу или когда появится сеть.
 struct CheckinFormView: View {
     let placeName: String
-    let backend: BackendClient?
     let onSaved: @MainActor () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SpeciesStore.self) private var speciesStore
+    @Environment(SyncEngine.self) private var sync
     @State private var draft: CheckinDraft
     @State private var editingCatch: CatchDraft?
     @State private var locationState: LocationState = .locating
@@ -28,9 +29,8 @@ struct CheckinFormView: View {
         case unavailable
     }
 
-    init(placeID: UUID, placeName: String, backend: BackendClient?, onSaved: @escaping @MainActor () -> Void) {
+    init(placeID: UUID, placeName: String, onSaved: @escaping @MainActor () -> Void) {
         self.placeName = placeName
-        self.backend = backend
         self.onSaved = onSaved
         _draft = State(initialValue: CheckinDraft(placeID: placeID))
     }
@@ -200,18 +200,17 @@ struct CheckinFormView: View {
     }
 
     private func save() async {
-        guard let backend else {
-            saveError = String(localized: "backend.status.notConfigured")
-            return
-        }
         isSaving = true
         defer { isSaving = false }
+        var checkin = draft
+        checkin.at = Date()
         do {
-            try await backend.createCheckin(draft)
+            // Сохраняется на телефоне сразу; на сервер — когда получится.
+            try await sync.submit(checkin, placeName: placeName)
             onSaved()
             dismiss()
         } catch {
-            saveError = error.localizedDescription
+            saveError = String(localized: "checkin.save.failed")
         }
     }
 }

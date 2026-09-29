@@ -34,7 +34,7 @@ public enum MediaPath {
 }
 
 /// Фото в отчёте места (`place_reports.media`).
-public struct ReportMedia: Decodable, Identifiable, Hashable, Sendable {
+public struct ReportMedia: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
     public let catchID: UUID?
     public let path: String

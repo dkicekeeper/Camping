@@ -37,7 +37,9 @@ extension BackendClient {
     public func createCheckin(_ draft: CheckinDraft) async throws {
         try await insertIgnoringDuplicates(into: "checkins", CheckinInsert(draft))
         if !draft.catches.isEmpty {
-            let catches = draft.catches.map { CatchInsert($0, checkinID: draft.id, visibility: draft.visibility) }
+            let catches = draft.catches.map {
+                CatchInsert($0, checkinID: draft.id, at: draft.at, visibility: draft.visibility)
+            }
             try await insertIgnoringDuplicates(into: "catches", catches)
         }
         let uploads = draft.photoUploads
@@ -95,6 +97,14 @@ extension BackendClient {
 
 // MARK: - Параметры и строки для вставки
 
+/// Время для `timestamptz` с явным часовым поясом (`…Z`). Кодировщик SDK пишет время без пояса,
+/// и тогда оно верно, только пока база работает в UTC.
+enum PostgresTimestamp {
+    static func string(_ date: Date) -> String {
+        date.formatted(Date.ISO8601FormatStyle(includingFractionalSeconds: true))
+    }
+}
+
 struct PlaceReportsParams: Encodable, Sendable {
     let placeID: UUID
     let limit: Int
@@ -109,6 +119,8 @@ struct PlaceReportsParams: Encodable, Sendable {
 struct CheckinInsert: Encodable, Sendable {
     let id: UUID
     let placeID: UUID
+    /// Время на месте, а не отправки: из офлайн-очереди чекин может уйти позже.
+    let at: Date
     let geom: String?
     let conditions: CheckinConditions
     let note: String?
@@ -117,6 +129,7 @@ struct CheckinInsert: Encodable, Sendable {
     init(_ draft: CheckinDraft) {
         id = draft.id
         placeID = draft.placeID
+        at = draft.at
         geom = draft.deviceLocation.map { "SRID=4326;POINT(\($0.longitude) \($0.latitude))" }
         conditions = draft.conditions
         note = draft.trimmedNote.isEmpty ? nil : draft.trimmedNote
@@ -126,6 +139,7 @@ struct CheckinInsert: Encodable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id
         case placeID = "place_id"
+        case at
         case geom
         case conditions
         case note
@@ -136,6 +150,7 @@ struct CheckinInsert: Encodable, Sendable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
         try c.encode(placeID, forKey: .placeID)
+        try c.encode(PostgresTimestamp.string(at), forKey: .at)
         try c.encode(geom, forKey: .geom)
         try c.encode(conditions, forKey: .conditions)
         try c.encode(note, forKey: .note)
@@ -190,11 +205,13 @@ struct CatchInsert: Encodable, Sendable {
     let bait: String?
     let released: Bool
     let hideSize: Bool
+    let at: Date
     let visibility: Visibility
 
-    init(_ draft: CatchDraft, checkinID: UUID, visibility: Visibility) {
+    init(_ draft: CatchDraft, checkinID: UUID, at: Date, visibility: Visibility) {
         id = draft.id
         self.checkinID = checkinID
+        self.at = at
         speciesID = draft.speciesID
         weightGrams = draft.weightGrams
         lengthMillimeters = draft.lengthMillimeters
@@ -218,6 +235,7 @@ struct CatchInsert: Encodable, Sendable {
         case bait
         case released
         case hideSize = "hide_size"
+        case at
         case visibility
     }
 
@@ -233,6 +251,7 @@ struct CatchInsert: Encodable, Sendable {
         try c.encode(bait, forKey: .bait)
         try c.encode(released, forKey: .released)
         try c.encode(hideSize, forKey: .hideSize)
+        try c.encode(PostgresTimestamp.string(at), forKey: .at)
         try c.encode(visibility, forKey: .visibility)
     }
 }
