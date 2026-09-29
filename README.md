@@ -23,8 +23,8 @@
 |------|-----------|--------|
 | 1. Анализ рынка и конкурентов | [`docs/01-market-analysis.md`](docs/01-market-analysis.md) | ✅ готово |
 | 2. План по каждому разделу | [`docs/02-plan/`](docs/02-plan/README.md) | ✅ готово, решения приняты |
-| 3. Архитектура и стек | [`docs/03-architecture/`](docs/03-architecture/README.md) | ✅ готово, ждёт ответов на [вопросы](docs/03-architecture/README.md#вопросы-к-этапу-3) |
-| 4. Спецификации | `docs/04-*` | — |
+| 3. Архитектура и стек | [`docs/03-architecture/`](docs/03-architecture/README.md) | ✅ готово, решения приняты (Supabase, TypeScript, MapLibre) |
+| 4. Спецификации | `docs/04-*` | ⏭ следующий |
 | 5. Реализация | код | — |
 
 ## Документы
@@ -33,7 +33,7 @@
 - [`docs/01-market-analysis.md`](docs/01-market-analysis.md) — рынок, конкуренты, сегменты, риски, монетизация
 - [`docs/02-plan/`](docs/02-plan/README.md) — план продукта: принципы, навигация, модель данных, релизы,
   планы по вкладкам и сквозным темам
-- [`docs/03-architecture/`](docs/03-architecture/README.md) — архитектура и стек: iOS, бэкенд, карты, инфраструктура
+- [`docs/03-architecture/`](docs/03-architecture/README.md) — архитектура и стек: iOS, бэкенд на Supabase, карты, инфраструктура и переезд в РК
 - [`docs/naming.md`](docs/naming.md) — название: выбор Dalada и оставшиеся проверки
 
 ## Дизайн-система
