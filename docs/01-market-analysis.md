@@ -124,6 +124,8 @@
 | Кемпинг | Hipcamp, The Dyrt, iOverlander | Низкая: в РК почти нет контента |
 | Локальные карты и отзывы | **2ГИС** (доминирует в РК, работает офлайн, отзывы), Яндекс Карты, Google Maps | **Высокая как привычка**: люди ищут «озёра рыбалка» в 2ГИС. Сильно в городе и у бизнесов, слабо в природных точках |
 | Локальный контент | Sxodim, «Забугорщики», veters.kz, zakon.kz (статьи-гайды), Almaty Tour (100+ маршрутов, гиды) | Низкая: статьи и туры, не сообщество |
+| Государственные цифровые продукты | **Kazakhstan.travel** — госпортал туризма: реестр гидов и маршрутов, приложение; обновлённая платформа с AI-ассистентом, конструктором маршрутов и бронированием на 8 языках — запуск в декабре 2026; анонсировано единое приложение TravelStan | Средняя для туристов (сегмент E), низкая для рыбалки. **Потенциальный партнёр**: маршруты, гиды, нацпарки |
+| Соцсети путешественников | **Joldar** (RU, 3 оценки, AI-планировщик, места на карте) | Низкая: без фокуса на Казахстан и рыбалку, маленькая аудитория |
 | Мессенджеры и форумы | **Telegram-чаты**, Instagram, форумы (ohotairibalka.kz, hft.kz) | **Высокая**: основной источник «где клюёт сейчас» — быстро, но хаотично, без карты и поиска |
 
 **Вывод:** наш реальный конкурент — не одно приложение, а связка **«2ГИС + Telegram-чат + статья
@@ -232,6 +234,10 @@
 
 ## 6. Монетизация (гипотезы)
 
+> **Решение 2026-09-29:** в ближайших релизах монетизации нет — фокус на сообществе и лидерстве
+> на рынке. В будущем — партнёрства и спонсорство (строки «B2B» и «Спонсорские челленджи» ниже).
+> Подписка остаётся гипотезой на потом.
+
 | Модель | Что продаём | Бенчмарк | Когда |
 |--------|-------------|----------|-------|
 | **Подписка Pro** | Офлайн-карты, расширенная статистика и итоги, прогноз клёва, приватные слои, экспорт маршрутов (GPX) | AllTrails Plus $35,99/год; Fishbrain Pro ~$10–13/мес | После product-market fit |
@@ -283,4 +289,5 @@
 **Локальные конкуренты и контент:**
 - [FisherMap KZ](https://kz.fishermap.org/region/almatinskaya-oblast/), [Fish Search](https://fish-search.ru/almatinskaya-oblast), [FishMapia](https://fishmapia.com/places/338/%D0%90%D0%BB%D0%BC%D0%B0%D1%82%D0%B8%D0%BD%D1%81%D0%BA%D0%B0%D1%8F_%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D1%8C), [2ГИС: озёра для рыбалки](https://2gis.kz/almaty/search/%D0%9E%D0%B7%D0%B5%D1%80%D0%B0%20%D1%80%D1%8B%D0%B1%D0%B0%D0%BB%D0%BA%D0%B0)
 - [UH.app (App Store)](https://apps.apple.com/us/app/uh-app-%D1%81%D0%BE%D1%86%D1%81%D0%B5%D1%82%D1%8C-%D0%B4%D0%BB%D1%8F-%D0%BE%D1%85%D0%BE%D1%82%D0%BD%D0%B8%D0%BA%D0%BE%D0%B2/id6593670651?l=ru), [HFT.kz](https://hft.kz/), [Форум ohotairibalka.kz](https://ohotairibalka.kz/)
+- [Kazakhstan.travel](https://kazakhstan.travel/ru), [Inform.kz: запуск портала в декабре 2026](https://www.inform.kz/ru/turisticheskiy-portal-kazakhstantravel-zapustyat-vdekabre-2026-goda-971d061c), [Liter.kz: TravelStan](https://liter.kz/edinoe-mobilnoe-prilozhenie-travelstan-dlia-turistov-sozdadut-v-kazakhstane-1744092698/), [Joldar (App Store)](https://apps.apple.com/ru/app/joldar/id6739992164)
 - [Wikiloc: Алматы](https://www.wikiloc.com/trails/hiking/kazakhstan/almaty), [Almaty Tour (Profi.Travel)](https://profi.travel/news/24268/details), [Sxodim: дикая рыбалка](https://sxodim.com/almaty/article/dikaya-rybalka), [RuStore: приложения для рыбаков](https://www.rustore.ru/prostore/prilozheniya-dlya-rybakov)
