@@ -1,1018 +1,1018 @@
 {
-  "sourceLanguage": "ru",
-  "strings": {
-    "auth.error.generic": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Попробуйте ещё раз. Если не получается — проверьте интернет."
+  "sourceLanguage" : "ru",
+  "strings" : {
+    "auth.error.generic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please try again. If it keeps failing, check your connection."
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Қайта көріңіз. Болмаса, интернетті тексеріңіз."
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Қайта көріңіз. Болмаса, интернетті тексеріңіз."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Please try again. If it keeps failing, check your connection."
-          }
-        }
-      }
-    },
-    "auth.error.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Не удалось войти"
-          }
-        },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Кіру мүмкін болмады"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn’t sign in"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попробуйте ещё раз. Если не получается — проверьте интернет."
           }
         }
       }
     },
-    "auth.google": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Войти через Google"
+    "auth.error.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t sign in"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Google арқылы кіру"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Кіру мүмкін болмады"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign in with Google"
-          }
-        }
-      }
-    },
-    "auth.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Без входа можно смотреть карту и публичные места."
-          }
-        },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Кірмей-ақ картаны және ашық орындарды көруге болады."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Without signing in you can browse the map and public places."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось войти"
           }
         }
       }
     },
-    "auth.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Войдите, чтобы сохранять места и поездки"
+    "auth.google" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in with Google"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Орындар мен сапарларды сақтау үшін кіріңіз"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Google арқылы кіру"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign in to save places and trips"
-          }
-        }
-      }
-    },
-    "backend.status.checking": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Проверяем соединение…"
-          }
-        },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Байланысты тексеріп жатырмыз…"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Checking connection…"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Войти через Google"
           }
         }
       }
     },
-    "backend.status.connected": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Подключено"
+    "auth.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Without signing in you can browse the map and public places."
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Қосылды"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Кірмей-ақ картаны және ашық орындарды көруге болады."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connected"
-          }
-        }
-      }
-    },
-    "backend.status.failed": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Нет соединения"
-          }
-        },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Байланыс жоқ"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No connection"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без входа можно смотреть карту и публичные места."
           }
         }
       }
     },
-    "backend.status.notConfigured": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Не настроен: добавьте ключи Supabase в Config/Secrets.xcconfig"
+    "auth.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to save places and trips"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Бапталмаған: Supabase кілттерін Config/Secrets.xcconfig файлына қосыңыз"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Орындар мен сапарларды сақтау үшін кіріңіз"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not configured: add Supabase keys to Config/Secrets.xcconfig"
-          }
-        }
-      }
-    },
-    "backend.status.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сервер"
-          }
-        },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Сервер"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Server"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Войдите, чтобы сохранять места и поездки"
           }
         }
       }
     },
-    "common.ok": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
+    "backend.status.checking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking connection…"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "OK"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Байланысты тексеріп жатырмыз…"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
-          }
-        }
-      }
-    },
-    "common.retry": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Повторить"
-          }
-        },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Қайталау"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retry"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверяем соединение…"
           }
         }
       }
     },
-    "common.soon": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Скоро"
+    "backend.status.connected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Жақында"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Қосылды"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Soon"
-          }
-        }
-      }
-    },
-    "lifehacks.empty.description": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Экипировка, чеклисты и советы."
-          }
-        },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Жабдықтар, тізімдер және кеңестер."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gear, checklists and tips."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подключено"
           }
         }
       }
     },
-    "lifehacks.empty.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Готовимся к поездке"
+    "backend.status.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No connection"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Сапарға дайындаламыз"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Байланыс жоқ"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Getting ready for a trip"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет соединения"
           }
         }
       }
     },
-    "onboarding.username.available": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Свободно"
+    "backend.status.notConfigured" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not configured: add Supabase keys to Config/Secrets.xcconfig"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Бос"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Бапталмаған: Supabase кілттерін Config/Secrets.xcconfig файлына қосыңыз"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Available"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не настроен: добавьте ключи Supabase в Config/Secrets.xcconfig"
           }
         }
       }
     },
-    "onboarding.username.checking": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Проверяем…"
+    "backend.status.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Тексеріп жатырмыз…"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Сервер"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Checking…"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сервер"
           }
         }
       }
     },
-    "onboarding.username.failed": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Не удалось проверить — нет соединения"
+    "common.ok" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Тексеру мүмкін болмады — байланыс жоқ"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "OK"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn’t check — no connection"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         }
       }
     },
-    "onboarding.username.invalid": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Только латиница в нижнем регистре, цифры, «_» и «.»; точка не в начале и не в конце"
+    "common.retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retry"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Тек кіші латын әріптері, сандар, «_» және «.»; нүкте басында немесе соңында болмайды"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Қайталау"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lowercase Latin letters, digits, “_” and “.” only; no dot at the start or end"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторить"
           }
         }
       }
     },
-    "onboarding.username.placeholder": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "username"
+    "common.soon" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soon"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "username"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жақында"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "username"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скоро"
           }
         }
       }
     },
-    "onboarding.username.save": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Продолжить"
+    "lifehacks.empty.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gear, checklists and tips."
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Жалғастыру"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жабдықтар, тізімдер және кеңестер."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Continue"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экипировка, чеклисты и советы."
           }
         }
       }
     },
-    "onboarding.username.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "По нему вас найдут друзья. Латиница, цифры, «_» и «.», от 3 до 30 символов."
+    "lifehacks.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getting ready for a trip"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Достарыңыз сізді осы арқылы табады. Латын әріптері, сандар, «_» және «.», 3–30 таңба."
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Сапарға дайындаламыз"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Friends will find you by it. Latin letters, digits, “_” and “.”, 3 to 30 characters."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готовимся к поездке"
           }
         }
       }
     },
-    "onboarding.username.taken": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Уже занято"
+    "onboarding.username.available" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Available"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Бұл ат бос емес"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Бос"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Already taken"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свободно"
           }
         }
       }
     },
-    "onboarding.username.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Имя пользователя"
+    "onboarding.username.checking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking…"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Пайдаланушы аты"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Тексеріп жатырмыз…"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Username"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверяем…"
           }
         }
       }
     },
-    "places.empty.description": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Популярные, где были друзья и рекомендуемые."
+    "onboarding.username.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t check — no connection"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Танымал орындар, достарыңыз болған жерлер және ұсыныстар."
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Тексеру мүмкін болмады — байланыс жоқ"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Popular spots, where your friends have been, and recommendations."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось проверить — нет соединения"
           }
         }
       }
     },
-    "places.empty.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Места появятся здесь"
+    "onboarding.username.invalid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lowercase Latin letters, digits, “_” and “.” only; no dot at the start or end"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Орындар осында пайда болады"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Тек кіші латын әріптері, сандар, «_» және «.»; нүкте басында немесе соңында болмайды"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Places will appear here"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Только латиница в нижнем регистре, цифры, «_» и «.»; точка не в начале и не в конце"
           }
         }
       }
     },
-    "profile.empty.description": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Поездки, уловы, любимые места и друзья."
+    "onboarding.username.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "username"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Сапарлар, олжалар, сүйікті орындар және достар."
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "username"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trips, catches, favourite places and friends."
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "username"
           }
         }
       }
     },
-    "profile.empty.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Здесь будет ваша история"
+    "onboarding.username.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Мұнда сіздің тарихыңыз болады"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жалғастыру"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your story will live here"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжить"
           }
         }
       }
     },
-    "profile.menu": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ещё"
+    "onboarding.username.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends will find you by it. Latin letters, digits, “_” and “.”, 3 to 30 characters."
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Тағы"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Достарыңыз сізді осы арқылы табады. Латын әріптері, сандар, «_» және «.», 3–30 таңба."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По нему вас найдут друзья. Латиница, цифры, «_» и «.», от 3 до 30 символов."
           }
         }
       }
     },
-    "profile.noName": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Без имени"
+    "onboarding.username.taken" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already taken"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Аты жоқ"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Бұл ат бос емес"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No name"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже занято"
           }
         }
       }
     },
-    "profile.signOut": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выйти"
+    "onboarding.username.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Username"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Шығу"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Пайдаланушы аты"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign out"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Имя пользователя"
           }
         }
       }
     },
-    "profile.unavailable": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Профиль не загрузился"
+    "places.empty.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Popular spots, where your friends have been, and recommendations."
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Профиль жүктелмеді"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Танымал орындар, достарыңыз болған жерлер және ұсыныстар."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Profile didn’t load"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Популярные, где были друзья и рекомендуемые."
           }
         }
       }
     },
-    "quick.catch": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Улов"
+    "places.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Places will appear here"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Олжа"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Орындар осында пайда болады"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Catch"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Места появятся здесь"
           }
         }
       }
     },
-    "quick.checkin": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Чекин"
+    "profile.empty.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trips, catches, favourite places and friends."
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Чекин"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Сапарлар, олжалар, сүйікті орындар және достар."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check in"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поездки, уловы, любимые места и друзья."
           }
         }
       }
     },
-    "quick.photo": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Фото"
+    "profile.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your story will live here"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Фото"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Мұнда сіздің тарихыңыз болады"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Photo"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Здесь будет ваша история"
           }
         }
       }
     },
-    "quick.place": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Новое место"
+    "profile.menu" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Жаңа орын"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Тағы"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New place"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ещё"
           }
         }
       }
     },
-    "quick.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Быстрые действия"
+    "profile.noName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No name"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Жылдам әрекеттер"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Аты жоқ"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quick actions"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без имени"
           }
         }
       }
     },
-    "quick.trip": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Начать поездку"
+    "profile.signOut" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign out"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Сапарды бастау"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Шығу"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start a trip"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выйти"
           }
         }
       }
     },
-    "tab.add": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Добавить"
+    "profile.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile didn’t load"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Қосу"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Профиль жүктелмеді"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профиль не загрузился"
           }
         }
       }
     },
-    "tab.close": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Закрыть"
+    "quick.catch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catch"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Жабу"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Олжа"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Улов"
           }
         }
       }
     },
-    "tab.lifehacks": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Лайфхаки"
+    "quick.checkin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check in"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Лайфхактар"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Чекин"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tips"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чекин"
           }
         }
       }
     },
-    "tab.map": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Карта"
+    "quick.photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Карта"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Фото"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Map"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото"
           }
         }
       }
     },
-    "tab.places": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Места"
+    "quick.place" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New place"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Орындар"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жаңа орын"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Places"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новое место"
           }
         }
       }
     },
-    "tab.profile": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Профиль"
+    "quick.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick actions"
           }
         },
-        "kk": {
-          "stringUnit": {
-            "state": "needs_review",
-            "value": "Профиль"
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жылдам әрекеттер"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Profile"
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Быстрые действия"
+          }
+        }
+      }
+    },
+    "quick.trip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a trip"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Сапарды бастау"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Начать поездку"
+          }
+        }
+      }
+    },
+    "tab.add" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Қосу"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить"
+          }
+        }
+      }
+    },
+    "tab.close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жабу"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрыть"
+          }
+        }
+      }
+    },
+    "tab.lifehacks" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tips"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Лайфхактар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Лайфхаки"
+          }
+        }
+      }
+    },
+    "tab.map" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Карта"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Карта"
+          }
+        }
+      }
+    },
+    "tab.places" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Places"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Орындар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Места"
+          }
+        }
+      }
+    },
+    "tab.profile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Профиль"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профиль"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }
