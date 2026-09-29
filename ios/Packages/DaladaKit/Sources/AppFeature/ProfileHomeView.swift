@@ -5,22 +5,27 @@ import DesignComponents
 import DesignTokens
 import SwiftUI
 
-/// Вкладка «Профиль» (главная): вход для гостя, шапка профиля, статус сервера.
+/// Вкладка «Профиль» (главная): вход для гостя, шапка профиля, уловы. Карточка сервера —
+/// только когда с ним проблема.
 struct ProfileHomeView: View {
     let environment: AppEnvironment
 
     @Environment(SessionStore.self) private var session
+    @State private var connection: ConnectionState = .checking
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.xl) {
                     content
-                    BackendStatusCard(backend: environment.backend)
+                    if connection.isProblem {
+                        BackendStatusCard(state: connection)
+                    }
                 }
                 .screenPadding()
             }
             .navigationTitle("tab.profile")
+            .task { await checkConnection() }
             .toolbar {
                 if session.profile != nil {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -66,6 +71,14 @@ struct ProfileHomeView: View {
                 style: .error
             )
         }
+    }
+
+    private func checkConnection() async {
+        guard let backend = environment.backend else {
+            connection = .notConfigured
+            return
+        }
+        connection = await backend.checkConnection()
     }
 
     private var historyPlaceholder: some View {
@@ -186,11 +199,19 @@ struct ProfileHeader: View {
     }
 }
 
+extension ConnectionState {
+    /// Сервер не настроен или недоступен — стоит показать пользователю.
+    var isProblem: Bool {
+        switch self {
+        case .notConfigured, .failed: true
+        case .checking, .connected: false
+        }
+    }
+}
+
 /// Карточка «Сервер: подключено / нет соединения / не настроен».
 struct BackendStatusCard: View {
-    let backend: BackendClient?
-
-    @State private var state: ConnectionState = .checking
+    let state: ConnectionState
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
@@ -207,14 +228,6 @@ struct BackendStatusCard: View {
         }
         .cardContentPadding()
         .cardStyle()
-        .task {
-            guard let backend else {
-                state = .notConfigured
-                return
-            }
-            state = .checking
-            state = await backend.checkConnection()
-        }
     }
 
     private var message: String {
