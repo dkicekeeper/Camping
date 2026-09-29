@@ -1,0 +1,4 @@
+#!/bin/sh
+# После git pull --rebase: при необходимости пересоздаёт Xcode-проект.
+[ "$1" = "rebase" ] || exit 0
+"$(git rev-parse --show-toplevel)/.githooks/xcodegen-if-needed.sh" ORIG_HEAD HEAD

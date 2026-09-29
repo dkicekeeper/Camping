@@ -1,0 +1,3 @@
+#!/bin/sh
+# После git pull (merge): при необходимости пересоздаёт Xcode-проект.
+"$(git rev-parse --show-toplevel)/.githooks/xcodegen-if-needed.sh" ORIG_HEAD HEAD

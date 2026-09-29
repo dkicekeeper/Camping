@@ -39,7 +39,10 @@ supabase db lint --level warning --fail-on warning -s public,private
 supabase test db                                    # pgTAP
 ```
 
-iOS собирается только на Mac (Xcode 26, iOS 26): `cd ios && xcodegen generate`. На Linux можно
+iOS собирается только на Mac (Xcode 26, iOS 26): `cd ios && xcodegen generate`. Хуки в `.githooks/`
+(включаются `git config core.hooksPath .githooks`) пересоздают проект после `git pull`, если изменился
+`ios/project.yml` или состав файлов `ios/Dalada/`. Новые файлы кладём в пакет `DaladaKit`, где
+генерация не нужна. На Linux можно
 проверить синтаксис (`swiftc -parse`) и модули без UI (`DaladaCore`, `Backend`) отдельным пакетом.
 
 ## Секреты
