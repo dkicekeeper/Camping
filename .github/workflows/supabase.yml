@@ -17,9 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Версия закреплена: с `latest` установщик спрашивает GitHub API без токена и иногда
+      # упирается в лимит запросов. Та же версия, что в облачном контейнере разработки.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.118.0
 
       - name: Start local database
         run: supabase db start
