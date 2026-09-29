@@ -60,8 +60,12 @@ jobs:
           print(ids[0])
           ')
           echo "Simulator: $DEVICE_ID"
+          SCHEMES=$(xcodebuild -list -json | python3 -c 'import json, sys; print("\n".join(json.load(sys.stdin)["workspace"]["schemes"]))')
+          echo "Schemes:"; echo "$SCHEMES"
+          SCHEME=$(echo "$SCHEMES" | grep -x 'DaladaKit-Package' || echo "$SCHEMES" | grep -x 'DaladaKit' || echo "$SCHEMES" | head -1)
+          echo "Testing scheme: $SCHEME"
           xcodebuild test \
-            -scheme DaladaKit-Package \
+            -scheme "$SCHEME" \
             -destination "id=$DEVICE_ID" \
             -derivedDataPath build \
             -quiet

@@ -1,0 +1,73 @@
+# Сборка на iPhone без Mac — TestFlight из GitHub Actions
+
+Приложение собирает Mac в GitHub Actions (для публичного репозитория — бесплатно), подписывает
+его и загружает в App Store Connect. Вы ставите сборку на iPhone через приложение **TestFlight**.
+Mac не нужен ни для сборки, ни для установки.
+
+Нужен платный Apple Developer Program. Судя по тому, что вход через Apple на телефоне работает,
+он у вас есть.
+
+## Один раз: настройка (15 минут, в браузере)
+
+Удобнее с любого компьютера, не обязательно Mac. С iPhone тоже можно, но `.p8`-файл с ключом там
+придётся открывать через «Файлы».
+
+### 1. Приложение в App Store Connect
+
+[appstoreconnect.apple.com](https://appstoreconnect.apple.com) → **Apps** → «+» → **New App**:
+- Platform: iOS; Name: «Dalada» (если занято — «Dalada: рыбалка и природа»);
+- Primary Language: Russian; Bundle ID: `app.dalada.ios` (появился, когда Xcode запускал
+  приложение на вашем телефоне); SKU: `dalada-ios`; User Access: Full Access.
+
+### 2. Ключ App Store Connect API
+
+**Users and Access** → **Integrations** → **App Store Connect API** → **Team Keys**
+(в первый раз — «Request Access» и согласиться с условиями) → «+»:
+- Name: `GitHub Actions`; Access: **Admin** (нужен, чтобы Xcode сам создавал сертификат
+  и профиль подписи) → **Generate**.
+- Запишите **Issuer ID** (над таблицей ключей) и **Key ID** (в строке ключа).
+- **Download** — файл `AuthKey_XXXXXXXXXX.p8`. Скачать можно **только один раз**.
+
+Ключ — это секрет: только в GitHub Secrets (шаг 3), не в чат и не в репозиторий. Отозвать
+можно в любой момент там же, в Team Keys.
+
+### 3. Секреты в GitHub
+
+Репозиторий → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**,
+пять штук:
+
+| Имя | Значение |
+|-----|----------|
+| `ASC_ISSUER_ID` | Issuer ID |
+| `ASC_KEY_ID` | Key ID |
+| `ASC_KEY_P8` | Всё содержимое `.p8`-файла (открыть как текст), вместе со строками `-----BEGIN PRIVATE KEY-----` и `-----END PRIVATE KEY-----` |
+| `SUPABASE_HOST` | Как в `ios/Config/Secrets.xcconfig` (без `https://`) |
+| `SUPABASE_KEY` | Publishable key, как в `Secrets.xcconfig` |
+
+### 4. Тестировщики
+
+App Store Connect → Dalada → **TestFlight** → **Internal Testing** → «+» → группа «Команда» →
+добавить себя (и других участников вашей команды App Store Connect, до 100 человек). Включите
+**Automatic Distribution** — новые сборки будут приходить сами.
+
+На iPhone — приложение **TestFlight** из App Store, вход тем же Apple ID.
+
+## Каждая сборка
+
+**Actions** → **TestFlight** → **Run workflow** → **Run workflow**. С телефона — в приложении
+GitHub или на github.com в Safari. Сборку после каждой вехи могу запускать и я.
+
+Сборка и загрузка — 15–25 минут, ещё 10–30 минут App Store Connect обрабатывает сборку.
+Потом в TestFlight на iPhone появится «Обновить» (или письмо-приглашение в первый раз).
+
+Номер сборки ставится сам (101, 102, …), версия — из `ios/project.yml` (`MARKETING_VERSION`).
+Сборки TestFlight работают 90 дней.
+
+## Если что-то пошло не так
+
+- **«Не заданы секреты»** — проверьте имена в шаге 3 (регистр важен).
+- **«No suitable application records were found»** — нет приложения в App Store Connect (шаг 1)
+  или другой Bundle ID.
+- **Ошибка подписи / «Cloud signing permission error»** — у ключа роль ниже Admin; создайте
+  новый ключ с Admin и обновите три секрета `ASC_*`.
+- Остальное — пришлите ссылку на запуск в Actions или текст ошибки.

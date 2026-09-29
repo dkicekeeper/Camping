@@ -106,6 +106,9 @@ Supabase → **Authentication → URL Configuration → Redirect URLs** → Add 
 
 ## Первая сборка в TestFlight
 
+> Без Mac: сборка и загрузка в GitHub Actions — [testflight.md](testflight.md). Ниже — вариант
+> через Xcode на Mac.
+
 1. App Store Connect → Apps → «+» → New App: платформа iOS, имя «Dalada» (если занято —
    «Dalada: рыбалка и природа»), язык — русский, bundle ID `app.dalada.ios`, SKU `dalada-ios`.
 2. Xcode: вверху выбрать **Any iOS Device (arm64)** → Product → **Archive**.

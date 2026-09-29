@@ -122,6 +122,9 @@ cd путь/к/репозиторию && git config core.hooksPath .githooks
 
 ### 4. TestFlight (к концу M1)
 
+**Без Mac** — сборка в GitHub Actions и установка через TestFlight: [testflight.md](testflight.md).
+Ниже — вариант через Xcode.
+
 1. App Store Connect → Apps → «+» → New App: имя «Dalada» (если занято — «Dalada: рыбалка и
    природа»), bundle ID `app.dalada.ios`, SKU `dalada-ios`, основной язык — русский.
 2. Xcode → Product → Archive → Distribute App → App Store Connect → Upload.

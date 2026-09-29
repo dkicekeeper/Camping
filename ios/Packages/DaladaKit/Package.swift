@@ -10,6 +10,10 @@ let package = Package(
     platforms: [.iOS("26.0")],
     products: [
         .library(name: "AppFeature", targets: ["AppFeature"]),
+        // Приложению нужен только AppFeature. Остальные продукты — чтобы Xcode создал общую схему
+        // `DaladaKit-Package`, которая собирает всё и запускает все тесты (так делает CI).
+        .library(name: "Persistence", targets: ["Persistence"]),
+        .library(name: "Sync", targets: ["Sync"]),
     ],
     dependencies: [
         // DesignKit без тегов — закрепляем на коммите.
