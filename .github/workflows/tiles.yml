@@ -2,8 +2,8 @@ name: Map tiles
 
 # Своя карта в Cloudflare R2 (map/README.md): стили, шрифты и значки — при изменениях в map/ в main;
 # тайлы региона из OpenStreetMap (Planetiler) — вручную и раз в месяц.
-# Секреты: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY; бакет — переменная R2_BUCKET
-# (по умолчанию dalada-tiles).
+# Секреты: R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (Account ID — в map/config.json); бакет —
+# переменная R2_BUCKET (по умолчанию dalada-tiles).
 on:
   workflow_dispatch:
     inputs:
@@ -27,9 +27,6 @@ env:
   R2_BUCKET: ${{ vars.R2_BUCKET || 'dalada-tiles' }}
   RCLONE_CONFIG_R2_TYPE: s3
   RCLONE_CONFIG_R2_PROVIDER: Cloudflare
-  RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-  RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-  RCLONE_CONFIG_R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
   RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
 
 jobs:
@@ -40,15 +37,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Check secrets
+      - name: R2 access
         env:
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-        run: |
-          if [ -z "$R2_ACCOUNT_ID" ] || [ -z "$RCLONE_CONFIG_R2_ACCESS_KEY_ID" ] || [ -z "$RCLONE_CONFIG_R2_SECRET_ACCESS_KEY" ]; then
-            echo "::error::Нет секретов R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY (map/README.md)"
-            exit 1
-          fi
-          sudo apt-get update -qq && sudo apt-get install -y -qq rclone > /dev/null
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: bash map/r2_env.sh
+
+      - name: Tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rclone > /dev/null
 
       - name: Build styles
         run: python3 map/build_style.py public
@@ -91,6 +87,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+
+      - name: R2 access
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: bash map/r2_env.sh
 
       - name: Tools
         run: |

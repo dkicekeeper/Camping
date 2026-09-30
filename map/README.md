@@ -22,8 +22,9 @@
 - тайлы — раз в месяц (3-го числа) и вручную: Actions → Map tiles → Run workflow (галочка
   «Пересобрать тайлы»). Сборка и загрузка — 15–40 минут, ~185 тыс. тайлов.
 
-Секреты репозитория: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` (токен R2 с правом
-Object Read & Write на бакет). Имя бакета — переменная `R2_BUCKET`, по умолчанию `dalada-tiles`.
+Секреты репозитория: `R2_ACCESS_KEY_ID` и `R2_SECRET_ACCESS_KEY` (токен R2 с правом Object Read &
+Write на бакет); Account ID — не секрет, он в `config.json`. Имя бакета — переменная `R2_BUCKET`, по
+умолчанию `dalada-tiles`. Шаг «R2 access» проверяет формат ключей и адрес аккаунта, не показывая их.
 
 Проверить стиль локально: `python3 map/build_style.py /tmp/map` — файлы появятся в `/tmp/map`.
 

@@ -1,6 +1,16 @@
 {
   "public_base": "https://pub-06c03b3c9f2e4de7b1a196206e04c258.r2.dev",
-  "bounds": [73.6, 42.15, 82.7, 47.35],
+  "account_id": "a25a87bdb7ef6a04c4b33fd700738f00",
+  "bounds": [
+    73.6,
+    42.15,
+    82.7,
+    47.35
+  ],
   "maxzoom": 14,
-  "languages": ["ru", "kk", "en"]
+  "languages": [
+    "ru",
+    "kk",
+    "en"
+  ]
 }
