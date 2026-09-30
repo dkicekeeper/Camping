@@ -62,14 +62,63 @@ TestFlight → **External Testing** → группа → «Public Link». Для
 
 Проверяющие Apple смотрят требования к пользовательскому контенту: жалобы, блокировка, фильтр,
 контакт для связи (Guideline 1.2), удаление аккаунта из приложения (5.1.1(v)). Жалобы, блокировка,
-фильтр и удаление аккаунта есть со сборки 107; ссылки на политику и поддержку в приложении и
-согласие при входе — со следующей сборки (M6c).
+фильтр и удаление аккаунта есть со сборки 107, ссылки на политику и поддержку и согласие при
+входе — со 108, пуши — со 109, места редакции — со 110.
+
+Если сборка 107 уже ждёт проверки — её можно не трогать: после одобрения версии 0.1.0 сборку 110
+можно сразу добавить во внешнюю группу. Если 107 отклонили или вы хотите проверку сразу на свежей
+сборке — Expire для 107 и отправьте 110 с текстами ниже.
 
 **Test Information** (TestFlight → Test Information): Feedback Email — dakacom@gmail.com; Privacy
 Policy URL — https://dkicekeeper.github.io/Dalada/privacy-policy.html (страница публикуется через
 GitHub Pages, см. [M6c](M6-beta-readiness.md#m6c-документы-поддержка-согласие)); в Beta App Review
 Information — контакт и, если просят, тестовый вход (у нас вход через Apple/Google — достаточно
 написать, что можно войти своим Apple ID).
+
+### Тексты для Beta App Review
+
+Проверяющие Apple читают по-английски. **What to Test** (Test Details, для каждой сборки):
+
+```
+Dalada is a map for fishing and outdoor trips in the Almaty region of Kazakhstan.
+Try: browse places on the Map tab (editorial places from OpenStreetMap), open a place card,
+sign in with Apple, add your own place, check in with a catch and a photo, record a trip
+(+ → Start a trip), add a friend by username, write a review or start a discussion,
+open checklists and articles in the Tips tab.
+```
+
+По-русски для своих тестировщиков:
+
+```
+Dalada — карта для рыбалки и отдыха на природе в Алматинском регионе. Посмотрите места на карте,
+войдите через Apple или Google, добавьте своё место, отметьтесь с уловом и фото, запишите
+поездку (+ → «Начать поездку»), добавьте друга по username, оставьте отзыв или начните
+обсуждение, загляните в чеклисты и статьи. Замечания — кнопкой «Отправить отзыв» в TestFlight
+или на dakacom@gmail.com.
+```
+
+**Beta App Review Information → Notes** (один раз для версии):
+
+```
+Sign-in: use Sign in with Apple with any Apple ID; no demo account is needed. Without signing in
+the app works in guest mode (map, places, articles).
+
+User-generated content (Guideline 1.2):
+- Report: "..." menu on any place, check-in, trip, review, discussion, reply or profile -> Report.
+- Block: the same menu -> Block @user; blocked users disappear for each other.
+- Objectionable words are rejected on the server in any public text.
+- Contact: Support and FAQ, and dakacom@gmail.com in Profile -> "..." (More) -> Account -> About.
+- Reports are reviewed within 24 hours.
+- Users accept the Terms of Use and community rules after signing in.
+
+Account deletion (5.1.1(v)): Profile -> "..." (More) -> Account -> Delete account. It deletes the
+account and all its data at once.
+
+Location: "When In Use" only. The background location mode records the track of a trip the user
+starts explicitly (+ -> Start a trip -> Start); recording shows a Live Activity and stops with Finish.
+
+Privacy policy: https://dkicekeeper.github.io/Dalada/privacy-policy.html
+```
 
 ## Каждая сборка
 
