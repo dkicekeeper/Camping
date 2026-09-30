@@ -31,6 +31,7 @@ public final class LocalDatabase: Sendable {
     public var outbox: OutboxStore { OutboxStore(writer: writer) }
     public var cache: CacheStore { CacheStore(writer: writer) }
     public var trips: TripStore { TripStore(writer: writer) }
+    public var ownRecords: OwnRecordStore { OwnRecordStore(writer: writer) }
 
     /// Схема. Миграции только добавляются, как и на сервере.
     static var migrator: DatabaseMigrator {
@@ -104,6 +105,27 @@ public final class LocalDatabase: Sendable {
                 t.column("attempts", .integer).notNull().defaults(to: 0)
                 t.column("next_attempt_at", .datetime).notNull()
                 t.column("last_error", .text)
+            }
+        }
+        migrator.registerMigration("v3-own-lists") { db in
+            // Свои записи (экипировка, чеклисты) в JSON; `is_dirty` — правка ещё не на сервере.
+            try db.create(table: "own_record") { t in
+                t.column("kind", .text).notNull()
+                t.column("id", .blob).notNull()
+                t.column("account", .text).notNull()
+                t.column("payload", .blob).notNull()
+                t.column("updated_at", .double).notNull()
+                t.column("is_deleted", .boolean).notNull()
+                t.column("is_dirty", .boolean).notNull()
+                t.primaryKey(["kind", "id"])
+            }
+            try db.create(index: "own_record_account", on: "own_record", columns: ["account", "kind"])
+            // До какого `synced_at` изменения с сервера уже получены.
+            try db.create(table: "own_sync_cursor") { t in
+                t.column("account", .text).notNull()
+                t.column("kind", .text).notNull()
+                t.column("synced_at", .double).notNull()
+                t.primaryKey(["account", "kind"])
             }
         }
         return migrator

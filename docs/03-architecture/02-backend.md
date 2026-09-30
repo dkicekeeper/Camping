@@ -39,7 +39,7 @@
 | `notifications`, `devices` | уведомления в приложении, APNs-токены | Свои |
 | `reports`, `moderation_actions` | жалобы и решения | Создание — всем; остальное — модераторам |
 | `points_ledger`, `badges`, `user_badges` | геймификация | Чтение своих; запись — только триггеры |
-| `gear_items`, `checklists`, `checklist_items`, `checklist_runs` | экипировка и сборы | Свои |
+| `gear_items`, `checklists` (`list` — свой чеклист, `packing` — сборы на поездку; пункты — JSON) | экипировка и сборы; синхронизация «последняя правка побеждает» (`updated_at` с телефона, `synced_at` сервера) | Свои |
 | `articles`, `checklist_templates`, `fish_species`, `collections` | контент с переводами | Чтение всем; запись — редакторам |
 
 Полная схема — на Этапе 4.

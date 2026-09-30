@@ -126,10 +126,57 @@ struct LifehacksHomeView: View {
     let environment: AppEnvironment
 
     @Environment(RulesStore.self) private var rules
+    @Environment(ListsStore.self) private var lists
+    @State private var startsPacking = false
+    @State private var opened: UUID?
 
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    // Ближайшие сборы с прогрессом.
+                    if let packing = lists.upcomingPacking {
+                        NavigationLink {
+                            ChecklistDetailView(checklistID: packing.id)
+                        } label: {
+                            ChecklistSummaryRow(checklist: packing)
+                        }
+                    }
+                    Button {
+                        startsPacking = true
+                    } label: {
+                        Label("packing.start", systemImage: "bag.badge.plus")
+                    }
+                    NavigationLink {
+                        ChecklistsView()
+                    } label: {
+                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                            Label("checklists.title", systemImage: "checklist")
+                                .font(AppTypography.bodyEmphasis)
+                            Text("checklists.summary \(lists.packingLists.count) \(lists.ownLists.count)")
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.textSecondary)
+                        }
+                    }
+                    NavigationLink {
+                        GearListView()
+                    } label: {
+                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                            Label("gear.title", systemImage: "backpack")
+                                .font(AppTypography.bodyEmphasis)
+                            Text(verbatim: lists.gear.isEmpty ? String(localized: "gear.summary.none") : GearFormat.summary(lists.gear))
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.textSecondary)
+                        }
+                    }
+                } header: {
+                    Text("lifehacks.section.prep")
+                } footer: {
+                    if lists.hasUnsyncedChanges {
+                        Label("lists.unsynced", systemImage: "icloud.slash")
+                    }
+                }
+
                 Section {
                     NavigationLink {
                         RulesListView(environment: environment)
@@ -163,7 +210,15 @@ struct LifehacksHomeView: View {
                 }
             }
             .navigationTitle("tab.lifehacks")
+            .navigationDestination(item: $opened) { id in
+                ChecklistDetailView(checklistID: id)
+            }
+            .sheet(isPresented: $startsPacking) {
+                StartPackingView { opened = $0.id }
+                    .environment(lists)
+            }
             .task { await rules.loadIfNeeded() }
+            .task { await lists.loadTemplates() }
         }
     }
 

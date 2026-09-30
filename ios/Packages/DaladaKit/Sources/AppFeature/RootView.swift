@@ -24,6 +24,7 @@ public struct RootView: View {
     @State private var recorder: TripRecorder
     @State private var reactions: ReactionStore
     @State private var rules: RulesStore
+    @State private var lists: ListsStore
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
     @State private var showsRecording = false
@@ -47,6 +48,9 @@ public struct RootView: View {
         _recorder = State(initialValue: TripRecorder(store: environment.database.trips))
         _reactions = State(initialValue: ReactionStore(backend: environment.backend))
         _rules = State(initialValue: RulesStore(backend: environment.backend, cache: environment.cache))
+        _lists = State(initialValue: ListsStore(
+            backend: environment.backend, database: environment.database, cache: environment.cache
+        ))
     }
 
     public var body: some View {
@@ -130,6 +134,7 @@ public struct RootView: View {
         .environment(recorder)
         .environment(reactions)
         .environment(rules)
+        .environment(lists)
         .task { await session.start() }
         // Правила нужны без сети (карта, форма улова): сохранённая копия и обновление.
         .task { await rules.loadIfNeeded() }
@@ -139,16 +144,22 @@ public struct RootView: View {
         .task {
             for await _ in NetworkMonitor.becameAvailable() {
                 sync.kick(force: true)
+                lists.scheduleSync(after: .zero)
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { sync.kick(force: true) }
+            if phase == .active {
+                sync.kick(force: true)
+                lists.scheduleSync(after: .zero)
+            }
         }
-        .onChange(of: session.profile?.id, initial: true) { _, _ in
+        .onChange(of: session.profile?.id, initial: true) { previous, current in
             Task {
                 await sync.refresh()
                 sync.kick(force: true)
             }
+            // Экипировка и чеклисты: свои у каждого аккаунта, у гостя — на телефоне.
+            Task { await lists.switchUser(from: previous, to: current) }
         }
     }
 
