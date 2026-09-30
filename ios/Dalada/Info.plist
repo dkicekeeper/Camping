@@ -27,10 +27,16 @@
 		<string>yandexmaps</string>
 		<string>comgooglemaps</string>
 	</array>
-	<!-- Запись трека поездки в фоне (CLBackgroundActivitySession). -->
+	<!-- Запись трека поездки в фоне (CLBackgroundActivitySession) и фоновое обновление:
+	     отправка офлайн-очереди (BackgroundSync). -->
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>app.dalada.ios.sync</string>
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>

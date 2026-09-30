@@ -16,6 +16,7 @@ enum AppTab: Hashable {
 /// Корень приложения: четыре вкладки и «+» (docs/02-plan/README.md, «Информационная архитектура»).
 public struct RootView: View {
     private let environment: AppEnvironment
+    private let background: BackgroundSync
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var session: SessionStore
@@ -37,19 +38,14 @@ public struct RootView: View {
     /// Обсуждение из пуша `dalada://thread/<id>`.
     @State private var threadLink: ThreadLinkItem?
 
-    public init(environment: AppEnvironment) {
+    public init(environment: AppEnvironment, background: BackgroundSync) {
         self.environment = environment
+        self.background = background
         _session = State(initialValue: SessionStore(
             backend: environment.backend, cache: environment.cache, database: environment.database
         ))
         _species = State(initialValue: SpeciesStore(backend: environment.backend, cache: environment.cache))
-        let sender: any OutboxSending
-        if let backend = environment.backend {
-            sender = backend
-        } else {
-            sender = UnavailableSender()
-        }
-        _sync = State(initialValue: SyncEngine(outbox: environment.database.outbox, sender: sender))
+        _sync = State(initialValue: background.engine)
         _recorder = State(initialValue: TripRecorder(store: environment.database.trips))
         _reactions = State(initialValue: ReactionStore(backend: environment.backend))
         _rules = State(initialValue: RulesStore(backend: environment.backend, cache: environment.cache))
@@ -171,11 +167,16 @@ public struct RootView: View {
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
+            switch phase {
+            case .active:
                 sync.kick(force: true)
                 lists.scheduleSync(after: .zero)
                 // Разрешение на уведомления могли дать в Настройках.
                 Task { await PushRegistrar.shared.update(userID: session.profile?.id, backend: environment.backend) }
+            case .background:
+                background.didEnterBackground()
+            default:
+                break
             }
         }
         .onChange(of: session.profile?.id, initial: true) { previous, current in
@@ -207,7 +208,7 @@ public struct RootView: View {
 }
 
 #Preview {
-    RootView(environment: .preview)
+    RootView(environment: .preview, background: BackgroundSync(environment: .preview))
 }
 
 /// Обсуждение, открытое по ссылке из пуша.

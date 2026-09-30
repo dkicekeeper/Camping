@@ -10,6 +10,8 @@ final class FakeSender: OutboxSending {
     enum Outcome: Sendable {
         case accept
         case fail(SendFailure)
+        /// Запрос «висит», пока отправку не остановят.
+        case hang
     }
 
     struct State {
@@ -36,14 +38,14 @@ final class FakeSender: OutboxSending {
     var currentUserID: UUID? { state.withLock { $0.userID } }
 
     func send(_ draft: CheckinDraft) async throws {
-        try perform(draft.id)
+        try await perform(draft.id)
     }
 
     func send(_ trip: TripDraft) async throws {
-        try perform(trip.id)
+        try await perform(trip.id)
     }
 
-    private func perform(_ id: UUID) throws {
+    private func perform(_ id: UUID) async throws {
         let outcome: Outcome = state.withLock { state in
             state.attempts += 1
             return state.outcomes.isEmpty ? .accept : state.outcomes.removeFirst()
@@ -53,6 +55,8 @@ final class FakeSender: OutboxSending {
             state.withLock { $0.sent.append(id) }
         case .fail(let failure):
             throw FakeError(failure: failure)
+        case .hang:
+            try await Task.sleep(for: .seconds(3600))
         }
     }
 
@@ -231,6 +235,49 @@ struct SyncEngineTests {
 
         await engine.discard(trip)
         #expect(engine.pendingTrips.isEmpty)
+    }
+
+    @Test func flushSendsEverythingWaiting() async throws {
+        sender.script(.fail(.offline))
+        let item = draft()
+        try await engine.submit(item, placeName: "Место")
+        await engine.waitUntilIdle()
+        #expect(engine.hasWaiting)
+
+        // Фоновое обновление: пауза между попытками ещё не прошла, но отправляем сразу.
+        await engine.flush(force: true)
+        #expect(sender.sent == [item.id])
+        #expect(!engine.hasWaiting)
+    }
+
+    @Test func flushStopsWhenBackgroundTimeRunsOut() async throws {
+        sender.script(.fail(.offline))
+        let item = draft()
+        try await engine.submit(item, placeName: "Место")
+        await engine.waitUntilIdle()
+
+        sender.script(.hang)
+        let background = Task { await engine.flush(force: true) }
+        while sender.attempts < 2 {
+            await Task.yield()
+        }
+        background.cancel()
+        await background.value
+        #expect(sender.sent.isEmpty)
+        #expect(engine.pending.first?.state == .waiting)
+
+        // Прерванная попытка не считается: запись уходит при следующей отправке без паузы.
+        engine.kick()
+        await engine.waitUntilIdle()
+        #expect(sender.sent == [item.id])
+    }
+
+    @Test func failedRecordsAreNotWaiting() async throws {
+        sender.script(.fail(.rejected("place not found")))
+        try await engine.submit(draft(), placeName: "Место")
+        await engine.waitUntilIdle()
+        #expect(engine.pending.count == 1)
+        #expect(!engine.hasWaiting)
     }
 
     @Test func eachUserSeesOwnQueue() async throws {

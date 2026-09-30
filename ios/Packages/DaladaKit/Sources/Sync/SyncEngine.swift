@@ -5,7 +5,7 @@ import Persistence
 
 /// Отправка офлайн-очереди. Чекин или поездка сначала сохраняются на телефоне, потом уходят
 /// на сервер — сразу, если есть сеть, или позже: при появлении сети, при возврате в приложение,
-/// по таймеру.
+/// по таймеру, в фоне (`flush`).
 @MainActor
 @Observable
 public final class SyncEngine {
@@ -20,6 +20,11 @@ public final class SyncEngine {
     /// Растёт после каждой принятой сервером записи — экраны по нему перечитывают данные.
     public private(set) var sentCount = 0
     public private(set) var isSending = false
+
+    /// Есть ли в очереди то, что мы ещё отправим сами (не «Не удалось отправить»).
+    public var hasWaiting: Bool {
+        pending.contains { $0.state == .waiting } || pendingTrips.contains { $0.state == .waiting }
+    }
 
     private let outbox: OutboxStore
     private let sender: any OutboxSending
@@ -69,6 +74,25 @@ public final class SyncEngine {
         while let task = processTask {
             await task.value
         }
+    }
+
+    /// Отправить всё, что пора, и дождаться конца — для фоновых задач. Если задачу отменили
+    /// (у системы кончилось время), отправка останавливается; прерванная запись остаётся в очереди
+    /// и уйдёт в следующий раз, попытка не засчитывается.
+    public func flush(force: Bool) async {
+        await refresh()
+        kick(force: force)
+        await withTaskCancellationHandler {
+            await waitUntilIdle()
+        } onCancel: {
+            Task { @MainActor in self.cancel() }
+        }
+    }
+
+    /// Остановить текущую отправку.
+    public func cancel() {
+        needsAnotherPass = false
+        processTask?.cancel()
     }
 
     /// «Повторить» для записи, которую не удалось отправить.
@@ -137,6 +161,8 @@ public final class SyncEngine {
         do {
             try await send()
         } catch {
+            // Отправку остановили (кончилось фоновое время) — это не ошибка записи.
+            if Task.isCancelled { return false }
             switch sender.failure(for: error) {
             case .offline:
                 // Сети нет — остальные тоже не уйдут. Ждём сеть или таймер.
