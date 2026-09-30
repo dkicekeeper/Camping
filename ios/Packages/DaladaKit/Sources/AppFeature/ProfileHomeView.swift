@@ -7,13 +7,14 @@ import Persistence
 import SwiftUI
 import Sync
 
-/// Вкладка «Профиль» (главная): вход для гостя, шапка профиля, уловы. Карточка сервера —
-/// только когда с ним проблема.
+/// Вкладка «Профиль» (главная): вход для гостя, шапка профиля, статистика, друзья и «Друзья
+/// недавно», поездки, уловы. Карточка сервера — только когда с ним проблема.
 struct ProfileHomeView: View {
     let environment: AppEnvironment
 
     @Environment(SessionStore.self) private var session
     @State private var connection: ConnectionState = .checking
+    @State private var showsPrivacyZones = false
 
     var body: some View {
         NavigationStack {
@@ -27,11 +28,17 @@ struct ProfileHomeView: View {
                 .screenPadding()
             }
             .navigationTitle("tab.profile")
+            .navigationDestination(isPresented: $showsPrivacyZones) {
+                PrivacyZonesView(environment: environment)
+            }
             .task { await checkConnection() }
             .toolbar {
                 if session.profile != nil {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
+                            Button("privacyZones.title", systemImage: "house.circle") {
+                                showsPrivacyZones = true
+                            }
                             Button("profile.signOut", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                                 Task { await session.signOut() }
                             }
@@ -59,6 +66,7 @@ struct ProfileHomeView: View {
                 ProfileHeader(profile: profile)
                 ProfileStatsCard(environment: environment, userID: profile.id)
                 FriendsEntryRow(environment: environment, userID: profile.id)
+                FriendsFeedSection(environment: environment, userID: profile.id)
                 PendingQueueSection()
                 MyTripsSection(environment: environment, userID: profile.id)
                 MyCatchesSection(backend: environment.backend, cache: environment.cache, userID: profile.id) {

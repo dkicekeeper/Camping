@@ -332,8 +332,8 @@ struct RelationshipBadge: View {
 
 // MARK: - Профиль человека
 
-/// Профиль другого человека: имя, @username, дружба; меню — удалить из друзей, заблокировать.
-/// Его поездки и места — в M4b (ленту и видимость для друзей).
+/// Профиль другого человека: имя, @username, дружба, итоги, поездки и места, которые я вижу;
+/// меню — удалить из друзей, заблокировать.
 struct UserProfileView: View {
     let username: String
     let environment: AppEnvironment
@@ -418,30 +418,39 @@ struct UserProfileView: View {
 
     private func content(_ profile: PublicProfile) -> some View {
         ScrollView {
-            VStack(spacing: AppSpacing.lg) {
-                PersonAvatar(displayName: profile.displayName, username: profile.username, size: AppIconSize.mega)
-                VStack(spacing: AppSpacing.xs) {
-                    Text(verbatim: profile.displayName ?? "@" + username)
-                        .font(AppTypography.h3)
-                    if profile.displayName != nil {
-                        Text(verbatim: "@" + username)
-                            .font(AppTypography.bodySmall)
-                            .foregroundStyle(AppColors.textSecondary)
+            VStack(spacing: AppSpacing.xl) {
+                VStack(spacing: AppSpacing.lg) {
+                    PersonAvatar(displayName: profile.displayName, username: profile.username, size: AppIconSize.mega)
+                    VStack(spacing: AppSpacing.xs) {
+                        Text(verbatim: profile.displayName ?? "@" + username)
+                            .font(AppTypography.h3)
+                        if profile.displayName != nil {
+                            Text(verbatim: "@" + username)
+                                .font(AppTypography.bodySmall)
+                                .foregroundStyle(AppColors.textSecondary)
+                        }
+                        if let city = profile.city {
+                            Text(verbatim: city)
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.textTertiary)
+                        }
                     }
-                    if let city = profile.city {
-                        Text(verbatim: city)
-                            .font(AppTypography.caption)
-                            .foregroundStyle(AppColors.textTertiary)
+                    if profile.id != session.profile?.id {
+                        relationshipButton(profile)
                     }
                 }
-                if profile.id != session.profile?.id {
-                    relationshipButton(profile)
-                }
+                .frame(maxWidth: .infinity)
+
+                UserContentSections(
+                    userID: profile.id,
+                    isFriend: profile.isFriend || profile.id == session.profile?.id,
+                    environment: environment
+                )
             }
-            .frame(maxWidth: .infinity)
             .screenPadding()
             .padding(.vertical, AppSpacing.xl)
         }
+        .refreshable { await load() }
     }
 
     @ViewBuilder

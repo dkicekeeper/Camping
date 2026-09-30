@@ -20,25 +20,31 @@ extension BackendClient {
             .value
     }
 
-    /// Своя поездка с треком. `nil` — не найдена (удалена или чужая).
+    /// Поездка с треком (RPC `trip_view`): своя — целиком, чужая — по видимости и без скрытых
+    /// участков трека. `nil` — не найдена или не видна.
     public func tripDetails(id: UUID) async throws -> TripDetails? {
         let rows: [TripDetails] = try await supabase
-            .from("trips")
-            .select(Self.tripColumns + ",track")
-            .eq("id", value: id)
-            .is("deleted_at", value: nil)
-            .limit(1)
+            .rpc("trip_view", params: ["p_trip": id])
             .execute()
             .value
         return rows.first
     }
 
-    /// Свои чекины за время поездки (RPC `my_trip_checkins`).
+    /// Чекины автора за время поездки, которые видит зритель (RPC `trip_checkins`).
     public func tripCheckins(tripID: UUID) async throws -> [TripCheckin] {
         try await supabase
-            .rpc("my_trip_checkins", params: ["p_trip": tripID])
+            .rpc("trip_checkins", params: ["p_trip": tripID])
             .execute()
             .value
+    }
+
+    /// Кто видит свою поездку.
+    public func setTripVisibility(_ tripID: UUID, visibility: Visibility) async throws {
+        try await supabase
+            .from("trips")
+            .update(["visibility": visibility.rawValue])
+            .eq("id", value: tripID)
+            .execute()
     }
 
     /// Статистика профиля (RPC `my_stats`).

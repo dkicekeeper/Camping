@@ -64,6 +64,11 @@ public struct CacheKey: Hashable, Sendable {
         CacheKey(rawValue: userPrefix(user) + "my_trips")
     }
 
+    /// Первая страница ленты друзей.
+    public static func feed(_ user: UUID) -> CacheKey {
+        CacheKey(rawValue: userPrefix(user) + "feed")
+    }
+
     public static func trip(_ id: UUID, viewer: UUID?) -> CacheKey {
         CacheKey(rawValue: viewerPrefix(viewer) + "trip/" + id.uuidString.lowercased())
     }

@@ -43,7 +43,8 @@ public struct DaladaMapView: UIViewRepresentable {
     let showsUserLocation: Bool
     let places: [MapPlace]
     let draftPin: GeoPoint?
-    let track: [GeoPoint]
+    /// Отрезки трека: своя поездка — один, чужая — видимые части без скрытых участков.
+    let trackSegments: [[GeoPoint]]
     let cameraMode: MapCameraMode
     let onRegionChange: @MainActor (GeoBoundingBox) -> Void
     let onPlaceTap: @MainActor (UUID) -> Void
@@ -56,7 +57,7 @@ public struct DaladaMapView: UIViewRepresentable {
         showsUserLocation: Bool = true,
         places: [MapPlace] = [],
         draftPin: GeoPoint? = nil,
-        track: [GeoPoint] = [],
+        trackSegments: [[GeoPoint]] = [],
         cameraMode: MapCameraMode = .free,
         onRegionChange: @escaping @MainActor (GeoBoundingBox) -> Void = { _ in },
         onPlaceTap: @escaping @MainActor (UUID) -> Void = { _ in },
@@ -68,7 +69,7 @@ public struct DaladaMapView: UIViewRepresentable {
         self.showsUserLocation = showsUserLocation
         self.places = places
         self.draftPin = draftPin
-        self.track = track
+        self.trackSegments = trackSegments
         self.cameraMode = cameraMode
         self.onRegionChange = onRegionChange
         self.onPlaceTap = onPlaceTap
@@ -123,7 +124,7 @@ public struct DaladaMapView: UIViewRepresentable {
         private var trackSource: MLNShapeSource?
         private var renderedPlaces: [MapPlace]?
         private var renderedDraft: GeoPoint?
-        private var renderedTrack: [GeoPoint]?
+        private var renderedTrack: [[GeoPoint]]?
         private var appliedCamera: MapCameraMode?
         private var isStyleLoaded = false
 
@@ -143,9 +144,9 @@ public struct DaladaMapView: UIViewRepresentable {
         /// Обновляет источник мест, если данные изменились. До загрузки стиля — ничего не делает:
         /// отрисуем в `didFinishLoading`.
         func render() {
-            if let trackSource, parent.track != renderedTrack {
-                renderedTrack = parent.track
-                trackSource.shape = Self.trackShape(parent.track)
+            if let trackSource, parent.trackSegments != renderedTrack {
+                renderedTrack = parent.trackSegments
+                trackSource.shape = Self.trackShape(parent.trackSegments)
             }
             guard let source else { return }
             guard parent.places != renderedPlaces || parent.draftPin != renderedDraft else { return }
@@ -164,9 +165,10 @@ public struct DaladaMapView: UIViewRepresentable {
                 mapView.showsUserLocation = true
                 mapView.setUserTrackingMode(.follow, animated: true, completionHandler: nil)
             case .fitTrack:
-                guard parent.track.count >= 2 else { return }
-                let latitudes = parent.track.map(\.latitude)
-                let longitudes = parent.track.map(\.longitude)
+                let points = parent.trackSegments.flatMap { $0 }
+                guard points.count >= 2 else { return }
+                let latitudes = points.map(\.latitude)
+                let longitudes = points.map(\.longitude)
                 let bounds = MLNCoordinateBounds(
                     sw: CLLocationCoordinate2D(latitude: latitudes.min()!, longitude: longitudes.min()!),
                     ne: CLLocationCoordinate2D(latitude: latitudes.max()!, longitude: longitudes.max()!)
@@ -181,10 +183,17 @@ public struct DaladaMapView: UIViewRepresentable {
             appliedCamera = parent.cameraMode
         }
 
-        static func trackShape(_ track: [GeoPoint]) -> MLNShape? {
-            guard track.count >= 2 else { return nil }
-            var coordinates = track.map(\.clCoordinate)
-            return MLNPolylineFeature(coordinates: &coordinates, count: UInt(coordinates.count))
+        static func trackShape(_ segments: [[GeoPoint]]) -> MLNShape? {
+            let lines: [MLNPolylineFeature] = segments.compactMap { segment in
+                guard segment.count >= 2 else { return nil }
+                var coordinates = segment.map(\.clCoordinate)
+                return MLNPolylineFeature(coordinates: &coordinates, count: UInt(coordinates.count))
+            }
+            switch lines.count {
+            case 0: return nil
+            case 1: return lines[0]
+            default: return MLNMultiPolylineFeature(polylines: lines)
+            }
         }
 
         func installLayers(in style: MLNStyle) {

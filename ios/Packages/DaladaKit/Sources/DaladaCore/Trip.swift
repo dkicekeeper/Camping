@@ -213,6 +213,32 @@ public struct TripSummary: Codable, Identifiable, Hashable, Sendable {
     public let maxSpeedMps: Double?
     public let visibility: Visibility
 
+    public init(
+        id: UUID,
+        activity: TripActivity,
+        title: String,
+        note: String?,
+        startedAt: Date,
+        endedAt: Date,
+        movingSeconds: Int,
+        distanceM: Int,
+        elevationGainM: Int,
+        maxSpeedMps: Double?,
+        visibility: Visibility
+    ) {
+        self.id = id
+        self.activity = activity
+        self.title = title
+        self.note = note
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.movingSeconds = movingSeconds
+        self.distanceM = distanceM
+        self.elevationGainM = elevationGainM
+        self.maxSpeedMps = maxSpeedMps
+        self.visibility = visibility
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case activity
@@ -230,53 +256,154 @@ public struct TripSummary: Codable, Identifiable, Hashable, Sendable {
     public var duration: TimeInterval { endedAt.timeIntervalSince(startedAt) }
 }
 
-/// Поездка с треком (GeoJSON `LineString` из PostgREST).
+/// Автор поездки (для чужих поездок — шапка страницы).
+public struct TripOwner: Hashable, Sendable {
+    public let id: UUID
+    public let username: String?
+    public let displayName: String?
+    public let avatarPath: String?
+
+    public init(id: UUID, username: String?, displayName: String?, avatarPath: String? = nil) {
+        self.id = id
+        self.username = username
+        self.displayName = displayName
+        self.avatarPath = avatarPath
+    }
+}
+
+/// Поездка с треком — строка `trip_view`.
+///
+/// Трек — видимые зрителю отрезки: своя поездка — один отрезок целиком; чужая — без начала и
+/// конца, зон приватности автора и участков у мест, которых зритель не видит (GeoJSON
+/// `MultiLineString`), или пусто, если не осталось ничего.
 public struct TripDetails: Codable, Hashable, Sendable {
     public let summary: TripSummary
-    public let track: [GeoPoint]
+    public let segments: [[GeoPoint]]
+    public let owner: TripOwner?
+    public let isOwn: Bool
 
-    public init(summary: TripSummary, track: [GeoPoint]) {
+    public init(summary: TripSummary, segments: [[GeoPoint]], owner: TripOwner? = nil, isOwn: Bool = true) {
         self.summary = summary
-        self.track = track
+        self.segments = segments.filter { $0.count >= 2 }
+        self.owner = owner
+        self.isOwn = isOwn
     }
+
+    /// Все видимые точки подряд (для рамки карты).
+    public var track: [GeoPoint] { segments.flatMap { $0 } }
 
     enum CodingKeys: String, CodingKey {
         case track
-    }
-
-    struct LineString: Codable {
-        var type = "LineString"
-        var coordinates: [[Double]]
+        case ownerID = "owner_id"
+        case ownerUsername = "owner_username"
+        case ownerDisplayName = "owner_display_name"
+        case ownerAvatarPath = "owner_avatar_path"
+        case isOwn = "is_own"
     }
 
     public init(from decoder: any Decoder) throws {
         summary = try TripSummary(from: decoder)
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        let line = try c.decodeIfPresent(LineString.self, forKey: .track)
-        track = (line?.coordinates ?? []).compactMap { position in
-            guard position.count >= 2 else { return nil }
-            return GeoPoint(latitude: position[1], longitude: position[0])
+        // Отрезок из одной точки линией не нарисовать.
+        segments = (try c.decodeIfPresent(TrackGeometry.self, forKey: .track)?.segments ?? []).filter { $0.count >= 2 }
+        if let ownerID = try c.decodeIfPresent(UUID.self, forKey: .ownerID) {
+            owner = TripOwner(
+                id: ownerID,
+                username: try c.decodeIfPresent(String.self, forKey: .ownerUsername),
+                displayName: try c.decodeIfPresent(String.self, forKey: .ownerDisplayName),
+                avatarPath: try c.decodeIfPresent(String.self, forKey: .ownerAvatarPath)
+            )
+        } else {
+            owner = nil
         }
+        // В кэше прошлых версий этого поля нет: такие копии открываются без действий автора.
+        isOwn = try c.decodeIfPresent(Bool.self, forKey: .isOwn) ?? false
     }
 
     public func encode(to encoder: any Encoder) throws {
         try summary.encode(to: encoder)
         var c = encoder.container(keyedBy: CodingKeys.self)
-        let line = track.isEmpty ? nil : LineString(coordinates: track.map { [$0.longitude, $0.latitude] })
-        try c.encode(line, forKey: .track)
+        try c.encode(segments.isEmpty ? nil : TrackGeometry(segments: segments), forKey: .track)
+        try c.encodeIfPresent(owner?.id, forKey: .ownerID)
+        try c.encodeIfPresent(owner?.username, forKey: .ownerUsername)
+        try c.encodeIfPresent(owner?.displayName, forKey: .ownerDisplayName)
+        try c.encodeIfPresent(owner?.avatarPath, forKey: .ownerAvatarPath)
+        try c.encode(isOwn, forKey: .isOwn)
+    }
+
+    /// Та же поездка с другой видимостью (после изменения автором).
+    public func with(visibility: Visibility) -> TripDetails {
+        let s = summary
+        return TripDetails(
+            summary: TripSummary(
+                id: s.id, activity: s.activity, title: s.title, note: s.note, startedAt: s.startedAt,
+                endedAt: s.endedAt, movingSeconds: s.movingSeconds, distanceM: s.distanceM,
+                elevationGainM: s.elevationGainM, maxSpeedMps: s.maxSpeedMps, visibility: visibility
+            ),
+            segments: segments,
+            owner: owner,
+            isOwn: isOwn
+        )
     }
 }
 
-/// Свой чекин за время поездки — строка `my_trip_checkins`.
+/// Трек в GeoJSON: `LineString` или `MultiLineString` (координаты — долгота, широта[, высота]).
+struct TrackGeometry: Codable {
+    let segments: [[GeoPoint]]
+
+    init(segments: [[GeoPoint]]) {
+        self.segments = segments
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case type
+        case coordinates
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        switch try c.decode(String.self, forKey: .type) {
+        case "LineString":
+            segments = [Self.points(try c.decode([[Double]].self, forKey: .coordinates))]
+        case "MultiLineString":
+            segments = try c.decode([[[Double]]].self, forKey: .coordinates).map(Self.points)
+        default:
+            segments = []
+        }
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        let lines = segments.map { line in line.map { [$0.longitude, $0.latitude] } }
+        if lines.count == 1 {
+            try c.encode("LineString", forKey: .type)
+            try c.encode(lines[0], forKey: .coordinates)
+        } else {
+            try c.encode("MultiLineString", forKey: .type)
+            try c.encode(lines, forKey: .coordinates)
+        }
+    }
+
+    static func points(_ positions: [[Double]]) -> [GeoPoint] {
+        positions.compactMap { position in
+            guard position.count >= 2 else { return nil }
+            return GeoPoint(latitude: position[1], longitude: position[0])
+        }
+    }
+}
+
+/// Чекин за время поездки — строка `trip_checkins`. Место, которого зритель не видит, приходит
+/// без id и названия («Секретное место»).
 public struct TripCheckin: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
     public let at: Date
     public let verified: Bool
-    public let placeID: UUID
+    public let placeID: UUID?
     public let placeName: String?
     public let conditions: CheckinConditions
     public let note: String?
     public let catches: [ReportCatch]
+    public let media: [ReportMedia]
 
     enum CodingKeys: String, CodingKey {
         case id = "checkin_id"
@@ -287,6 +414,20 @@ public struct TripCheckin: Codable, Identifiable, Hashable, Sendable {
         case conditions
         case note
         case catches
+        case media
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        at = try c.decode(Date.self, forKey: .at)
+        verified = try c.decode(Bool.self, forKey: .verified)
+        placeID = try c.decodeIfPresent(UUID.self, forKey: .placeID)
+        placeName = try c.decodeIfPresent(String.self, forKey: .placeName)
+        conditions = try c.decodeIfPresent(CheckinConditions.self, forKey: .conditions) ?? CheckinConditions()
+        note = try c.decodeIfPresent(String.self, forKey: .note)
+        catches = try c.decodeIfPresent([ReportCatch].self, forKey: .catches) ?? []
+        media = try c.decodeIfPresent([ReportMedia].self, forKey: .media) ?? []
     }
 }
 

@@ -151,7 +151,7 @@ struct TripRecordingView: View {
                 styleURL: environment.config.mapStyleURL,
                 initialCenter: recorder.track.last ?? .almaty,
                 initialZoom: 14,
-                track: recorder.track,
+                trackSegments: [recorder.track],
                 cameraMode: .followUser
             )
             .ignoresSafeArea()
@@ -262,7 +262,7 @@ struct TripFinishView: View {
     @State private var title = ""
     @State private var note = ""
     @State private var activity: TripActivity = .fishing
-    @State private var visibility: DaladaCore.Visibility = .private
+    @State private var visibility: DaladaCore.Visibility = .friends
     @State private var isSaving = false
     @State private var saveError: String?
     @State private var confirmsDiscard = false
@@ -580,7 +580,8 @@ struct TripsLoader {
 
 // MARK: - Страница поездки
 
-/// Поездка: трек на карте, итоги, заметка, чекины за время поездки.
+/// Поездка: трек на карте, итоги, заметка, чекины за время поездки. Своя — с выбором «Кто видит»;
+/// чужая — с автором, трек без начала, конца и скрытых участков.
 struct TripDetailView: View {
     let tripID: UUID
     let environment: AppEnvironment
@@ -589,7 +590,11 @@ struct TripDetailView: View {
     @Environment(SpeciesStore.self) private var speciesStore
     @State private var trip: TripDetails?
     @State private var checkins: [TripCheckin] = []
+    @State private var photoURLs: [String: URL] = [:]
     @State private var loadError: String?
+    @State private var visibilityError: String?
+    @State private var showsVisibilityError = false
+    @State private var selectedPlace: PlaceSelection?
 
     var body: some View {
         Group {
@@ -611,6 +616,22 @@ struct TripDetailView: View {
         }
         .navigationTitle(Text(verbatim: trip?.summary.title ?? ""))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let trip, trip.isOwn {
+                ToolbarItem(placement: .topBarTrailing) {
+                    visibilityMenu(trip)
+                }
+            }
+        }
+        .alert("trip.visibility.failed", isPresented: $showsVisibilityError) {
+            Button("common.ok", role: .cancel) {}
+        } message: {
+            Text(verbatim: visibilityError ?? "")
+        }
+        .sheet(item: $selectedPlace) { selection in
+            PlaceCardView(placeID: selection.id, environment: environment)
+                .presentationDetents([.medium, .large])
+        }
         .task { await load() }
         .task { await speciesStore.loadIfNeeded() }
     }
@@ -618,17 +639,29 @@ struct TripDetailView: View {
     private func content(_ trip: TripDetails) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                if trip.track.count >= 2 {
+                if !trip.isOwn, let owner = trip.owner {
+                    TripOwnerRow(owner: owner, environment: environment)
+                }
+
+                if let start = trip.track.first {
                     DaladaMapView(
                         styleURL: environment.config.mapStyleURL,
-                        initialCenter: trip.track[0],
+                        initialCenter: start,
                         initialZoom: 12,
                         showsUserLocation: false,
-                        track: trip.track,
+                        trackSegments: trip.segments,
                         cameraMode: .fitTrack
                     )
                     .frame(height: 260)
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl))
+                }
+                if !trip.isOwn {
+                    Label(
+                        LocalizedStringKey(trip.segments.isEmpty ? "trip.detail.trackHiddenAll" : "trip.detail.trackHidden"),
+                        systemImage: "eye.slash"
+                    )
+                    .font(AppTypography.caption)
+                    .foregroundStyle(AppColors.textSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -638,6 +671,11 @@ struct TripDetailView: View {
                     Text(verbatim: trip.summary.startedAt.formatted(.dateTime.day().month(.wide).year().hour().minute()))
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textTertiary)
+                    if trip.isOwn {
+                        Label(LocalizedStringKey(trip.summary.visibility.titleKey), systemImage: trip.summary.visibility.systemImage)
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                    }
                 }
 
                 VStack(spacing: AppSpacing.md) {
@@ -667,13 +705,66 @@ struct TripDetailView: View {
                     VStack(alignment: .leading, spacing: AppSpacing.md) {
                         SectionHeaderView(String(localized: "trip.detail.checkins"), systemImage: "mappin.circle")
                         ForEach(checkins) { checkin in
-                            TripCheckinRow(checkin: checkin)
+                            TripCheckinRow(checkin: checkin, photoURLs: photoURLs) {
+                                if let placeID = checkin.placeID {
+                                    selectedPlace = PlaceSelection(id: placeID)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if trip.isOwn && trip.summary.visibility != .private {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                        Text("trip.detail.sharedHint")
+                            .font(AppTypography.caption)
+                            .foregroundStyle(AppColors.textSecondary)
+                        NavigationLink {
+                            PrivacyZonesView(environment: environment)
+                        } label: {
+                            Label("privacyZones.title", systemImage: "house.circle")
+                                .font(AppTypography.bodySmall)
                         }
                     }
                 }
             }
             .screenPadding()
             .padding(.vertical, AppSpacing.lg)
+        }
+    }
+
+    /// «Кто видит» своей поездки.
+    private func visibilityMenu(_ trip: TripDetails) -> some View {
+        Menu {
+            Section("place.form.visibility") {
+                ForEach(DaladaCore.Visibility.allCases) { item in
+                    Button {
+                        Task { await setVisibility(item) }
+                    } label: {
+                        Label(
+                            LocalizedStringKey(item.titleKey),
+                            systemImage: item == trip.summary.visibility ? "checkmark" : item.systemImage
+                        )
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: trip.summary.visibility.systemImage)
+                .accessibilityLabel(Text("place.form.visibility"))
+        }
+    }
+
+    private func setVisibility(_ visibility: DaladaCore.Visibility) async {
+        guard let trip, trip.summary.visibility != visibility else { return }
+        guard let backend = environment.backend else { return }
+        do {
+            try await backend.setTripVisibility(trip.summary.id, visibility: visibility)
+            let updated = trip.with(visibility: visibility)
+            self.trip = updated
+            try? await environment.cache.save(updated, for: CacheKey.trip(tripID, viewer: session.profile?.id))
+        } catch {
+            visibilityError = error.localizedDescription
+            showsVisibilityError = true
         }
     }
 
@@ -686,6 +777,8 @@ struct TripDetailView: View {
                     loadError = nil
                     try? await environment.cache.save(loaded, for: key)
                     checkins = (try? await backend.tripCheckins(tripID: tripID)) ?? []
+                    let paths = checkins.flatMap { checkin in checkin.media.flatMap { [$0.thumbnailPath, $0.path] } }
+                    photoURLs = (try? await backend.signedMediaURLs(paths: paths)) ?? [:]
                     return
                 }
             } catch {
@@ -701,9 +794,35 @@ struct TripDetailView: View {
     }
 }
 
-/// Чекин поездки: место, время, условия, заметка, уловы.
+/// Автор чужой поездки — ссылка на его профиль.
+struct TripOwnerRow: View {
+    let owner: TripOwner
+    let environment: AppEnvironment
+
+    var body: some View {
+        if let username = owner.username {
+            NavigationLink {
+                UserProfileView(username: username, environment: environment)
+            } label: {
+                PersonRow(displayName: owner.displayName, username: owner.username) {
+                    Image(systemName: "chevron.right")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+            }
+            .buttonStyle(.plain)
+        } else {
+            PersonRow(displayName: owner.displayName, username: nil)
+        }
+    }
+}
+
+/// Чекин поездки: место (тап — карточка места), время, условия, заметка, уловы, фото.
+/// Место, которого зритель не видит, — «Секретное место».
 struct TripCheckinRow: View {
     let checkin: TripCheckin
+    var photoURLs: [String: URL] = [:]
+    var onPlaceTap: @MainActor () -> Void = {}
 
     @Environment(SpeciesStore.self) private var speciesStore
 
@@ -711,10 +830,16 @@ struct TripCheckinRow: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.xs) {
                 if let placeName = checkin.placeName {
-                    Text(verbatim: placeName)
-                        .font(AppTypography.bodyEmphasis)
+                    Button {
+                        onPlaceTap()
+                    } label: {
+                        Text(verbatim: placeName)
+                            .font(AppTypography.bodyEmphasis)
+                            .foregroundStyle(AppColors.textPrimary)
+                    }
+                    .buttonStyle(.plain)
                 } else {
-                    Text("trip.detail.placeHidden")
+                    Label("trip.detail.placeHidden", systemImage: "lock")
                         .font(AppTypography.bodyEmphasis)
                         .foregroundStyle(AppColors.textSecondary)
                 }
@@ -745,6 +870,9 @@ struct TripCheckinRow: View {
                     lengthMillimeters: item.lengthMillimeters,
                     released: item.released
                 )
+            }
+            if !checkin.media.isEmpty {
+                ReportPhotoStrip(media: checkin.media, urls: photoURLs)
             }
         }
         .cardContentPadding()
