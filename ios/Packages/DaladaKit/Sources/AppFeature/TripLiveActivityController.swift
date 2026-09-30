@@ -45,21 +45,22 @@ final class TripLiveActivityController {
     }
 
     func end() {
-        let activities = Activity<TripActivityAttributes>.activities
         activity = nil
         lastState = nil
-        Task {
-            for activity in activities {
+        // `Activity` не Sendable: ищем её заново внутри задачи, а не передаём с главного актора.
+        Task.detached {
+            for activity in Activity<TripActivityAttributes>.activities {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
         }
     }
 
     private func push(_ state: TripActivityAttributes.ContentState) {
-        guard let activity else { return }
+        guard let id = activity?.id else { return }
         lastState = state
         lastUpdate = Date()
-        Task {
+        Task.detached {
+            guard let activity = Activity<TripActivityAttributes>.activities.first(where: { $0.id == id }) else { return }
             await activity.update(ActivityContent(state: state, staleDate: nil))
         }
     }
