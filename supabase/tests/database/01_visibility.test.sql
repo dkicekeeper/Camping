@@ -7,6 +7,9 @@ set search_path = public, extensions;
 
 select plan(41);
 
+-- Места редакции (M6e) — начальные данные; в этих проверках не участвуют.
+delete from public.places where owner_id = private.editorial_id();
+
 -- Помощники: действовать от имени пользователя / гостя / администратора ----------------------
 
 create function pg_temp.act_as(uid uuid) returns void language plpgsql as $$

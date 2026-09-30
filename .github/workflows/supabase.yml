@@ -17,6 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # places.csv и миграция с местами редакции совпадают (supabase/data/places/README.md).
+      - name: Check editorial places
+        run: python3 supabase/data/places/places.py check
+
       # Версия закреплена: с `latest` установщик спрашивает GitHub API без токена и иногда
       # упирается в лимит запросов. Та же версия, что в облачном контейнере разработки.
       - uses: supabase/setup-cli@v1
