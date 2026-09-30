@@ -38,6 +38,9 @@ extension BackendClient: OutboxSending {
             case .some(let code) where code.hasPrefix("23") || code.hasPrefix("22"):
                 // Нарушены правила данных — повтор не поможет.
                 return .rejected(error.message)
+            case "DL005":
+                // Грубые слова в заметке или названии: повтор не поможет, текст нужно поправить.
+                return .rejected(String(localized: "moderation.error.badWords"))
             case "P0002", "42501", "54000":
                 // Место или чекин не найден (удалены, скрыты), нет прав, слишком много фото
                 // или слишком длинный трек.

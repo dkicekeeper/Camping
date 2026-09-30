@@ -105,7 +105,7 @@ final class MapScreenModel {
             await reload()
             return nil
         } catch {
-            return error.localizedDescription
+            return CommunityMessage.text(for: error)
         }
     }
 }

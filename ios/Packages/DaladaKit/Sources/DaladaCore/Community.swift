@@ -504,7 +504,7 @@ public struct PostDraft: Equatable, Sendable {
 
 // MARK: - Ошибки
 
-/// Отказы базы для отзывов и обсуждений (коды DL001–DL003).
+/// Отказы базы для отзывов, обсуждений и жалоб (коды DL001–DL003, DL005).
 public enum CommunityRefusal: String, Sendable {
     /// Отзыв — только после чекина в месте.
     case checkinRequired = "DL001"
@@ -512,12 +512,15 @@ public enum CommunityRefusal: String, Sendable {
     case publicPlacesOnly = "DL002"
     /// Слишком часто.
     case tooOften = "DL003"
+    /// В тексте грубые слова.
+    case badWords = "DL005"
 
     public var messageKey: String {
         switch self {
         case .checkinRequired: "community.error.checkinRequired"
         case .publicPlacesOnly: "community.error.publicOnly"
         case .tooOften: "community.error.tooOften"
+        case .badWords: "moderation.error.badWords"
         }
     }
 }

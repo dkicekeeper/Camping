@@ -85,7 +85,9 @@ struct PlaceReviewsSection: View {
                 reviewAction(summary)
             }
             ForEach(reviews) { review in
-                ReviewRow(review: review)
+                ReviewRow(review: review) { blocked in
+                    reviews.removeAll { $0.author.id == blocked }
+                }
             }
             if let summary, summary.reviewsCount > reviews.count {
                 NavigationLink {
@@ -181,6 +183,8 @@ struct ReviewSummaryView: View {
 /// Отзыв: автор, звёзды, когда был, текст, «Полезно».
 struct ReviewRow: View {
     let review: PlaceReview
+    /// Автора заблокировали — убрать его отзывы с экрана.
+    var onBlocked: (@MainActor (UUID) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -194,6 +198,11 @@ struct ReviewRow: View {
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
                     .lineLimit(1)
+                if !review.isOwn {
+                    ModerationMenu(target: .review, targetID: review.id, author: review.author) {
+                        onBlocked?(review.author.id)
+                    }
+                }
             }
             if let visited = review.visitedOn {
                 Text("reviews.visited \(visited.date().formatted(.dateTime.day().month(.wide).year()))")
@@ -243,7 +252,9 @@ struct ReviewsListView: View {
                 .pickerStyle(.segmented)
             }
             ForEach(reviews) { review in
-                ReviewRow(review: review)
+                ReviewRow(review: review) { blocked in
+                    reviews.removeAll { $0.author.id == blocked }
+                }
                     .listRowSeparator(.hidden)
                     .onAppear {
                         if review.id == reviews.last?.id { Task { await loadMore() } }
@@ -701,15 +712,22 @@ struct ThreadView: View {
         .navigationTitle(Text(verbatim: thread?.placeName ?? ""))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if thread?.isOwn == true {
+            if let thread {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button("threads.delete", systemImage: "trash", role: .destructive) {
-                            confirmsDeleteThread = true
+                    if thread.isOwn {
+                        Menu {
+                            Button("threads.delete", systemImage: "trash", role: .destructive) {
+                                confirmsDeleteThread = true
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .accessibilityLabel(Text("profile.menu"))
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .accessibilityLabel(Text("profile.menu"))
+                    } else {
+                        // Автора обсуждения заблокировали — обсуждение больше не видно.
+                        ModerationMenu(target: .thread, targetID: thread.id, author: thread.author, isToolbar: true) {
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -753,7 +771,8 @@ struct ThreadView: View {
                         post: post,
                         canReply: session.profile != nil,
                         onReply: { quote(post) },
-                        onDelete: { Task { await deletePost(post) } }
+                        onDelete: { Task { await deletePost(post) } },
+                        onBlocked: { Task { await load() } }
                     )
                     .onAppear {
                         if post.id == posts.last?.id { Task { await loadMore() } }
@@ -937,6 +956,8 @@ struct PostRow: View {
     let canReply: Bool
     let onReply: @MainActor () -> Void
     let onDelete: @MainActor () -> Void
+    /// Автора заблокировали — перечитать обсуждение.
+    var onBlocked: (@MainActor () -> Void)?
 
     @State private var confirmsDelete = false
 
@@ -953,6 +974,9 @@ struct PostRow: View {
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textTertiary)
                         .lineLimit(1)
+                    if !post.isOwn {
+                        ModerationMenu(target: .post, targetID: post.id, author: post.author, onBlocked: onBlocked)
+                    }
                 }
                 if let quote = post.quote {
                     HStack(spacing: AppSpacing.sm) {

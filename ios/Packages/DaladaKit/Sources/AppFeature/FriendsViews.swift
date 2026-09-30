@@ -345,6 +345,7 @@ struct UserProfileView: View {
     @State private var isWorking = false
     @State private var confirmsBlock = false
     @State private var confirmsRemove = false
+    @State private var reports = false
 
     enum LoadState {
         case loading
@@ -393,6 +394,9 @@ struct UserProfileView: View {
                                 confirmsRemove = true
                             }
                         }
+                        Button("moderation.report", systemImage: "flag") {
+                            reports = true
+                        }
                         Button("person.block", systemImage: "hand.raised", role: .destructive) {
                             confirmsBlock = true
                         }
@@ -406,6 +410,12 @@ struct UserProfileView: View {
         .confirmationDialog("person.blockConfirm", isPresented: $confirmsBlock, titleVisibility: .visible) {
             Button("person.block", role: .destructive) {
                 Task { await block() }
+            }
+        }
+        .sheet(isPresented: $reports) {
+            if let profile {
+                ReportView(target: .user, targetID: profile.id)
+                    .environment(session)
             }
         }
         .confirmationDialog("person.removeConfirm", isPresented: $confirmsRemove, titleVisibility: .visible) {

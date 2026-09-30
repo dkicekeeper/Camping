@@ -66,6 +66,21 @@ struct PlaceCardView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // Чужое место: пожаловаться или заблокировать автора (место тогда пропадёт).
+                if case .loaded(let place) = state, !place.isOwn {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ModerationMenu(
+                            target: .place,
+                            targetID: place.id,
+                            author: FeedAuthor(id: place.ownerID, username: place.ownerUsername, displayName: nil),
+                            isToolbar: true
+                        ) {
+                            Task { await load() }
+                        }
+                    }
+                }
+            }
         }
         .task { await load() }
         .task { await speciesStore.loadIfNeeded() }
@@ -179,7 +194,9 @@ struct PlaceCardView: View {
                     .foregroundStyle(AppColors.textSecondary)
             } else {
                 ForEach(reports) { report in
-                    ReportRow(report: report, photoURLs: photoURLs)
+                    ReportRow(report: report, photoURLs: photoURLs) { blocked in
+                        reports.removeAll { $0.authorID == blocked }
+                    }
                 }
             }
         }
@@ -246,6 +263,8 @@ struct PlaceCardView: View {
 struct ReportRow: View {
     let report: PlaceReport
     let photoURLs: [String: URL]
+    /// Автора заблокировали — убрать его отчёты с экрана.
+    var onBlocked: (@MainActor (UUID) -> Void)?
 
     @Environment(SpeciesStore.self) private var speciesStore
 
@@ -263,6 +282,15 @@ struct ReportRow: View {
                 Text(report.at, style: .relative)
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textTertiary)
+                if !report.isOwn {
+                    ModerationMenu(
+                        target: .checkin,
+                        targetID: report.id,
+                        author: FeedAuthor(id: report.authorID, username: report.authorUsername, displayName: report.authorDisplayName)
+                    ) {
+                        onBlocked?(report.authorID)
+                    }
+                }
             }
 
             if let conditionsText {

@@ -622,6 +622,17 @@ struct TripDetailView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     visibilityMenu(trip)
                 }
+            } else if let trip {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ModerationMenu(
+                        target: .trip,
+                        targetID: trip.summary.id,
+                        author: trip.owner.map { FeedAuthor(id: $0.id, username: $0.username, displayName: $0.displayName) },
+                        isToolbar: true
+                    ) {
+                        Task { await load() }
+                    }
+                }
             }
         }
         .alert("trip.visibility.failed", isPresented: $showsVisibilityError) {

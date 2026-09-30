@@ -172,7 +172,7 @@ final class SessionStore {
         } catch ProfileUpdateError.usernameInvalid {
             return String(localized: "onboarding.username.invalid")
         } catch {
-            return error.localizedDescription
+            return CommunityMessage.text(for: error)
         }
     }
 
