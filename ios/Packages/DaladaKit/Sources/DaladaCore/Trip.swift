@@ -289,3 +289,26 @@ public struct TripCheckin: Codable, Identifiable, Hashable, Sendable {
         case catches
     }
 }
+
+/// Статистика профиля — строка `my_stats`.
+public struct UserStats: Codable, Equatable, Sendable {
+    public let tripsCount: Int
+    public let distanceM: Int
+    public let movingSeconds: Int
+    public let daysOutdoors: Int
+    public let checkinsCount: Int
+    public let catchesCount: Int
+    public let speciesCount: Int
+    public let placesCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case tripsCount = "trips_count"
+        case distanceM = "distance_m"
+        case movingSeconds = "moving_seconds"
+        case daysOutdoors = "days_outdoors"
+        case checkinsCount = "checkins_count"
+        case catchesCount = "catches_count"
+        case speciesCount = "species_count"
+        case placesCount = "places_count"
+    }
+}

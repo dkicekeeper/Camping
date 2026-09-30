@@ -57,6 +57,7 @@ struct ProfileHomeView: View {
         case .needsUsername, .signedIn:
             if let profile = session.profile {
                 ProfileHeader(profile: profile)
+                ProfileStatsCard(environment: environment, userID: profile.id)
                 PendingQueueSection()
                 MyTripsSection(environment: environment, userID: profile.id)
                 MyCatchesSection(backend: environment.backend, cache: environment.cache, userID: profile.id) {
@@ -169,6 +170,64 @@ struct MyCatchesSection<Placeholder: View>: View {
             try? await cache.save(loaded, for: key)
         } else if catches.isEmpty, let saved = try? await cache.load([MyCatch].self, for: key) {
             catches = saved
+        }
+    }
+}
+
+/// Счётчики профиля: дни на природе, поездки, километры, уловы (RPC `my_stats`).
+/// Без сети — сохранённые; обновляются после отправки очереди.
+struct ProfileStatsCard: View {
+    let environment: AppEnvironment
+    let userID: UUID
+
+    @Environment(SyncEngine.self) private var sync
+    @State private var stats: UserStats?
+
+    var body: some View {
+        Group {
+            if let stats {
+                HStack(alignment: .top, spacing: AppSpacing.sm) {
+                    counter(String(stats.daysOutdoors), titleKey: "stats.days")
+                    counter(String(stats.tripsCount), titleKey: "stats.trips")
+                    counter(
+                        (Double(stats.distanceM) / 1000).formatted(.number.precision(.fractionLength(0))),
+                        titleKey: "stats.km"
+                    )
+                    counter(String(stats.catchesCount), titleKey: "stats.catches")
+                }
+                .cardContentPadding()
+                .cardStyle()
+            }
+        }
+        .task(id: userID) { await load() }
+        .onChange(of: sync.sentCount) { _, _ in
+            Task { await load() }
+        }
+    }
+
+    private func counter(_ value: String, titleKey: LocalizedStringKey) -> some View {
+        VStack(spacing: AppSpacing.xxs) {
+            Text(verbatim: value)
+                .font(AppTypography.h4)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(titleKey)
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func load() async {
+        let key = CacheKey.stats(userID)
+        if let backend = environment.backend, let loaded = try? await backend.myStats() {
+            stats = loaded
+            try? await environment.cache.save(loaded, for: key)
+        } else if stats == nil {
+            stats = try? await environment.cache.load(UserStats.self, for: key)
         }
     }
 }

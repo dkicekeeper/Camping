@@ -56,6 +56,10 @@ public struct CacheKey: Hashable, Sendable {
         CacheKey(rawValue: userPrefix(user) + "my_catches")
     }
 
+    public static func stats(_ user: UUID) -> CacheKey {
+        CacheKey(rawValue: userPrefix(user) + "stats")
+    }
+
     public static func myTrips(_ user: UUID) -> CacheKey {
         CacheKey(rawValue: userPrefix(user) + "my_trips")
     }

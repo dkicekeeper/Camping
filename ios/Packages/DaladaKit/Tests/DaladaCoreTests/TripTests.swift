@@ -117,6 +117,16 @@ struct TripTests {
         #expect(cached == trip)
     }
 
+    @Test func decodesStats() throws {
+        let json = """
+        [{"trips_count": 2, "distance_m": 42500, "moving_seconds": 36000, "days_outdoors": 5,
+          "checkins_count": 2, "catches_count": 11, "species_count": 2, "places_count": 2}]
+        """
+        let stats = try JSONDecoder().decode([UserStats].self, from: Data(json.utf8))
+        #expect(stats.first?.daysOutdoors == 5)
+        #expect(stats.first?.catchesCount == 11)
+    }
+
     @Test func decodesTripWithoutTrack() throws {
         let json = """
         {"id": "77777777-0000-0000-0000-000000000002", "activity": "camping", "title": "Ночёвка",

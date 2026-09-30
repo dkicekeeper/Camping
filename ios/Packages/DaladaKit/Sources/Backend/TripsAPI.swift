@@ -41,6 +41,12 @@ extension BackendClient {
             .value
     }
 
+    /// Статистика профиля (RPC `my_stats`).
+    public func myStats() async throws -> UserStats? {
+        let rows: [UserStats] = try await supabase.rpc("my_stats").execute().value
+        return rows.first
+    }
+
     /// Сохраняет поездку с треком. ID задаёт телефон: повтор после сбоя не создаёт дубль.
     public func createTrip(_ draft: TripDraft) async throws {
         do {
