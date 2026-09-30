@@ -25,6 +25,7 @@ public struct RootView: View {
     @State private var reactions: ReactionStore
     @State private var rules: RulesStore
     @State private var lists: ListsStore
+    @State private var articles: ArticlesStore
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
     @State private var showsRecording = false
@@ -51,6 +52,7 @@ public struct RootView: View {
         _lists = State(initialValue: ListsStore(
             backend: environment.backend, database: environment.database, cache: environment.cache
         ))
+        _articles = State(initialValue: ArticlesStore(backend: environment.backend, cache: environment.cache))
     }
 
     public var body: some View {
@@ -135,6 +137,7 @@ public struct RootView: View {
         .environment(reactions)
         .environment(rules)
         .environment(lists)
+        .environment(articles)
         .task { await session.start() }
         // Правила нужны без сети (карта, форма улова): сохранённая копия и обновление.
         .task { await rules.loadIfNeeded() }

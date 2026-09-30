@@ -127,6 +127,7 @@ struct LifehacksHomeView: View {
 
     @Environment(RulesStore.self) private var rules
     @Environment(ListsStore.self) private var lists
+    @Environment(ArticlesStore.self) private var articles
     @State private var startsPacking = false
     @State private var opened: UUID?
 
@@ -202,11 +203,27 @@ struct LifehacksHomeView: View {
                 }
 
                 Section {
-                    Text("lifehacks.soon")
-                        .font(AppTypography.bodySmall)
-                        .foregroundStyle(AppColors.textSecondary)
+                    // Три последние статьи и ссылка на все.
+                    ForEach(articles.articles.prefix(3)) { article in
+                        NavigationLink {
+                            ArticleView(article: article)
+                        } label: {
+                            ArticleRow(article: article)
+                        }
+                    }
+                    if articles.articles.isEmpty {
+                        Text("articles.empty")
+                            .font(AppTypography.bodySmall)
+                            .foregroundStyle(AppColors.textSecondary)
+                    } else {
+                        NavigationLink {
+                            ArticlesListView()
+                        } label: {
+                            Label("articles.all", systemImage: "books.vertical")
+                        }
+                    }
                 } header: {
-                    Text("lifehacks.section.soon")
+                    Text("articles.title")
                 }
             }
             .navigationTitle("tab.lifehacks")
@@ -219,6 +236,7 @@ struct LifehacksHomeView: View {
             }
             .task { await rules.loadIfNeeded() }
             .task { await lists.loadTemplates() }
+            .task { await articles.loadIfNeeded() }
         }
     }
 

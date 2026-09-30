@@ -50,6 +50,9 @@ public struct CacheKey: Hashable, Sendable {
     /// Шаблоны чеклистов редакции — общие для всех, нужны без сети.
     public static let checklistTemplates = CacheKey(rawValue: "shared/checklist_templates")
 
+    /// Статьи редакции — общие для всех, читаются без сети.
+    public static let articles = CacheKey(rawValue: "shared/articles")
+
     public static func profile(_ user: UUID) -> CacheKey {
         CacheKey(rawValue: userPrefix(user) + "profile")
     }
