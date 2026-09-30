@@ -134,7 +134,7 @@ struct FollowRouteView: View {
                     session.reverse()
                 } label: {
                     Label(
-                        session.isReversed ? "route.follow.forward" : "route.follow.reverse",
+                        LocalizedStringKey(session.isReversed ? "route.follow.forward" : "route.follow.reverse"),
                         systemImage: "arrow.uturn.backward"
                     )
                     .frame(maxWidth: .infinity)
@@ -170,12 +170,12 @@ struct FollowRouteView: View {
         } else if let progress = session.progress {
             if progress.isFinished {
                 Label("route.follow.finished", systemImage: "flag.checkered")
-                    .font(AppTypography.title)
+                    .font(AppTypography.h3)
                     .foregroundStyle(AppColors.success)
             } else if progress.isApproaching {
                 VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                     Text("route.follow.approach \(TripFormat.distance(progress.distanceToRoute))")
-                        .font(AppTypography.title)
+                        .font(AppTypography.h3)
                     Text("route.follow.approach.hint")
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textSecondary)
@@ -192,7 +192,7 @@ struct FollowRouteView: View {
                         .foregroundStyle(AppColors.destructive)
                     }
                     Text("route.follow.remaining \(TripFormat.distance(progress.remaining))")
-                        .font(AppTypography.title)
+                        .font(AppTypography.h3)
                     ProgressView(value: progress.fraction)
                     Text("route.follow.traveled \(TripFormat.distance(progress.traveled)) \(TripFormat.distance(progress.total))")
                         .font(AppTypography.caption)
