@@ -103,8 +103,17 @@ jobs:
       - name: OpenStreetMap extract
         run: |
           mkdir -p data
-          curl -sSfL -o data/kz.osm.pbf https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf
-          curl -sSfL -o data/kg.osm.pbf https://download.geofabrik.de/asia/kyrgyzstan-latest.osm.pbf
+          # Geofabrik ставит cookie и перенаправляет на тот же адрес — без хранилища cookie curl ходит
+          # по кругу. Запасное зеркало — openstreetmap.fr.
+          fetch() {
+            curl -sSfL --retry 3 -A "Dalada-tiles (+https://github.com/dkicekeeper/Dalada)" \
+              -b "$RUNNER_TEMP/cookies" -c "$RUNNER_TEMP/cookies" -o "data/$1.osm.pbf" \
+              "https://download.geofabrik.de/asia/$2-latest.osm.pbf" \
+            || curl -sSfL --retry 3 -o "data/$1.osm.pbf" "https://download.openstreetmap.fr/extracts/asia/$2-latest.osm.pbf"
+            ls -la "data/$1.osm.pbf"
+          }
+          fetch kz kazakhstan
+          fetch kg kyrgyzstan
           bounds=$(python3 -c "import json; print(','.join(map(str, json.load(open('map/config.json'))['bounds'])))")
           osmium merge data/kz.osm.pbf data/kg.osm.pbf -o data/merged.osm.pbf
           osmium extract --bbox "$bounds" --strategy smart data/merged.osm.pbf -o data/region.osm.pbf
