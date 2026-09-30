@@ -36,3 +36,8 @@ Deno.test("запрос к APNs: окружение, тема, тело", () => 
   assertEquals(JSON.parse(request.body).aps.alert.title, "Ответ: Дорога");
   assertEquals(JSON.parse(request.body).url, "dalada://thread/dddddddd-0000-0000-0000-000000000001");
 });
+
+Deno.test("проверочное уведомление — без ссылки, на языке устройства", () => {
+  const message = buildMessage({ ...reply, kind: "test", language: "en", payload: {} });
+  assertEquals(message, { title: "Dalada", body: "Notifications work — this is a test.", url: undefined });
+});

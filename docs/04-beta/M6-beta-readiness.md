@@ -221,7 +221,12 @@ Function `push` (через pg_net) → функция отправляет в A
    select vault.create_secret('<та же строка, что PUSH_WORKER_SECRET>', 'push_worker_secret');
    ```
 
-Проверка: второй аккаунт отправляет вам запрос в друзья — через минуту приходит пуш. Если нет —
+Проверка без второго аккаунта: GitHub → Actions → **Push check** → Run workflow, в поле username —
+свой username (без @). Workflow покажет, какие секреты заданы (только имена), сколько телефонов
+зарегистрировано, отправит «Уведомления работают» и напишет, ушло ли оно или какую ошибку вернул
+APNs.
+
+Проверка вживую: второй аккаунт отправляет вам запрос в друзья — через минуту приходит пуш. Если нет —
 Supabase → Edge Functions → push → Logs и `select * from private.push_outbox order by id desc` (поле
 `last_error`: `InvalidProviderToken` — неверные Key ID / Team ID / ключ, `BadDeviceToken` —
 сборка из Xcode против production или наоборот).

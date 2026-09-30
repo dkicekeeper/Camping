@@ -1,6 +1,6 @@
 // Тексты уведомлений на языке устройства и запрос к APNs.
 
-export type PushKind = "thread_reply" | "friend_request" | "friend_accept";
+export type PushKind = "thread_reply" | "friend_request" | "friend_accept" | "test";
 
 export type PushRow = {
   outbox_id: number;
@@ -20,16 +20,19 @@ const texts: Record<string, Record<PushKind, (p: Payload) => { title: string; bo
     thread_reply: (p) => ({ title: `Ответ: ${p.title ?? "обсуждение"}`, body: `${p.actor}: ${p.snippet ?? ""}` }),
     friend_request: (p) => ({ title: "Запрос в друзья", body: `${p.actor} хочет добавить вас в друзья` }),
     friend_accept: (p) => ({ title: "Новый друг", body: `${p.actor} теперь у вас в друзьях` }),
+    test: () => ({ title: "Dalada", body: "Уведомления работают — это проверка." }),
   },
   kk: {
     thread_reply: (p) => ({ title: `Жауап: ${p.title ?? "талқылау"}`, body: `${p.actor}: ${p.snippet ?? ""}` }),
     friend_request: (p) => ({ title: "Достық сұрауы", body: `${p.actor} сізді достарға қосқысы келеді` }),
     friend_accept: (p) => ({ title: "Жаңа дос", body: `${p.actor} енді сіздің досыңыз` }),
+    test: () => ({ title: "Dalada", body: "Хабарландырулар жұмыс істейді — бұл тексеру." }),
   },
   en: {
     thread_reply: (p) => ({ title: `Reply: ${p.title ?? "discussion"}`, body: `${p.actor}: ${p.snippet ?? ""}` }),
     friend_request: (p) => ({ title: "Friend request", body: `${p.actor} wants to add you as a friend` }),
     friend_accept: (p) => ({ title: "New friend", body: `${p.actor} is now your friend` }),
+    test: () => ({ title: "Dalada", body: "Notifications work — this is a test." }),
   },
 };
 
