@@ -50,7 +50,7 @@ final class ListsStore {
         }
         userID = current
         if current != nil {
-            try? await store.adopt(from: OwnRecordStore.guestAccount, into: account)
+            _ = try? await store.adopt(from: OwnRecordStore.guestAccount, into: account)
         }
         await reload()
         await sync()

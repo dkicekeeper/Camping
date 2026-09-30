@@ -12,5 +12,15 @@
     "ru",
     "kk",
     "en"
-  ]
+  ],
+  "relief": {
+    "terrain_zooms": [
+      8,
+      12
+    ],
+    "contour_zooms": [
+      11,
+      13
+    ]
+  }
 }

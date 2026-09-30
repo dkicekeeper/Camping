@@ -1,7 +1,8 @@
 name: Map tiles
 
 # Своя карта в Cloudflare R2 (map/README.md): стили, шрифты и значки — при изменениях в map/ в main;
-# тайлы региона из OpenStreetMap (Planetiler) — вручную и раз в месяц.
+# тайлы региона из OpenStreetMap (Planetiler) — вручную и раз в месяц; рельеф и горизонтали из
+# Copernicus DEM (map/relief.py) — вручную: высоты не меняются.
 # Секреты: R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY (Account ID — в map/config.json); бакет —
 # переменная R2_BUCKET (по умолчанию dalada-tiles).
 on:
@@ -11,6 +12,10 @@ on:
         description: "Пересобрать тайлы (15–40 минут); без галочки — только стили, шрифты и значки"
         type: boolean
         default: true
+      relief:
+        description: "Пересобрать рельеф и горизонтали (Copernicus DEM, 20–40 минут)"
+        type: boolean
+        default: false
   schedule:
     - cron: "23 2 3 * *"
   push:
@@ -30,8 +35,85 @@ env:
   RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
 
 jobs:
+  # Рельеф — раньше стилей: стиль ссылается на эти тайлы.
+  relief:
+    name: Relief and contours
+    if: github.event_name == 'workflow_dispatch' && inputs.relief
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: R2 access
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: bash map/r2_env.sh
+
+      - name: Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rclone gdal-bin python3-gdal python3-numpy python3-pil tippecanoe > /dev/null
+          gdalinfo --version && tippecanoe --version 2>&1 | head -1
+
+      - name: Copernicus DEM
+        run: |
+          python3 map/relief.py download data/dem
+          bounds=$(python3 -c "import json; print(' '.join(map(str, json.load(open('map/config.json'))['bounds'])))")
+          gdalbuildvrt -q data/dem.vrt data/dem/*.tif
+          gdalbuildvrt -q -te $bounds data/region.vrt data/dem/*.tif
+          du -sh data/dem
+
+      # Горизонтали: через 100 м — по высотам, усреднённым до ~90 м (масштабы 11–12), через 20 м — по
+      # исходным ~30 м (13-й; крупнее MapLibre растягивает). Короткие замкнутые линии (бугорки, шум
+      # высот) отбрасываем; idx = 1 — у горизонталей, кратных 100 м (толще и с подписью).
+      - name: Contours
+        run: |
+          read z0 z1 < <(python3 -c "import json; r = json.load(open('map/config.json'))['relief']['contour_zooms']; print(r[0], r[1])")
+          gdal_contour -q -a ele -i 20 -f FlatGeobuf data/region.vrt data/c20.fgb
+          gdalwarp -q -r average -tr 0.000833333333 0.000833333333 data/region.vrt data/dem90.tif
+          gdal_contour -q -a ele -i 100 -f FlatGeobuf data/dem90.tif data/c100.fgb
+          ogr2ogr -f FlatGeobuf data/m20.fgb data/c20.fgb -dialect sqlite -sql \
+            "SELECT geometry, CAST(ele AS INTEGER) AS ele, CAST(ele AS INTEGER) % 100 = 0 AS idx FROM contour WHERE ST_Length(geometry) > 0.003"
+          ogr2ogr -f FlatGeobuf data/m100.fgb data/c100.fgb -dialect sqlite -sql \
+            "SELECT geometry, CAST(ele AS INTEGER) AS ele, 1 AS idx FROM contour WHERE ST_Length(geometry) > 0.006"
+          rm data/c20.fgb data/c100.fgb data/dem90.tif
+          ls -la data/*.fgb
+          tippecanoe -q -f -o data/contours-low.mbtiles -l contour -Z"$z0" -z"$((z1 - 1))" data/m100.fgb
+          tippecanoe -q -f -o data/contours-high.mbtiles -l contour -Z"$z1" -z"$z1" data/m20.fgb
+          tile-join -q -f -o data/contours.mbtiles data/contours-low.mbtiles data/contours-high.mbtiles
+          python3 map/dump_mbtiles.py data/contours.mbtiles public/contours
+
+      - name: Terrain tiles
+        run: python3 map/relief.py terrain data/dem.vrt public/relief
+
+      - name: Upload
+        run: |
+          base=$(python3 -c "import json; print(json.load(open('map/config.json'))['public_base'])")
+          rclone copy public/contours "r2:$R2_BUCKET/contours" --checksum --transfers 96 --checkers 96 --fast-list \
+            --header-upload "Content-Encoding: gzip" --header-upload "Content-Type: application/x-protobuf" \
+            --header-upload "Cache-Control: public, max-age=604800" --stats 60s --stats-one-line
+          rclone copy public/relief "r2:$R2_BUCKET/relief" --checksum --transfers 96 --checkers 96 --fast-list \
+            --header-upload "Content-Type: image/png" \
+            --header-upload "Cache-Control: public, max-age=604800" --stats 60s --stats-one-line
+          for path in "contours/$(cd public/contours && ls -d 13/*/* | head -1)" "relief/$(cd public/relief && ls -d 12/*/* | head -1)"; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -H "Accept-Encoding: gzip" "$base/$path")
+            echo "$base/$path → $code"
+            [ "$code" = 200 ] || exit 1
+          done
+          {
+            echo "Горизонтали: $(find public/contours -name '*.pbf' | wc -l) тайлов, $(du -sh public/contours | cut -f1)"
+            echo "Высоты: $(find public/relief -name '*.png' | wc -l) тайлов, $(du -sh public/relief | cut -f1)"
+            echo
+            python3 map/region_sizes.py public/relief public/contours
+          } >> "$GITHUB_STEP_SUMMARY"
+          python3 map/region_sizes.py public/relief public/contours
+
   assets:
     name: Styles, fonts and sprites
+    needs: relief
+    # Рельеф пересобирается не всегда: стили выкладываем, если он пропущен или собрался.
+    if: ${{ !cancelled() && needs.relief.result != 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -77,7 +159,8 @@ jobs:
   tiles:
     name: Region tiles
     needs: assets
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tiles)
+    # Без !cancelled() пропущенный рельеф (он выше по цепочке) пропустил бы и эту задачу.
+    if: ${{ !cancelled() && needs.assets.result == 'success' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tiles)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
