@@ -1,6 +1,6 @@
 #!/bin/sh
 # Пересоздаёт ios/Dalada.xcodeproj, если между двумя коммитами изменился ios/project.yml
-# или в ios/Dalada/ добавились, удалились или переименовались файлы.
+# или в ios/Dalada/ или ios/DaladaWidgets/ добавились, удалились или переименовались файлы.
 # Файлы Swift-пакета ios/Packages/DaladaKit Xcode подхватывает сам — для них генерация не нужна.
 set -u
 
@@ -11,7 +11,7 @@ to=$2
 needs_generate=0
 [ -d "$root/ios/Dalada.xcodeproj" ] || needs_generate=1
 git diff --quiet "$from" "$to" -- ios/project.yml 2>/dev/null || needs_generate=1
-[ -n "$(git diff --name-only --diff-filter=ADR "$from" "$to" -- ios/Dalada 2>/dev/null)" ] && needs_generate=1
+[ -n "$(git diff --name-only --diff-filter=ADR "$from" "$to" -- ios/Dalada ios/DaladaWidgets 2>/dev/null)" ] && needs_generate=1
 
 [ "$needs_generate" = 1 ] || exit 0
 

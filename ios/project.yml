@@ -8,6 +8,16 @@ options:
   createIntermediateGroups: true
   developmentLanguage: ru
 
+# Общее для приложения и расширения: версии должны совпадать, иначе App Store не примет сборку.
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: SY2L2VMQP7
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+
 packages:
   DaladaKit:
     path: Packages/DaladaKit
@@ -28,16 +38,11 @@ targets:
     dependencies:
       - package: DaladaKit
         product: AppFeature
+      - target: DaladaWidgets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.dalada.ios
         PRODUCT_NAME: Dalada
-        MARKETING_VERSION: "0.1.0"
-        CURRENT_PROJECT_VERSION: "1"
-        DEVELOPMENT_TEAM: SY2L2VMQP7
-        CODE_SIGN_STYLE: Automatic
-        TARGETED_DEVICE_FAMILY: "1"
-        SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: Dalada/Info.plist
         CODE_SIGN_ENTITLEMENTS: Dalada/Dalada.entitlements
@@ -47,7 +52,30 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Чтобы показать вас на карте, отмечаться в местах и записывать поездки."
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         LOCALIZATION_PREFERS_STRING_CATALOGS: YES
         SWIFT_EMIT_LOC_STRINGS: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+  # Расширение виджетов: Live Activity записи поездки (экран блокировки, Dynamic Island).
+  DaladaWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: DaladaWidgets
+        excludes:
+          - Info.plist
+    dependencies:
+      - package: DaladaKit
+        product: TripLiveActivity
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.dalada.ios.widgets
+        PRODUCT_NAME: DaladaWidgets
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: DaladaWidgets/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Dalada
+        SKIP_INSTALL: YES
         ENABLE_USER_SCRIPT_SANDBOXING: YES

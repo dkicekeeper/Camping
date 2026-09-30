@@ -14,8 +14,9 @@ iOS-приложение для рыбалки и отдыха на природ
 ## Структура
 
 - `supabase/` — миграции (`migrations/`), тесты pgTAP (`tests/database/`), `config.toml`.
-- `ios/` — `project.yml` (XcodeGen; `.xcodeproj` не хранится в git), таргет `Dalada/`,
-  модули в `Packages/DaladaKit` (DaladaCore → DaladaUI / MapEngine / Backend → AppFeature).
+- `ios/` — `project.yml` (XcodeGen; `.xcodeproj` не хранится в git), таргеты `Dalada/` и
+  `DaladaWidgets/` (Live Activity), модули в `Packages/DaladaKit` (DaladaCore → DaladaUI / MapEngine /
+  Backend / Persistence → Sync / TripLiveActivity → AppFeature).
 - `docs/` — бриф, анализ рынка, план продукта, архитектура, путь к бете.
 
 ## База данных: правила
@@ -46,11 +47,15 @@ supabase test db                                    # pgTAP
 
 iOS собирается только на Mac (Xcode 26, iOS 26): `cd ios && xcodegen generate`. Хуки в `.githooks/`
 (включаются `git config core.hooksPath .githooks`) пересоздают проект после `git pull`, если изменился
-`ios/project.yml` или состав файлов `ios/Dalada/`. Новые файлы кладём в пакет `DaladaKit`, где
+`ios/project.yml` или состав файлов `ios/Dalada/` и `ios/DaladaWidgets/`. Новые файлы кладём в пакет `DaladaKit`, где
 генерация не нужна. На Linux можно
 проверить синтаксис (`swiftc -parse`) и модули без UI (`DaladaCore`, `Persistence`, `Sync`, `Backend`) отдельным
 пакетом: у `DaladaKit` платформа только iOS, поэтому для Linux — свой `Package.swift` со ссылками на
 папки исходников.
+
+Настоящую сборку приложения и тесты пакета делает GitHub Actions на macOS (`.github/workflows/ios.yml`,
+в том числе на ветках `claude/**`). Код iOS попадает в `main` только после зелёной сборки на рабочей
+ветке. Сборка в TestFlight — `.github/workflows/testflight.yml` (вручную, см. `docs/04-beta/testflight.md`).
 
 ## Секреты
 

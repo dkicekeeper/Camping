@@ -14,6 +14,8 @@ let package = Package(
         // `DaladaKit-Package`, которая собирает всё и запускает все тесты (так делает CI).
         .library(name: "Persistence", targets: ["Persistence"]),
         .library(name: "Sync", targets: ["Sync"]),
+        // Для расширения виджетов (Live Activity поездки).
+        .library(name: "TripLiveActivity", targets: ["TripLiveActivity"]),
     ],
     dependencies: [
         // DesignKit без тегов — закрепляем на коммите.
@@ -68,6 +70,9 @@ let package = Package(
             dependencies: ["DaladaCore", "Persistence"]
         ),
 
+        // Live Activity записи поездки — общая для приложения и расширения виджетов.
+        .target(name: "TripLiveActivity"),
+
         // Вкладки, навигация, экраны.
         .target(
             name: "AppFeature",
@@ -78,6 +83,7 @@ let package = Package(
                 "Backend",
                 "Persistence",
                 "Sync",
+                "TripLiveActivity",
                 .product(name: "DesignKit", package: "DesignKit"),
             ]
         ),

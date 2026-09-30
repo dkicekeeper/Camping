@@ -35,6 +35,7 @@ final class TripRecorder {
 
     private let store: TripStore
     private let filter = TrackFilter()
+    @ObservationIgnored private let liveActivity = TripLiveActivityController()
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
     @ObservationIgnored private var backgroundSession: CLBackgroundActivitySession?
     @ObservationIgnored private var serviceSession: CLServiceSession?
@@ -66,6 +67,7 @@ final class TripRecorder {
         nextStartsSegment = false
         phase = .recording
         beginUpdates()
+        liveActivity.start(activity: activity, startedAt: now, distanceM: 0, isPaused: false)
     }
 
     func pause() async {
@@ -73,12 +75,14 @@ final class TripRecorder {
         phase = .paused
         stopUpdates()
         nextStartsSegment = true
+        liveActivity.update(distanceM: stats.distanceM, isPaused: true, force: true)
         try? await store.setState(.paused)
     }
 
     func resume() async {
         guard phase == .paused else { return }
         phase = .recording
+        liveActivity.update(distanceM: stats.distanceM, isPaused: false, force: true)
         try? await store.setState(.recording)
         beginUpdates()
     }
@@ -95,6 +99,7 @@ final class TripRecorder {
             endedAt: endedAt,
             now: Date()
         )
+        liveActivity.end()
         reset()
     }
 
@@ -102,6 +107,7 @@ final class TripRecorder {
     func discard() async {
         stopUpdates()
         try? await store.discardActive()
+        liveActivity.end()
         reset()
     }
 
@@ -122,6 +128,12 @@ final class TripRecorder {
             phase = .paused
             nextStartsSegment = true
         }
+        liveActivity.start(
+            activity: active.activity,
+            startedAt: active.startedAt,
+            distanceM: stats.distanceM,
+            isPaused: phase == .paused
+        )
     }
 
     private func reset() {
@@ -191,6 +203,7 @@ final class TripRecorder {
         lastAccepted = point
         stats.add(point)
         track.append(point.coordinate)
+        liveActivity.update(distanceM: stats.distanceM, isPaused: false)
         try? await store.append(point, to: tripID)
     }
 }
