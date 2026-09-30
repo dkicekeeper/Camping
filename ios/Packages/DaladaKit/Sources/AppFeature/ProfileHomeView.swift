@@ -16,6 +16,7 @@ struct ProfileHomeView: View {
     @State private var connection: ConnectionState = .checking
     @State private var showsPrivacyZones = false
     @State private var showsAccount = false
+    @State private var showsAbout = false
 
     var body: some View {
         NavigationStack {
@@ -35,9 +36,22 @@ struct ProfileHomeView: View {
             .navigationDestination(isPresented: $showsAccount) {
                 AccountView()
             }
+            .navigationDestination(isPresented: $showsAbout) {
+                AboutView()
+            }
             .task { await checkConnection() }
             .toolbar {
-                if session.profile != nil {
+                if session.profile == nil {
+                    // Гостю — поддержка и документы.
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showsAbout = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .accessibilityLabel(Text("about.title"))
+                        }
+                    }
+                } else {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
                             Button("privacyZones.title", systemImage: "house.circle") {

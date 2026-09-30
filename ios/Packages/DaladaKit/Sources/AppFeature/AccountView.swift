@@ -53,6 +53,8 @@ struct AccountView: View {
             } footer: {
                 Text("account.delete.footer")
             }
+
+            LegalLinksSection()
         }
         .navigationTitle("account.title")
         .navigationBarTitleDisplayMode(.inline)

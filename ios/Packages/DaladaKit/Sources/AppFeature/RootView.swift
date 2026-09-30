@@ -127,10 +127,16 @@ public struct RootView: View {
             .environment(reactions)
             .environment(rules)
         }
-        // После первого входа — выбор username, пока он не сохранён.
-        .fullScreenCover(isPresented: $session.isUsernameOnboardingPresented) {
-            UsernameOnboardingView()
-                .environment(session)
+        // После первого входа — согласие с условиями, затем выбор username.
+        .fullScreenCover(isPresented: $session.isOnboardingPresented) {
+            Group {
+                if session.needsConsent {
+                    ConsentView()
+                } else {
+                    UsernameOnboardingView()
+                }
+            }
+            .environment(session)
         }
         .environment(session)
         .environment(species)

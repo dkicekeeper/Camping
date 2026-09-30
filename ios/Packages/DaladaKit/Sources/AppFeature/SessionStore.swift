@@ -25,6 +25,9 @@ final class SessionStore {
     private(set) var state: State = .loading
     private(set) var isWorking = false
     var errorMessage: String?
+    /// Профиль пришёл с сервера в этот запуск, а не из кэша. Согласие просим только тогда: без сети
+    /// его не отправить, а приложение должно работать и без сети.
+    private var isProfileFresh = false
 
     let backend: BackendClient?
     /// Профиль на случай запуска без сети.
@@ -50,9 +53,14 @@ final class SessionStore {
         if case .needsUsername = state { true } else { false }
     }
 
-    /// Для `.fullScreenCover`: онбординг закрывается сам, когда username сохранён.
-    var isUsernameOnboardingPresented: Bool {
-        get { needsUsername }
+    /// Нужно принять условия и политику конфиденциальности (новый человек или новая версия).
+    var needsConsent: Bool {
+        isProfileFresh && profile?.needsTermsConsent == true
+    }
+
+    /// Для `.fullScreenCover`: согласие, затем выбор username; закрывается сам, когда всё сделано.
+    var isOnboardingPresented: Bool {
+        get { needsConsent || needsUsername }
         set {}
     }
 
@@ -81,6 +89,7 @@ final class SessionStore {
         guard let backend else { return }
         do {
             let profile = try await backend.myProfile()
+            isProfileFresh = true
             apply(profile)
             try? await cache?.save(profile, for: .profile(profile.id))
         } catch {
@@ -175,6 +184,22 @@ final class SessionStore {
         try? await database?.outbox.removeAll(owner: userID)
         try? await database?.ownRecords.removeAll(account: OwnRecordStore.account(for: userID))
         state = .guest
+        return nil
+    }
+
+    /// Принять условия и политику текущей версии. Возвращает текст ошибки или `nil` при успехе.
+    func acceptTerms() async -> String? {
+        guard let backend, var profile else { return String(localized: "auth.error.generic") }
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            try await backend.acceptTerms(version: LegalDocuments.version)
+        } catch {
+            return String(localized: "consent.failed")
+        }
+        profile.termsVersion = LegalDocuments.version
+        apply(profile)
+        try? await cache?.save(profile, for: .profile(profile.id))
         return nil
     }
 

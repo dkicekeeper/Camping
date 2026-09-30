@@ -8,6 +8,8 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
     public var avatarPath: String?
     public var city: String?
     public var language: String
+    /// Какую версию условий и политики человек принял (`LegalDocuments.version`); `nil` — никакую.
+    public var termsVersion: Int?
 
     public init(
         id: UUID,
@@ -15,7 +17,8 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
         displayName: String? = nil,
         avatarPath: String? = nil,
         city: String? = nil,
-        language: String = "ru"
+        language: String = "ru",
+        termsVersion: Int? = nil
     ) {
         self.id = id
         self.username = username
@@ -23,6 +26,12 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
         self.avatarPath = avatarPath
         self.city = city
         self.language = language
+        self.termsVersion = termsVersion
+    }
+
+    /// Нужно принять условия и политику (новый человек или документы изменились).
+    public var needsTermsConsent: Bool {
+        (termsVersion ?? 0) < LegalDocuments.version
     }
 
     enum CodingKeys: String, CodingKey {
@@ -32,6 +41,7 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
         case avatarPath = "avatar_path"
         case city
         case language
+        case termsVersion = "terms_version"
     }
 }
 

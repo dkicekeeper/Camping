@@ -62,8 +62,14 @@ TestFlight → **External Testing** → группа → «Public Link». Для
 
 Проверяющие Apple смотрят требования к пользовательскому контенту: жалобы, блокировка, фильтр,
 контакт для связи (Guideline 1.2), удаление аккаунта из приложения (5.1.1(v)). Жалобы, блокировка,
-фильтр и удаление аккаунта есть со сборки 107; контакт для связи и политика конфиденциальности —
-в M6c.
+фильтр и удаление аккаунта есть со сборки 107; ссылки на политику и поддержку в приложении и
+согласие при входе — со следующей сборки (M6c).
+
+**Test Information** (TestFlight → Test Information): Feedback Email — dakacom@gmail.com; Privacy
+Policy URL — https://dkicekeeper.github.io/Dalada/privacy-policy.html (страница публикуется через
+GitHub Pages, см. [M6c](M6-beta-readiness.md#m6c-документы-поддержка-согласие)); в Beta App Review
+Information — контакт и, если просят, тестовый вход (у нас вход через Apple/Google — достаточно
+написать, что можно войти своим Apple ID).
 
 ## Каждая сборка
 

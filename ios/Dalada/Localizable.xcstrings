@@ -1,6 +1,29 @@
 {
   "sourceLanguage" : "ru",
   "strings" : {
+    "about.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Қосымша туралы"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "О приложении"
+          }
+        }
+      }
+    },
     "account.delete" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3079,6 +3102,121 @@
         }
       }
     },
+    "consent.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dalada stores your profile, places, check-ins, catches, photos and trips on a Supabase server in Germany, outside Kazakhstan. You choose who sees what: everyone, friends or only you. Reviews and discussions of public places are visible to everyone; we remove anything that breaks the community rules."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Dalada профиліңізді, орындарыңызды, белгілеріңізді, олжаңызды, фотоларыңызды және сапарларыңызды Германиядағы Supabase серверінде — Қазақстаннан тыс жерде сақтайды. Кім нені көретінін өзіңіз таңдайсыз: «барлығы», «достар» немесе «тек мен». Жария орындардың пікірлері мен талқылауларын барлығы көреді; қауымдастық ережелерін бұзатынын жоямыз."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dalada хранит ваш профиль, места, чекины, уловы, фото и поездки на сервере Supabase в Германии — за пределами Казахстана. Кто что видит, вы выбираете сами: «все», «друзья» или «только я». Отзывы и обсуждения публичных мест видят все; то, что нарушает правила сообщества, мы удаляем."
+          }
+        }
+      }
+    },
+    "consent.checkbox" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I accept the terms of use, community rules and privacy policy and agree that my data is stored outside Kazakhstan"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Мен пайдалану шарттарын, қауымдастық ережелерін және құпиялылық саясатын қабылдаймын және деректерімнің Қазақстаннан тыс жерде сақталуына келісемін"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Я принимаю условия использования, правила сообщества и политику конфиденциальности и соглашаюсь на хранение моих данных за пределами Казахстана"
+          }
+        }
+      }
+    },
+    "consent.continue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жалғастыру"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжить"
+          }
+        }
+      }
+    },
+    "consent.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save your consent. Check the connection and try again."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Келісімді сақтау мүмкін болмады. Желіні тексеріп, қайталап көріңіз."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить согласие. Проверьте сеть и попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "consent.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terms and privacy"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Шарттар мен құпиялылық"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Условия и конфиденциальность"
+          }
+        }
+      }
+    },
     "feed.all" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4865,6 +5003,121 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пригласить друга"
+          }
+        }
+      }
+    },
+    "legal.contact" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact us"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Бізге жазу"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Написать нам"
+          }
+        }
+      }
+    },
+    "legal.privacy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy policy"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Құпиялылық саясаты"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Политика конфиденциальности"
+          }
+        }
+      }
+    },
+    "legal.support" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support and FAQ"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Қолдау және жиі сұрақтар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поддержка и частые вопросы"
+          }
+        }
+      }
+    },
+    "legal.terms" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terms and community rules"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Шарттар мен қауымдастық ережелері"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Условия и правила сообщества"
+          }
+        }
+      }
+    },
+    "legal.version %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Нұсқа %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версия %@"
           }
         }
       }
