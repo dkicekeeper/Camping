@@ -262,7 +262,7 @@ struct TripFinishView: View {
     @State private var title = ""
     @State private var note = ""
     @State private var activity: TripActivity = .fishing
-    @State private var visibility: Visibility = .private
+    @State private var visibility: DaladaCore.Visibility = .private
     @State private var isSaving = false
     @State private var saveError: String?
     @State private var confirmsDiscard = false
@@ -300,7 +300,7 @@ struct TripFinishView: View {
 
                 Section {
                     Picker("place.form.visibility", selection: $visibility) {
-                        ForEach(Visibility.allCases) { item in
+                        ForEach(DaladaCore.Visibility.allCases) { item in
                             Text(LocalizedStringKey(item.titleKey)).tag(item)
                         }
                     }

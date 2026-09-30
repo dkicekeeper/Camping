@@ -52,6 +52,10 @@ struct UnavailableSender: OutboxSending {
         throw URLError(.cannotFindHost)
     }
 
+    func send(_ trip: TripDraft) async throws {
+        throw URLError(.cannotFindHost)
+    }
+
     func failure(for error: any Error) -> SendFailure { .signedOut }
 }
 
