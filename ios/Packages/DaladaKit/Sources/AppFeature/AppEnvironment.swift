@@ -4,6 +4,7 @@ import DesignTokens
 import Foundation
 import MapEngine
 import Persistence
+import SwiftUI
 
 /// Зависимости приложения, которые передаются экранам.
 public struct AppEnvironment: Sendable {
@@ -64,6 +65,9 @@ struct UnavailableSender: OutboxSending {
 public enum AppBootstrap {
     @MainActor
     public static func configure() {
+        // Акцент Dalada — зелёный из AccentColor приложения (светлая #2E8B57, тёмная #3CB371):
+        // один цвет и для AppColors.accent, и для системных элементов. До первого экрана.
+        DesignKitTheme.accent = Color("AccentColor")
         // Шрифт Inter из DesignKit должен быть зарегистрирован до первого экрана.
         DesignKitFonts.registerIfNeeded()
         // Просмотренные районы карты остаются доступны без сети.

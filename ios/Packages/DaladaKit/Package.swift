@@ -18,8 +18,9 @@ let package = Package(
         .library(name: "TripLiveActivity", targets: ["TripLiveActivity"]),
     ],
     dependencies: [
-        // DesignKit без тегов — закрепляем на коммите.
-        .package(url: "https://github.com/dkicekeeper/DesignKit", revision: "b87b25055580449647c3f37601561e47f593a6b1"),
+        // DesignKit — точная версия: обновление приходит только сменой номера здесь (CI DesignKit
+        // собирает Dalada с каждым своим изменением, так что новая версия уже проверена на нас).
+        .package(url: "https://github.com/dkicekeeper/DesignKit", exact: "0.2.0"),
         .package(url: "https://github.com/maplibre/maplibre-gl-native-distribution", from: "6.31.0"),
         .package(url: "https://github.com/supabase/supabase-swift", from: "2.55.3"),
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.11.1"),
