@@ -2,6 +2,7 @@ import Backend
 import DaladaCore
 import DesignTokens
 import Foundation
+import MapEngine
 import Persistence
 
 /// Зависимости приложения, которые передаются экранам.
@@ -65,5 +66,7 @@ public enum AppBootstrap {
     public static func configure() {
         // Шрифт Inter из DesignKit должен быть зарегистрирован до первого экрана.
         DesignKitFonts.registerIfNeeded()
+        // Просмотренные районы карты остаются доступны без сети.
+        MapCache.configure()
     }
 }
