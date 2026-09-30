@@ -596,6 +596,7 @@ struct TripDetailView: View {
     @State private var visibilityError: String?
     @State private var showsVisibilityError = false
     @State private var selectedPlace: PlaceSelection?
+    @State private var followed: FollowedRoute?
 
     var body: some View {
         Group {
@@ -644,6 +645,9 @@ struct TripDetailView: View {
             PlaceCardView(placeID: selection.id, environment: environment)
                 .presentationDetents([.medium, .large])
         }
+        .fullScreenCover(item: $followed) { route in
+            FollowRouteView(route: route, environment: environment)
+        }
         .task { await load() }
         .task { await speciesStore.loadIfNeeded() }
     }
@@ -666,6 +670,16 @@ struct TripDetailView: View {
                     )
                     .frame(height: 260)
                     .clipShape(RoundedRectangle(cornerRadius: AppRadius.xl))
+                }
+                // Пройти по треку: линия маршрута, сколько осталось, предупреждение при сходе.
+                if let route = FollowedRoute(trip: trip) {
+                    Button {
+                        followed = route
+                    } label: {
+                        Label("route.follow", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .secondaryButton()
                 }
                 if !trip.isOwn {
                     Label(

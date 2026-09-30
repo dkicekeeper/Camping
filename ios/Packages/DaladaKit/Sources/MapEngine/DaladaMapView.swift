@@ -67,6 +67,8 @@ public struct DaladaMapView: UIViewRepresentable {
     let draftPin: GeoPoint?
     /// Отрезки трека: своя поездка — один, чужая — видимые части без скрытых участков.
     let trackSegments: [[GeoPoint]]
+    /// Маршрут, по которому человек идёт (следование), — широкой полупрозрачной линией под треком.
+    let routeSegments: [[GeoPoint]]
     let cameraMode: MapCameraMode
     /// Зоны правил (запреты) — под местами и треком.
     let ruleAreas: [MapRuleArea]
@@ -83,6 +85,7 @@ public struct DaladaMapView: UIViewRepresentable {
         places: [MapPlace] = [],
         draftPin: GeoPoint? = nil,
         trackSegments: [[GeoPoint]] = [],
+        routeSegments: [[GeoPoint]] = [],
         cameraMode: MapCameraMode = .free,
         ruleAreas: [MapRuleArea] = [],
         onRegionChange: @escaping @MainActor (GeoBoundingBox) -> Void = { _ in },
@@ -97,6 +100,7 @@ public struct DaladaMapView: UIViewRepresentable {
         self.places = places
         self.draftPin = draftPin
         self.trackSegments = trackSegments
+        self.routeSegments = routeSegments
         self.cameraMode = cameraMode
         self.ruleAreas = ruleAreas
         self.onRegionChange = onRegionChange
@@ -151,6 +155,8 @@ public struct DaladaMapView: UIViewRepresentable {
         weak var mapView: MLNMapView?
         private var source: MLNShapeSource?
         private var trackSource: MLNShapeSource?
+        private var routeSource: MLNShapeSource?
+        private var renderedRoute: [[GeoPoint]]?
         private var ruleSource: MLNShapeSource?
         private var renderedRuleAreas: [MapRuleArea]?
         private var renderedPlaces: [MapPlace]?
@@ -170,6 +176,8 @@ public struct DaladaMapView: UIViewRepresentable {
             static let draft = "dalada-draft-pin"
             static let trackSource = "dalada-track"
             static let trackLine = "dalada-track-line"
+            static let routeSource = "dalada-route"
+            static let routeLine = "dalada-route-line"
             static let ruleSource = "dalada-rules"
             static let ruleFill = "dalada-rules-fill"
             static let ruleLine = "dalada-rules-line"
@@ -181,6 +189,10 @@ public struct DaladaMapView: UIViewRepresentable {
             if let ruleSource, parent.ruleAreas != renderedRuleAreas {
                 renderedRuleAreas = parent.ruleAreas
                 ruleSource.shape = MLNShapeCollectionFeature(shapes: Self.ruleFeatures(parent.ruleAreas))
+            }
+            if let routeSource, parent.routeSegments != renderedRoute {
+                renderedRoute = parent.routeSegments
+                routeSource.shape = Self.trackShape(parent.routeSegments)
             }
             if let trackSource, parent.trackSegments != renderedTrack {
                 renderedTrack = parent.trackSegments
@@ -273,6 +285,19 @@ public struct DaladaMapView: UIViewRepresentable {
             style.addLayer(ruleLine)
             self.ruleSource = ruleSource
             renderedRuleAreas = nil
+
+            // Маршрут для следования — под треком.
+            let routeSource = MLNShapeSource(identifier: Layer.routeSource, shape: nil, options: nil)
+            style.addSource(routeSource)
+            let routeLine = MLNLineStyleLayer(identifier: Layer.routeLine, source: routeSource)
+            routeLine.lineColor = NSExpression(forConstantValue: UIColor.systemBlue)
+            routeLine.lineWidth = NSExpression(forConstantValue: 7)
+            routeLine.lineOpacity = NSExpression(forConstantValue: 0.55)
+            routeLine.lineCap = NSExpression(forConstantValue: "round")
+            routeLine.lineJoin = NSExpression(forConstantValue: "round")
+            style.addLayer(routeLine)
+            self.routeSource = routeSource
+            renderedRoute = nil
 
             // Трек — под точками мест.
             let trackSource = MLNShapeSource(identifier: Layer.trackSource, shape: nil, options: nil)
