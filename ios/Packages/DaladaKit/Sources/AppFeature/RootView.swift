@@ -1,4 +1,5 @@
 import DaladaCore
+import DaladaUI
 import DesignComponents
 import SwiftUI
 import Sync
@@ -27,6 +28,8 @@ public struct RootView: View {
     /// Выбор из «+», который выполняется, когда лист «+» закроется.
     @State private var pendingTripActivity: TripActivity?
     @State private var opensRecordingAfterSheet = false
+    /// Открытая ссылка-приглашение `dalada://u/<username>`.
+    @State private var profileLink: ProfileLink?
 
     public init(environment: AppEnvironment) {
         self.environment = environment
@@ -85,6 +88,26 @@ public struct RootView: View {
                 .environment(session)
                 .environment(sync)
                 .environment(species)
+        }
+        // Ссылка-приглашение из QR-кода или сообщения — профиль человека.
+        .onOpenURL { url in
+            if let username = InviteLink.username(from: url) {
+                profileLink = ProfileLink(username: username)
+            }
+        }
+        .sheet(item: $profileLink) { link in
+            NavigationStack {
+                if session.profile != nil {
+                    UserProfileView(username: link.username, environment: environment)
+                } else {
+                    PlaceholderScreen(
+                        icon: "person.crop.circle.badge.questionmark",
+                        title: "@" + link.username,
+                        description: String(localized: "invite.signInToAdd")
+                    )
+                }
+            }
+            .environment(session)
         }
         // После первого входа — выбор username, пока он не сохранён.
         .fullScreenCover(isPresented: $session.isUsernameOnboardingPresented) {
