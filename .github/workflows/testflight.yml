@@ -71,7 +71,7 @@ jobs:
       # Идентификаторы приложения и расширения. Для отладочной сборки Xcode обходится общим профилем
       # команды, а для App Store каждому таргету нужен свой зарегистрированный идентификатор;
       # из xcodebuild по ключу API он его не создаёт («cannot register bundle identifier»).
-      - name: Register bundle identifiers
+      - name: Register bundle identifiers, clean up certificates
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -107,6 +107,27 @@ jobs:
                       print("::error::Ключ не может регистрировать идентификаторы: нужна роль Admin "
                             "(docs/04-beta/testflight.md, шаг 2) или регистрация вручную на developer.apple.com.")
                   sys.exit(1)
+
+          # Каждая облачная сборка создаёт сертификат «Apple Development: Created via API» (ключа от
+          # него на следующей машине нет), и у Apple есть лимит — старые отзываем. Для TestFlight они
+          # не нужны: сборку подписывает облачный сертификат распространения. Сертификаты,
+          # созданные в Xcode на Mac (с именем человека), не трогаем.
+          certificates = call("GET", "/certificates?" + urllib.parse.urlencode({"limit": 200})).get("data", [])
+          development = [c for c in certificates if c["attributes"].get("certificateType") in ("DEVELOPMENT", "IOS_DEVELOPMENT")]
+          created_by_ci = [c for c in development if "Created via API" in (c["attributes"].get("name") or "")]
+          print(f"Сертификатов разработки: {len(development)}, из них созданных сборками: {len(created_by_ci)}")
+          for certificate in certificates:
+              attributes = certificate["attributes"]
+              if attributes.get("certificateType") in ("DEVELOPMENT", "IOS_DEVELOPMENT") \
+                      and "Created via API" in (attributes.get("name") or ""):
+                  try:
+                      request = urllib.request.Request(
+                          "https://api.appstoreconnect.apple.com/v1/certificates/" + certificate["id"],
+                          method="DELETE", headers={"Authorization": "Bearer " + token})
+                      urllib.request.urlopen(request).read()
+                      print(f"Отозван сертификат сборки: {attributes.get('name')}, до {attributes.get('expirationDate', '')[:10]}")
+                  except urllib.error.HTTPError as error:
+                      print(f"::warning::Не удалось отозвать сертификат: HTTP {error.code}")
 
           for identifier, name in [("app.dalada.ios", "Dalada"), ("app.dalada.ios.widgets", "Dalada Widgets")]:
               query = urllib.parse.urlencode({"filter[identifier]": identifier, "limit": 200})
