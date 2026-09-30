@@ -23,6 +23,8 @@ jobs:
     name: Archive and upload to TestFlight
     runs-on: macos-26
     timeout-minutes: 60
+    outputs:
+      build: ${{ steps.archive.outputs.build }}
     steps:
       - uses: actions/checkout@v5
 
@@ -142,6 +144,7 @@ jobs:
           PY
 
       - name: Archive
+        id: archive
         working-directory: ios
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -150,6 +153,7 @@ jobs:
           # Номер сборки растёт с каждым запуском; +100 — чтобы не совпасть с загрузками из Xcode.
           BUILD_NUMBER=$((100 + GITHUB_RUN_NUMBER))
           echo "Build number: $BUILD_NUMBER"
+          echo "build=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
           xcodebuild archive \
             -project Dalada.xcodeproj \
             -scheme Dalada \
@@ -195,3 +199,13 @@ jobs:
       - name: Remove API key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
+
+  # What to Test и заметки для проверки — когда App Store Connect обработает сборку.
+  info:
+    name: TestFlight texts
+    needs: upload
+    uses: ./.github/workflows/testflight-info.yml
+    with:
+      build: ${{ needs.upload.outputs.build }}
+      wait: 45
+    secrets: inherit

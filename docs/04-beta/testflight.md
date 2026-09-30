@@ -75,50 +75,25 @@ GitHub Pages, см. [M6c](M6-beta-readiness.md#m6c-документы-подде
 Information — контакт и, если просят, тестовый вход (у нас вход через Apple/Google — достаточно
 написать, что можно войти своим Apple ID).
 
-### Тексты для Beta App Review
+### Тексты для TestFlight и Beta App Review
 
-Проверяющие Apple читают по-английски. **What to Test** (Test Details, для каждой сборки):
+Тексты лежат в `appstore/testflight/` и попадают в App Store Connect сами — workflow **TestFlight
+info** (`appstore/testflight_info.py`, тот же ключ API из секретов `ASC_*`):
 
-```
-Dalada is a map for fishing and outdoor trips in the Almaty region of Kazakhstan.
-Try: browse places on the Map tab (editorial places from OpenStreetMap), open a place card,
-sign in with Apple, add your own place, check in with a catch and a photo, record a trip
-(+ → Start a trip), add a friend by username, write a review or start a discussion,
-open checklists and articles in the Tips tab.
-```
+| Файл | Куда в App Store Connect |
+|------|--------------------------|
+| `beta_description.<язык>.txt` | Test Information → Beta App Description (+ почта для отзывов и политика конфиденциальности) |
+| `review_notes.txt` | Beta App Review Information → Notes; вход без демо-аккаунта |
+| `what_to_test.<язык>.txt` | What to Test у сборки |
 
-По-русски для своих тестировщиков:
+Когда запускается: после каждой сборки TestFlight (ждёт обработки сборки до 45 минут и ставит What
+to Test), при изменении текстов в `main` и вручную — Actions → **TestFlight info** → Run workflow;
+там же можно указать номер сборки и галочку «отправить на бета-проверку» (добавит сборку во
+внешние группы и отправит, если версия ещё не одобрена). В итогах запуска — таблица последних сборок
+с состоянием внутреннего и внешнего тестирования.
 
-```
-Dalada — карта для рыбалки и отдыха на природе в Алматинском регионе. Посмотрите места на карте,
-войдите через Apple или Google, добавьте своё место, отметьтесь с уловом и фото, запишите
-поездку (+ → «Начать поездку»), добавьте друга по username, оставьте отзыв или начните
-обсуждение, загляните в чеклисты и статьи. Замечания — кнопкой «Отправить отзыв» в TestFlight
-или на dakacom@gmail.com.
-```
-
-**Beta App Review Information → Notes** (один раз для версии):
-
-```
-Sign-in: use Sign in with Apple with any Apple ID; no demo account is needed. Without signing in
-the app works in guest mode (map, places, articles).
-
-User-generated content (Guideline 1.2):
-- Report: "..." menu on any place, check-in, trip, review, discussion, reply or profile -> Report.
-- Block: the same menu -> Block @user; blocked users disappear for each other.
-- Objectionable words are rejected on the server in any public text.
-- Contact: Support and FAQ, and dakacom@gmail.com in Profile -> "..." (More) -> Account -> About.
-- Reports are reviewed within 24 hours.
-- Users accept the Terms of Use and community rules after signing in.
-
-Account deletion (5.1.1(v)): Profile -> "..." (More) -> Account -> Delete account. It deletes the
-account and all its data at once.
-
-Location: "When In Use" only. The background location mode records the track of a trip the user
-starts explicitly (+ -> Start a trip -> Start); recording shows a Live Activity and stops with Finish.
-
-Privacy policy: https://dkicekeeper.github.io/Dalada/privacy-policy.html
-```
+Имя, фамилию и телефон для связи с проверяющими workflow не заполняет (и не выводит в лог) — если
+их нет, он предупредит; заполните один раз в Test Information → Beta App Review Information.
 
 ## Каждая сборка
 

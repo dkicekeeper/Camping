@@ -1,0 +1,72 @@
+name: TestFlight info
+
+# Тексты TestFlight из appstore/testflight/ → App Store Connect (appstore/testflight_info.py):
+# описание бета-версии, почта для отзывов и политика, заметки для бета-проверки Apple, What to Test
+# у сборки. Запускается сам после загрузки сборки (workflow TestFlight) и при изменении текстов в
+# main; вручную — Actions → TestFlight info → Run workflow (номер сборки, отправка на проверку).
+# Ключ — те же секреты ASC_*, что у сборки.
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "Номер сборки (пусто — последняя)"
+        required: false
+        default: ""
+      submit:
+        description: "Добавить во внешние группы и отправить на бета-проверку Apple"
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      build:
+        type: string
+        required: false
+        default: ""
+      wait:
+        type: number
+        required: false
+        default: 0
+  push:
+    branches: [main]
+    paths:
+      - "appstore/**"
+      - ".github/workflows/testflight-info.yml"
+
+concurrency:
+  group: testflight-info
+  cancel-in-progress: false
+
+jobs:
+  info:
+    name: Update TestFlight texts
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Update App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          BUILD: ${{ inputs.build }}
+          WAIT: ${{ inputs.wait || 0 }}
+          SUBMIT: ${{ inputs.submit && 'yes' || '' }}
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY_P8" ]; then
+            echo "::error::Нет секретов ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 (docs/04-beta/testflight.md)"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey.p8"
+          export ASC_KEY_PATH="$RUNNER_TEMP/asc/AuthKey.p8"
+          python3 -m venv "$RUNNER_TEMP/ascenv"
+          "$RUNNER_TEMP/ascenv/bin/pip" install --quiet pyjwt cryptography
+          args=(--wait "$WAIT")
+          if [ -n "$BUILD" ]; then args+=(--build "$BUILD"); fi
+          if [ -n "$SUBMIT" ]; then args+=(--submit); fi
+          "$RUNNER_TEMP/ascenv/bin/python" appstore/testflight_info.py "${args[@]}"
+
+      - name: Remove API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"
