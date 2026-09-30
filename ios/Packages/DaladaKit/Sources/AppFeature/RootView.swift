@@ -20,20 +20,26 @@ public struct RootView: View {
     @State private var session: SessionStore
     @State private var species: SpeciesStore
     @State private var sync: SyncEngine
+    @State private var recorder: TripRecorder
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
+    @State private var showsRecording = false
+    /// Выбор из «+», который выполняется, когда лист «+» закроется.
+    @State private var pendingTripActivity: TripActivity?
+    @State private var opensRecordingAfterSheet = false
 
     public init(environment: AppEnvironment) {
         self.environment = environment
         _session = State(initialValue: SessionStore(backend: environment.backend, cache: environment.cache))
         _species = State(initialValue: SpeciesStore(backend: environment.backend, cache: environment.cache))
-        let sender: any CheckinSending
+        let sender: any OutboxSending
         if let backend = environment.backend {
             sender = backend
         } else {
             sender = UnavailableSender()
         }
         _sync = State(initialValue: SyncEngine(outbox: environment.database.outbox, sender: sender))
+        _recorder = State(initialValue: TripRecorder(store: environment.database.trips))
     }
 
     public var body: some View {
@@ -56,15 +62,29 @@ public struct RootView: View {
                 PlusTabLabel(isExpanded: showsQuickActions)
             }
         }
+        // Идущая запись поездки — мини-плеер над вкладками.
+        .modifier(TripAccessoryModifier(isEnabled: recorder.isActive) { showsRecording = true })
         // «+» не открывает вкладку: возвращаем прежнюю и показываем быстрые действия.
         .onChange(of: selection) { previous, current in
             guard current == .quickAction else { return }
             selection = previous
             showsQuickActions = true
         }
-        .sheet(isPresented: $showsQuickActions) {
-            QuickActionsSheet()
-                .presentationDetents([.medium])
+        .sheet(isPresented: $showsQuickActions, onDismiss: runPendingQuickAction) {
+            QuickActionsSheet(
+                isRecording: recorder.isActive,
+                canRecord: session.profile != nil,
+                onStartTrip: { pendingTripActivity = $0 },
+                onOpenRecording: { opensRecordingAfterSheet = true }
+            )
+            .presentationDetents([.medium, .large])
+        }
+        .fullScreenCover(isPresented: $showsRecording) {
+            TripRecordingView(environment: environment)
+                .environment(recorder)
+                .environment(session)
+                .environment(sync)
+                .environment(species)
         }
         // После первого входа — выбор username, пока он не сохранён.
         .fullScreenCover(isPresented: $session.isUsernameOnboardingPresented) {
@@ -74,7 +94,10 @@ public struct RootView: View {
         .environment(session)
         .environment(species)
         .environment(sync)
+        .environment(recorder)
         .task { await session.start() }
+        // Незаконченная запись поездки (приложение закрыли или система выгрузила) продолжается.
+        .task { await recorder.restore() }
         // Офлайн-очередь: отправляем при появлении сети, возврате в приложение и входе.
         .task {
             for await _ in NetworkMonitor.becameAvailable() {
@@ -89,6 +112,21 @@ public struct RootView: View {
                 await sync.refresh()
                 sync.kick(force: true)
             }
+        }
+    }
+
+    /// Действие из «+» выполняется после закрытия листа: иначе полноэкранная запись
+    /// не откроется поверх закрывающегося листа.
+    private func runPendingQuickAction() {
+        if let activity = pendingTripActivity {
+            pendingTripActivity = nil
+            Task {
+                await recorder.start(activity: activity)
+                showsRecording = true
+            }
+        } else if opensRecordingAfterSheet {
+            opensRecordingAfterSheet = false
+            showsRecording = true
         }
     }
 }

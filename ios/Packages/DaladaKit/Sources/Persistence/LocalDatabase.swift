@@ -30,6 +30,7 @@ public final class LocalDatabase: Sendable {
 
     public var outbox: OutboxStore { OutboxStore(writer: writer) }
     public var cache: CacheStore { CacheStore(writer: writer) }
+    public var trips: TripStore { TripStore(writer: writer) }
 
     /// Схема. Миграции только добавляются, как и на сервере.
     static var migrator: DatabaseMigrator {
@@ -65,6 +66,44 @@ public final class LocalDatabase: Sendable {
                 t.primaryKey("key", .text)
                 t.column("value", .blob).notNull()
                 t.column("updated_at", .datetime).notNull()
+            }
+        }
+        migrator.registerMigration("v2-trips") { db in
+            // Идущая запись поездки (не больше одной).
+            try db.create(table: "active_trip") { t in
+                t.primaryKey("id", .blob)
+                t.column("activity", .text).notNull()
+                t.column("started_at", .datetime).notNull()
+                t.column("state", .text).notNull()
+            }
+            // Точки трека — и идущей поездки, и поездок в очереди отправки. Пишутся сразу,
+            // поэтому трек не теряется, если приложение закрыли или оно упало.
+            try db.create(table: "track_point") { t in
+                t.column("trip_id", .blob).notNull()
+                t.column("seq", .integer).notNull()
+                t.column("latitude", .double).notNull()
+                t.column("longitude", .double).notNull()
+                t.column("altitude", .double)
+                t.column("accuracy", .double).notNull()
+                t.column("speed", .double)
+                t.column("timestamp", .datetime).notNull()
+                t.column("starts_segment", .boolean).notNull().defaults(to: false)
+                t.primaryKey(["trip_id", "seq"])
+            }
+            // Законченные поездки, которые ещё не приняты сервером.
+            try db.create(table: "outbox_trip") { t in
+                t.primaryKey("id", .blob)
+                t.column("owner_id", .blob).notNull().indexed()
+                t.column("activity", .text).notNull()
+                t.column("title", .text).notNull()
+                t.column("note", .text).notNull()
+                t.column("visibility", .text).notNull()
+                t.column("started_at", .datetime).notNull()
+                t.column("ended_at", .datetime).notNull()
+                t.column("status", .text).notNull()
+                t.column("attempts", .integer).notNull().defaults(to: 0)
+                t.column("next_attempt_at", .datetime).notNull()
+                t.column("last_error", .text)
             }
         }
         return migrator

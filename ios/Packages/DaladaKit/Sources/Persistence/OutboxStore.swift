@@ -2,7 +2,8 @@ import DaladaCore
 import Foundation
 import GRDB
 
-/// Очередь отправки: чекины (с уловами и фото), созданные на телефоне и ещё не принятые сервером.
+/// Очередь отправки: чекины (с уловами и фото) и поездки (с треком), созданные на телефоне
+/// и ещё не принятые сервером.
 /// Запись удаляется, только когда сервер подтвердил приём.
 public struct OutboxStore: Sendable {
     let writer: any DatabaseWriter
@@ -64,10 +65,43 @@ public struct OutboxStore: Sendable {
         }
     }
 
-    /// Сервер принял — убираем из очереди (фото удаляются каскадом).
+    /// Поездки, которые пора отправить (с точками трека), по времени начала.
+    public func dueTrips(owner: UUID, now: Date, limit: Int = 1) async throws -> [TripDraft] {
+        try await writer.read { db in
+            let records = try OutboxTripRecord
+                .filter(Column("owner_id") == owner)
+                .filter(Column("status") == OutboxStatus.pending.rawValue)
+                .filter(Column("next_attempt_at") <= now)
+                .order(Column("started_at"), Column("id"))
+                .limit(limit)
+                .fetchAll(db)
+            return try records.map { record in
+                record.draft(points: try TrackPointRecord.points(of: record.id, in: db))
+            }
+        }
+    }
+
+    /// Поездки пользователя в очереди — для интерфейса, без точек.
+    public func pendingTrips(owner: UUID) async throws -> [PendingTrip] {
+        try await writer.read { db in
+            try OutboxTripRecord
+                .filter(Column("owner_id") == owner)
+                .order(Column("started_at").desc)
+                .fetchAll(db)
+                .map(\.pending)
+        }
+    }
+
+    // MARK: Общее для чекинов и поездок (id уникальны, запись ищется в обеих таблицах)
+
+    /// Сервер принял — убираем из очереди (фото чекина — каскадом, точки поездки — здесь).
     public func remove(_ id: UUID) async throws {
-        _ = try await writer.write { db in
-            try OutboxCheckinRecord.deleteOne(db, key: id)
+        try await writer.write { db in
+            try db.execute(sql: "DELETE FROM outbox_checkin WHERE id = ?", arguments: [id])
+            if try Int.fetchOne(db, sql: "SELECT count(*) FROM outbox_trip WHERE id = ?", arguments: [id]) ?? 0 > 0 {
+                try db.execute(sql: "DELETE FROM track_point WHERE trip_id = ?", arguments: [id])
+                try db.execute(sql: "DELETE FROM outbox_trip WHERE id = ?", arguments: [id])
+            }
         }
     }
 
@@ -75,57 +109,75 @@ public struct OutboxStore: Sendable {
     @discardableResult
     public func recordFailedAttempt(_ id: UUID, error: String?, now: Date) async throws -> Int {
         try await writer.write { db in
-            guard var record = try OutboxCheckinRecord.fetchOne(db, key: id) else { return 0 }
-            record.attempts += 1
-            record.lastError = error
-            record.nextAttemptAt = now.addingTimeInterval(RetryPolicy.delay(afterAttempt: record.attempts))
-            try record.update(db)
-            return record.attempts
+            for table in Self.tables {
+                guard let attempts = try Int.fetchOne(
+                    db, sql: "SELECT attempts FROM \(table) WHERE id = ?", arguments: [id]
+                ) else { continue }
+                let next = attempts + 1
+                try db.execute(
+                    sql: "UPDATE \(table) SET attempts = ?, last_error = ?, next_attempt_at = ? WHERE id = ?",
+                    arguments: [next, error, now.addingTimeInterval(RetryPolicy.delay(afterAttempt: next)), id]
+                )
+                return next
+            }
+            return 0
         }
     }
 
     /// Больше не отправляем сами — ждём решения пользователя («Повторить» или «Удалить»).
     public func markFailed(_ id: UUID, error: String) async throws {
         try await writer.write { db in
-            guard var record = try OutboxCheckinRecord.fetchOne(db, key: id) else { return }
-            record.status = .failed
-            record.lastError = error
-            try record.update(db)
+            for table in Self.tables {
+                try db.execute(
+                    sql: "UPDATE \(table) SET status = ?, last_error = ? WHERE id = ?",
+                    arguments: [OutboxStatus.failed.rawValue, error, id]
+                )
+            }
         }
     }
 
     /// «Повторить»: возвращаем в очередь со сброшенным счётчиком.
     public func requeue(_ id: UUID, now: Date) async throws {
         try await writer.write { db in
-            guard var record = try OutboxCheckinRecord.fetchOne(db, key: id) else { return }
-            record.status = .pending
-            record.attempts = 0
-            record.lastError = nil
-            record.nextAttemptAt = now
-            try record.update(db)
+            for table in Self.tables {
+                try db.execute(
+                    sql: "UPDATE \(table) SET status = ?, attempts = 0, last_error = NULL, next_attempt_at = ? WHERE id = ?",
+                    arguments: [OutboxStatus.pending.rawValue, now, id]
+                )
+            }
         }
     }
 
     /// Появилась сеть или приложение открыли: всё ждущее — отправлять сейчас, не дожидаясь паузы.
     public func makeDue(owner: UUID, now: Date) async throws {
-        _ = try await writer.write { db in
-            try OutboxCheckinRecord
-                .filter(Column("owner_id") == owner)
-                .filter(Column("status") == OutboxStatus.pending.rawValue)
-                .updateAll(db, Column("next_attempt_at").set(to: now))
+        try await writer.write { db in
+            for table in Self.tables {
+                try db.execute(
+                    sql: "UPDATE \(table) SET next_attempt_at = ? WHERE owner_id = ? AND status = ?",
+                    arguments: [now, owner, OutboxStatus.pending.rawValue]
+                )
+            }
         }
     }
 
     /// Когда следующая попытка (для таймера).
     public func nextAttemptDate(owner: UUID) async throws -> Date? {
         try await writer.read { db in
-            try OutboxCheckinRecord
-                .select(min(Column("next_attempt_at")), as: Date.self)
-                .filter(Column("owner_id") == owner)
-                .filter(Column("status") == OutboxStatus.pending.rawValue)
-                .fetchOne(db)
+            try Date.fetchOne(
+                db,
+                sql: """
+                SELECT min(next_attempt_at) FROM (
+                  SELECT next_attempt_at FROM outbox_checkin WHERE owner_id = ? AND status = ?
+                  UNION ALL
+                  SELECT next_attempt_at FROM outbox_trip WHERE owner_id = ? AND status = ?
+                )
+                """,
+                arguments: [owner, OutboxStatus.pending.rawValue, owner, OutboxStatus.pending.rawValue]
+            )
         }
     }
+
+    private static let tables = ["outbox_checkin", "outbox_trip"]
 }
 
 // MARK: - Записи

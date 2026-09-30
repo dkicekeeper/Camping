@@ -21,10 +21,21 @@ public struct MapPlace: Hashable, Sendable, Identifiable {
     }
 }
 
+/// Как ведёт себя камера карты.
+public enum MapCameraMode: Hashable, Sendable {
+    /// Пользователь двигает карту сам.
+    case free
+    /// Карта следует за пользователем (запись поездки).
+    case followUser
+    /// Показать трек целиком (страница поездки).
+    case fitTrack
+}
+
 /// Карта Dalada — SwiftUI-обёртка над `MLNMapView`.
 ///
 /// Места рисуются слоями стиля из одного GeoJSON-источника: круги приблизительных мест,
-/// точки мест и метка нового места. Фичи не импортируют MapLibre — только этот модуль.
+/// точки мест и метка нового места; трек — линией из отдельного источника. Фичи не импортируют
+/// MapLibre — только этот модуль.
 public struct DaladaMapView: UIViewRepresentable {
     let styleURL: URL
     let initialCenter: GeoPoint
@@ -32,6 +43,8 @@ public struct DaladaMapView: UIViewRepresentable {
     let showsUserLocation: Bool
     let places: [MapPlace]
     let draftPin: GeoPoint?
+    let track: [GeoPoint]
+    let cameraMode: MapCameraMode
     let onRegionChange: @MainActor (GeoBoundingBox) -> Void
     let onPlaceTap: @MainActor (UUID) -> Void
     let onLongPress: @MainActor (GeoPoint) -> Void
@@ -43,6 +56,8 @@ public struct DaladaMapView: UIViewRepresentable {
         showsUserLocation: Bool = true,
         places: [MapPlace] = [],
         draftPin: GeoPoint? = nil,
+        track: [GeoPoint] = [],
+        cameraMode: MapCameraMode = .free,
         onRegionChange: @escaping @MainActor (GeoBoundingBox) -> Void = { _ in },
         onPlaceTap: @escaping @MainActor (UUID) -> Void = { _ in },
         onLongPress: @escaping @MainActor (GeoPoint) -> Void = { _ in }
@@ -53,6 +68,8 @@ public struct DaladaMapView: UIViewRepresentable {
         self.showsUserLocation = showsUserLocation
         self.places = places
         self.draftPin = draftPin
+        self.track = track
+        self.cameraMode = cameraMode
         self.onRegionChange = onRegionChange
         self.onPlaceTap = onPlaceTap
         self.onLongPress = onLongPress
@@ -86,12 +103,14 @@ public struct DaladaMapView: UIViewRepresentable {
             action: #selector(Coordinator.handleLongPress(_:))
         )
         mapView.addGestureRecognizer(longPress)
+        context.coordinator.mapView = mapView
         return mapView
     }
 
     public func updateUIView(_ mapView: MLNMapView, context: Context) {
         context.coordinator.parent = self
         context.coordinator.render()
+        context.coordinator.applyCamera()
     }
 
     // MARK: - Coordinator
@@ -99,9 +118,14 @@ public struct DaladaMapView: UIViewRepresentable {
     @MainActor
     public final class Coordinator: NSObject {
         var parent: DaladaMapView
+        weak var mapView: MLNMapView?
         private var source: MLNShapeSource?
+        private var trackSource: MLNShapeSource?
         private var renderedPlaces: [MapPlace]?
         private var renderedDraft: GeoPoint?
+        private var renderedTrack: [GeoPoint]?
+        private var appliedCamera: MapCameraMode?
+        private var isStyleLoaded = false
 
         init(parent: DaladaMapView) {
             self.parent = parent
@@ -112,11 +136,17 @@ public struct DaladaMapView: UIViewRepresentable {
             static let areas = "dalada-place-areas"
             static let points = "dalada-place-points"
             static let draft = "dalada-draft-pin"
+            static let trackSource = "dalada-track"
+            static let trackLine = "dalada-track-line"
         }
 
         /// Обновляет источник мест, если данные изменились. До загрузки стиля — ничего не делает:
         /// отрисуем в `didFinishLoading`.
         func render() {
+            if let trackSource, parent.track != renderedTrack {
+                renderedTrack = parent.track
+                trackSource.shape = Self.trackShape(parent.track)
+            }
             guard let source else { return }
             guard parent.places != renderedPlaces || parent.draftPin != renderedDraft else { return }
             renderedPlaces = parent.places
@@ -124,7 +154,52 @@ public struct DaladaMapView: UIViewRepresentable {
             source.shape = MLNShapeCollectionFeature(shapes: Self.features(places: parent.places, draft: parent.draftPin))
         }
 
+        /// Режим камеры применяется один раз при смене: дальше пользователь может двигать карту.
+        func applyCamera() {
+            guard isStyleLoaded, let mapView, parent.cameraMode != appliedCamera else { return }
+            switch parent.cameraMode {
+            case .free:
+                mapView.userTrackingMode = .none
+            case .followUser:
+                mapView.showsUserLocation = true
+                mapView.setUserTrackingMode(.follow, animated: true, completionHandler: nil)
+            case .fitTrack:
+                guard parent.track.count >= 2 else { return }
+                let latitudes = parent.track.map(\.latitude)
+                let longitudes = parent.track.map(\.longitude)
+                let bounds = MLNCoordinateBounds(
+                    sw: CLLocationCoordinate2D(latitude: latitudes.min()!, longitude: longitudes.min()!),
+                    ne: CLLocationCoordinate2D(latitude: latitudes.max()!, longitude: longitudes.max()!)
+                )
+                mapView.setVisibleCoordinateBounds(
+                    bounds,
+                    edgePadding: UIEdgeInsets(top: 40, left: 32, bottom: 40, right: 32),
+                    animated: false,
+                    completionHandler: nil
+                )
+            }
+            appliedCamera = parent.cameraMode
+        }
+
+        static func trackShape(_ track: [GeoPoint]) -> MLNShape? {
+            guard track.count >= 2 else { return nil }
+            var coordinates = track.map(\.clCoordinate)
+            return MLNPolylineFeature(coordinates: &coordinates, count: UInt(coordinates.count))
+        }
+
         func installLayers(in style: MLNStyle) {
+            // Трек — под точками мест.
+            let trackSource = MLNShapeSource(identifier: Layer.trackSource, shape: nil, options: nil)
+            style.addSource(trackSource)
+            let trackLine = MLNLineStyleLayer(identifier: Layer.trackLine, source: trackSource)
+            trackLine.lineColor = NSExpression(forConstantValue: UIColor.systemOrange)
+            trackLine.lineWidth = NSExpression(forConstantValue: 4)
+            trackLine.lineCap = NSExpression(forConstantValue: "round")
+            trackLine.lineJoin = NSExpression(forConstantValue: "round")
+            style.addLayer(trackLine)
+            self.trackSource = trackSource
+            renderedTrack = nil
+
             let source = MLNShapeSource(identifier: Layer.source, shape: nil, options: nil)
             style.addSource(source)
 
@@ -220,6 +295,8 @@ public struct DaladaMapView: UIViewRepresentable {
 extension DaladaMapView.Coordinator: @preconcurrency MLNMapViewDelegate {
     public func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
         installLayers(in: style)
+        isStyleLoaded = true
+        applyCamera()
         reportRegion(of: mapView)
     }
 

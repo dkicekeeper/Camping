@@ -58,6 +58,7 @@ struct ProfileHomeView: View {
             if let profile = session.profile {
                 ProfileHeader(profile: profile)
                 PendingQueueSection()
+                MyTripsSection(environment: environment, userID: profile.id)
                 MyCatchesSection(backend: environment.backend, cache: environment.cache, userID: profile.id) {
                     historyPlaceholder
                 }

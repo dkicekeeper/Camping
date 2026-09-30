@@ -168,3 +168,72 @@ struct CacheTests {
         #expect(try await cache.load([FishSpecies].self, for: .species) == nil)
     }
 }
+
+@Suite("Trips")
+struct TripStoreTests {
+    let owner = UUID()
+    let start = Date(timeIntervalSince1970: 1_790_000_000)
+
+    private func point(_ seconds: Double, altitude: Double? = 480, startsSegment: Bool = false) -> TrackPoint {
+        TrackPoint(latitude: 43.9 + seconds / 100_000, longitude: 77.0, altitude: altitude,
+                   horizontalAccuracy: 5, speed: 1.2, timestamp: start.addingTimeInterval(seconds),
+                   startsSegment: startsSegment)
+    }
+
+    @Test func activeTripSurvivesReopening() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("dalada-\(UUID()).sqlite")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let id = UUID()
+        do {
+            let trips = try LocalDatabase.open(at: url).trips
+            try await trips.start(id: id, activity: .hiking, at: start)
+            try await trips.append(point(0), to: id)
+            try await trips.append(point(30, altitude: nil), to: id)
+            try await trips.setState(.paused)
+            try await trips.append(point(90, startsSegment: true), to: id)
+        }
+        let active = try #require(try await LocalDatabase.open(at: url).trips.active())
+        #expect(active.id == id)
+        #expect(active.activity == .hiking)
+        #expect(active.state == .paused)
+        #expect(active.points == [point(0), point(30, altitude: nil), point(90, startsSegment: true)])
+    }
+
+    @Test func finishMovesTripToOutboxWithPoints() async throws {
+        let database = try LocalDatabase.inMemory()
+        let id = UUID()
+        try await database.trips.start(id: id, activity: .fishing, at: start)
+        for seconds in [0.0, 30, 60] { try await database.trips.append(point(seconds), to: id) }
+        try await database.trips.finishActive(owner: owner, title: "Капшагай", note: "Судак", visibility: .friends,
+                                              activity: .fishing, endedAt: start.addingTimeInterval(3600), now: start)
+
+        #expect(try await database.trips.active() == nil)
+        let due = try #require(try await database.outbox.dueTrips(owner: owner, now: start).first)
+        #expect(due.id == id)
+        #expect(due.title == "Капшагай")
+        #expect(due.visibility == .friends)
+        #expect(due.points.count == 3)
+        #expect(due.endedAt == start.addingTimeInterval(3600))
+        #expect(try await database.outbox.pendingTrips(owner: owner).first?.state == .waiting)
+
+        try await database.outbox.recordFailedAttempt(id, error: "503", now: start)
+        #expect(try await database.outbox.dueTrips(owner: owner, now: start).isEmpty)
+        #expect(try await database.outbox.nextAttemptDate(owner: owner) == start.addingTimeInterval(15))
+
+        try await database.outbox.remove(id)
+        let points = try await database.writer.read { try Int.fetchOne($0, sql: "SELECT count(*) FROM track_point") }
+        #expect(points == 0)
+        #expect(try await database.outbox.pendingTrips(owner: owner).isEmpty)
+    }
+
+    @Test func discardingActiveTripRemovesPoints() async throws {
+        let database = try LocalDatabase.inMemory()
+        let id = UUID()
+        try await database.trips.start(id: id, activity: .fishing, at: start)
+        try await database.trips.append(point(0), to: id)
+        try await database.trips.discardActive()
+        #expect(try await database.trips.active() == nil)
+        let points = try await database.writer.read { try Int.fetchOne($0, sql: "SELECT count(*) FROM track_point") }
+        #expect(points == 0)
+    }
+}

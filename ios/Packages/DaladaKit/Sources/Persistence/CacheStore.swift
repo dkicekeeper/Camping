@@ -56,6 +56,14 @@ public struct CacheKey: Hashable, Sendable {
         CacheKey(rawValue: userPrefix(user) + "my_catches")
     }
 
+    public static func myTrips(_ user: UUID) -> CacheKey {
+        CacheKey(rawValue: userPrefix(user) + "my_trips")
+    }
+
+    public static func trip(_ id: UUID, viewer: UUID?) -> CacheKey {
+        CacheKey(rawValue: viewerPrefix(viewer) + "trip/" + id.uuidString.lowercased())
+    }
+
     /// Последние места на карте.
     public static func mapPlaces(viewer: UUID?) -> CacheKey {
         CacheKey(rawValue: viewerPrefix(viewer) + "map_places")

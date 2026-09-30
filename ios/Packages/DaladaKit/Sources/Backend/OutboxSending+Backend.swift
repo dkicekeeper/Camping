@@ -4,11 +4,15 @@ import Supabase
 
 // MARK: - Отправка офлайн-очереди
 
-extension BackendClient: CheckinSending {
+extension BackendClient: OutboxSending {
     public var currentUserID: UUID? { supabase.auth.currentUser?.id }
 
     public func send(_ draft: CheckinDraft) async throws {
         try await createCheckin(draft)
+    }
+
+    public func send(_ trip: TripDraft) async throws {
+        try await createTrip(trip)
     }
 
     /// Что делать с ошибкой отправки: ждать сеть, повторить позже, сдаться или ждать входа.
@@ -35,7 +39,8 @@ extension BackendClient: CheckinSending {
                 // Нарушены правила данных — повтор не поможет.
                 return .rejected(error.message)
             case "P0002", "42501", "54000":
-                // Место или чекин не найден (удалены, скрыты), нет прав, слишком много фото.
+                // Место или чекин не найден (удалены, скрыты), нет прав, слишком много фото
+                // или слишком длинный трек.
                 return .rejected(error.message)
             default:
                 return .temporary(error.message)

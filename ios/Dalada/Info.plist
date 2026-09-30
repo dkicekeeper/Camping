@@ -7,6 +7,11 @@
 	<string>$(SUPABASE_HOST)</string>
 	<key>SupabaseKey</key>
 	<string>$(SUPABASE_KEY)</string>
+	<!-- Запись трека поездки в фоне (CLBackgroundActivitySession). -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- Только для локального Supabase (http://127.0.0.1:54321) при разработке. -->

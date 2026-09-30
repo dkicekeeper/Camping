@@ -45,7 +45,7 @@ public struct AppEnvironment: Sendable {
 }
 
 /// Отправитель, когда сервер не настроен: очередь ничего не отправляет.
-struct UnavailableSender: CheckinSending {
+struct UnavailableSender: OutboxSending {
     var currentUserID: UUID? { nil }
 
     func send(_ draft: CheckinDraft) async throws {

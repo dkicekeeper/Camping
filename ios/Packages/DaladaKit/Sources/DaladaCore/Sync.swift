@@ -12,12 +12,14 @@ public enum SendFailure: Equatable, Sendable {
     case signedOut
 }
 
-/// Отправка чекина на сервер. В приложении — `BackendClient`, в тестах — подделка.
-public protocol CheckinSending: Sendable {
+/// Отправка офлайн-очереди на сервер. В приложении — `BackendClient`, в тестах — подделка.
+public protocol OutboxSending: Sendable {
     /// Кто сейчас вошёл. Очередь у каждого пользователя своя.
     var currentUserID: UUID? { get }
     /// Создаёт чекин с уловами и фото. Повторная отправка того же черновика безопасна.
     func send(_ draft: CheckinDraft) async throws
+    /// Создаёт поездку с треком. Повторная отправка безопасна.
+    func send(_ trip: TripDraft) async throws
     func failure(for error: any Error) -> SendFailure
 }
 
@@ -72,6 +74,32 @@ public struct PendingCheckin: Identifiable, Equatable, Sendable {
         self.note = note
         self.catches = catches
         self.photoCount = photoCount
+        self.state = state
+    }
+}
+
+/// Поездка в очереди отправки — для интерфейса (без точек трека).
+public struct PendingTrip: Identifiable, Equatable, Sendable {
+    public let id: UUID
+    public let activity: TripActivity
+    public let title: String
+    public let startedAt: Date
+    public let endedAt: Date
+    public let state: PendingCheckin.State
+
+    public init(
+        id: UUID,
+        activity: TripActivity,
+        title: String,
+        startedAt: Date,
+        endedAt: Date,
+        state: PendingCheckin.State
+    ) {
+        self.id = id
+        self.activity = activity
+        self.title = title
+        self.startedAt = startedAt
+        self.endedAt = endedAt
         self.state = state
     }
 }

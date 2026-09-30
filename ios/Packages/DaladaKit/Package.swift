@@ -62,7 +62,7 @@ let package = Package(
             ]
         ),
 
-        // Отправка офлайн-очереди с повторами. Сервер — через протокол `CheckinSending`.
+        // Отправка офлайн-очереди с повторами. Сервер — через протокол `OutboxSending`.
         .target(
             name: "Sync",
             dependencies: ["DaladaCore", "Persistence"]

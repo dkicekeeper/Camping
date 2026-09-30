@@ -3,8 +3,9 @@ import Foundation
 import Observation
 import Persistence
 
-/// Отправка офлайн-очереди. Чекин сначала сохраняется на телефоне, потом уходит на сервер —
-/// сразу, если есть сеть, или позже: при появлении сети, при возврате в приложение, по таймеру.
+/// Отправка офлайн-очереди. Чекин или поездка сначала сохраняются на телефоне, потом уходят
+/// на сервер — сразу, если есть сеть, или позже: при появлении сети, при возврате в приложение,
+/// по таймеру.
 @MainActor
 @Observable
 public final class SyncEngine {
@@ -14,12 +15,14 @@ public final class SyncEngine {
 
     /// Чекины текущего пользователя, которые ещё не приняты сервером.
     public private(set) var pending: [PendingCheckin] = []
-    /// Растёт после каждого принятого сервером чекина — экраны по нему перечитывают данные.
+    /// Поездки текущего пользователя, которые ещё не приняты сервером.
+    public private(set) var pendingTrips: [PendingTrip] = []
+    /// Растёт после каждой принятой сервером записи — экраны по нему перечитывают данные.
     public private(set) var sentCount = 0
     public private(set) var isSending = false
 
     private let outbox: OutboxStore
-    private let sender: any CheckinSending
+    private let sender: any OutboxSending
     private let now: @Sendable () -> Date
 
     @ObservationIgnored private var processTask: Task<Void, Never>?
@@ -27,7 +30,7 @@ public final class SyncEngine {
     @ObservationIgnored private var needsAnotherPass = false
     @ObservationIgnored private var forceNextPass = false
 
-    public init(outbox: OutboxStore, sender: any CheckinSending, now: @escaping @Sendable () -> Date = { Date() }) {
+    public init(outbox: OutboxStore, sender: any OutboxSending, now: @escaping @Sendable () -> Date = { Date() }) {
         self.outbox = outbox
         self.sender = sender
         self.now = now
@@ -38,6 +41,12 @@ public final class SyncEngine {
     public func submit(_ draft: CheckinDraft, placeName: String) async throws {
         guard let owner = sender.currentUserID else { throw SubmitError.signedOut }
         try await outbox.enqueue(draft, owner: owner, placeName: placeName, now: now())
+        await refresh()
+        kick()
+    }
+
+    /// В очередь положили запись в обход `submit` (например, законченную поездку).
+    public func enqueued() async {
         await refresh()
         kick()
     }
@@ -62,14 +71,14 @@ public final class SyncEngine {
         }
     }
 
-    /// «Повторить» для чекина, который не удалось отправить.
+    /// «Повторить» для записи, которую не удалось отправить.
     public func retry(_ id: UUID) async {
         try? await outbox.requeue(id, now: now())
         await refresh()
         kick()
     }
 
-    /// «Удалить» чекин из очереди, не отправляя.
+    /// «Удалить» запись из очереди, не отправляя.
     public func discard(_ id: UUID) async {
         try? await outbox.remove(id)
         await refresh()
@@ -79,9 +88,11 @@ public final class SyncEngine {
     public func refresh() async {
         guard let owner = sender.currentUserID else {
             pending = []
+            pendingTrips = []
             return
         }
         pending = (try? await outbox.pending(owner: owner)) ?? pending
+        pendingTrips = (try? await outbox.pendingTrips(owner: owner)) ?? pendingTrips
     }
 
     // MARK: - Отправка
@@ -106,35 +117,51 @@ public final class SyncEngine {
         isSending = true
         defer { isSending = false }
 
+        // Сначала поездки, потом чекины; каждая запись — отдельная попытка.
         while !Task.isCancelled {
-            guard let draft = try? await outbox.due(owner: owner, now: now()).first else { return }
-            do {
-                try await sender.send(draft)
-                do {
-                    try await outbox.remove(draft.id)
-                } catch {
-                    return // не смогли убрать из очереди — не отправляем по кругу
-                }
-                sentCount += 1
-            } catch {
-                switch sender.failure(for: error) {
-                case .offline:
-                    // Сети нет — остальные тоже не уйдут. Ждём сеть или таймер.
-                    _ = try? await outbox.recordFailedAttempt(draft.id, error: nil, now: now())
-                    return
-                case .temporary(let message):
-                    let attempts = (try? await outbox.recordFailedAttempt(draft.id, error: message, now: now())) ?? 0
-                    if attempts >= RetryPolicy.maxTemporaryAttempts {
-                        try? await outbox.markFailed(draft.id, error: message)
-                    }
-                case .rejected(let message):
-                    try? await outbox.markFailed(draft.id, error: message)
-                case .signedOut:
-                    return
-                }
+            let item: (id: UUID, send: () async throws -> Void)
+            if let trip = try? await outbox.dueTrips(owner: owner, now: now()).first {
+                item = (trip.id, { [sender] in try await sender.send(trip) })
+            } else if let checkin = try? await outbox.due(owner: owner, now: now()).first {
+                item = (checkin.id, { [sender] in try await sender.send(checkin) })
+            } else {
+                return
             }
+            guard await attempt(item.id, item.send) else { return }
             await refresh()
         }
+    }
+
+    /// Одна попытка отправки. `false` — дальше в этот раз не отправляем (нет сети или входа).
+    private func attempt(_ id: UUID, _ send: () async throws -> Void) async -> Bool {
+        do {
+            try await send()
+        } catch {
+            switch sender.failure(for: error) {
+            case .offline:
+                // Сети нет — остальные тоже не уйдут. Ждём сеть или таймер.
+                _ = try? await outbox.recordFailedAttempt(id, error: nil, now: now())
+                return false
+            case .temporary(let message):
+                let attempts = (try? await outbox.recordFailedAttempt(id, error: message, now: now())) ?? 0
+                if attempts >= RetryPolicy.maxTemporaryAttempts {
+                    try? await outbox.markFailed(id, error: message)
+                }
+                return true
+            case .rejected(let message):
+                try? await outbox.markFailed(id, error: message)
+                return true
+            case .signedOut:
+                return false
+            }
+        }
+        do {
+            try await outbox.remove(id)
+        } catch {
+            return false // не смогли убрать из очереди — не отправляем по кругу
+        }
+        sentCount += 1
+        return true
     }
 
     /// Будильник на следующую попытку по паузе из `RetryPolicy`.

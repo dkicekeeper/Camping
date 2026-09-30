@@ -125,24 +125,31 @@ struct PendingReportRow: View {
     }
 }
 
-/// «Ожидают отправки» в профиле: все чекины из очереди и «Отправить сейчас».
+/// «Ожидают отправки» в профиле: все поездки и чекины из очереди и «Отправить сейчас».
 struct PendingQueueSection: View {
     @Environment(SyncEngine.self) private var sync
 
+    private var hasWaiting: Bool {
+        sync.pending.contains { $0.state == .waiting } || sync.pendingTrips.contains { $0.state == .waiting }
+    }
+
     var body: some View {
-        if !sync.pending.isEmpty {
+        if !sync.pending.isEmpty || !sync.pendingTrips.isEmpty {
             VStack(alignment: .leading, spacing: AppSpacing.md) {
                 HStack {
                     SectionHeaderView(String(localized: "pending.title"), systemImage: "icloud.and.arrow.up")
                     Spacer(minLength: 0)
                     if sync.isSending {
                         ProgressView()
-                    } else if sync.pending.contains(where: { $0.state == .waiting }) {
+                    } else if hasWaiting {
                         Button("pending.sendNow") {
                             sync.kick(force: true)
                         }
                         .font(AppTypography.bodySmall)
                     }
+                }
+                ForEach(sync.pendingTrips) { item in
+                    PendingTripRow(item: item)
                 }
                 ForEach(sync.pending) { item in
                     PendingReportRow(item: item, showsPlace: true)

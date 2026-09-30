@@ -4,7 +4,8 @@ name: iOS
 # контейнере на Linux, где SwiftUI не собрать: ошибки компиляции видны здесь раньше, чем в Xcode.
 on:
   push:
-    branches: [main]
+    # Рабочие ветки тоже: сборка проверяется до попадания кода в main.
+    branches: [main, "claude/**"]
     paths:
       - "ios/**"
       - ".github/workflows/ios.yml"

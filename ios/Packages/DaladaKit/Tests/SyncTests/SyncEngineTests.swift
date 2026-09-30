@@ -6,7 +6,7 @@ import Sync
 import Testing
 
 /// Подставной сервер: запоминает отправленное, отвечает заданными ошибками.
-final class FakeSender: CheckinSending {
+final class FakeSender: OutboxSending {
     enum Outcome: Sendable {
         case accept
         case fail(SendFailure)
@@ -36,13 +36,21 @@ final class FakeSender: CheckinSending {
     var currentUserID: UUID? { state.withLock { $0.userID } }
 
     func send(_ draft: CheckinDraft) async throws {
+        try perform(draft.id)
+    }
+
+    func send(_ trip: TripDraft) async throws {
+        try perform(trip.id)
+    }
+
+    private func perform(_ id: UUID) throws {
         let outcome: Outcome = state.withLock { state in
             state.attempts += 1
             return state.outcomes.isEmpty ? .accept : state.outcomes.removeFirst()
         }
         switch outcome {
         case .accept:
-            state.withLock { $0.sent.append(draft.id) }
+            state.withLock { $0.sent.append(id) }
         case .fail(let failure):
             throw FakeError(failure: failure)
         }
@@ -69,11 +77,30 @@ final class TestClock: Sendable {
 struct SyncEngineTests {
     let sender = FakeSender()
     let clock = TestClock()
+    let database: LocalDatabase
     let engine: SyncEngine
 
     init() throws {
         let clock = clock
-        engine = SyncEngine(outbox: try LocalDatabase.inMemory().outbox, sender: sender, now: { clock.now })
+        database = try LocalDatabase.inMemory()
+        engine = SyncEngine(outbox: database.outbox, sender: sender, now: { clock.now })
+    }
+
+    /// Записывает и заканчивает поездку так, как это делает приложение.
+    private func finishTrip(minutesAgo: Double) async throws -> UUID {
+        let id = UUID()
+        let start = clock.now.addingTimeInterval(-minutesAgo * 60)
+        try await database.trips.start(id: id, activity: .fishing, at: start)
+        for second in stride(from: 0.0, to: 120, by: 30) {
+            let point = TrackPoint(latitude: 43.9, longitude: 77.0 + second / 100_000, horizontalAccuracy: 5,
+                                   timestamp: start.addingTimeInterval(second))
+            try await database.trips.append(point, to: id)
+        }
+        try await database.trips.finishActive(
+            owner: sender.currentUserID!, title: "Рыбалка", note: "", visibility: .private,
+            activity: .fishing, endedAt: start.addingTimeInterval(120), now: clock.now
+        )
+        return id
     }
 
     private func draft(minutesAgo: Double = 0) -> CheckinDraft {
@@ -175,6 +202,35 @@ struct SyncEngineTests {
         await #expect(throws: SyncEngine.SubmitError.signedOut) {
             try await engine.submit(draft(), placeName: "Место")
         }
+    }
+
+    @Test func sendsFinishedTripThenCheckins() async throws {
+        sender.script(.fail(.offline))
+        let checkin = draft(minutesAgo: 30)
+        try await engine.submit(checkin, placeName: "Место")
+        await engine.waitUntilIdle()
+        let trip = try await finishTrip(minutesAgo: 60)
+        await engine.refresh()
+        #expect(engine.pendingTrips.map(\.id) == [trip])
+        #expect(engine.pendingTrips.first?.title == "Рыбалка")
+
+        engine.kick(force: true)
+        await engine.waitUntilIdle()
+        #expect(sender.sent == [trip, checkin.id])
+        #expect(engine.pendingTrips.isEmpty)
+        #expect(engine.pending.isEmpty)
+        #expect(engine.sentCount == 2)
+    }
+
+    @Test func rejectedTripWaitsForUser() async throws {
+        sender.script(.fail(.rejected("track too long")))
+        let trip = try await finishTrip(minutesAgo: 10)
+        await engine.enqueued()
+        await engine.waitUntilIdle()
+        #expect(engine.pendingTrips.first?.state == .failed("track too long"))
+
+        await engine.discard(trip)
+        #expect(engine.pendingTrips.isEmpty)
     }
 
     @Test func eachUserSeesOwnQueue() async throws {
