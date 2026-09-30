@@ -1,0 +1,128 @@
+name: Map tiles
+
+# Своя карта в Cloudflare R2 (map/README.md): стили, шрифты и значки — при изменениях в map/ в main;
+# тайлы региона из OpenStreetMap (Planetiler) — вручную и раз в месяц.
+# Секреты: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY; бакет — переменная R2_BUCKET
+# (по умолчанию dalada-tiles).
+on:
+  workflow_dispatch:
+    inputs:
+      tiles:
+        description: "Пересобрать тайлы (15–40 минут); без галочки — только стили, шрифты и значки"
+        type: boolean
+        default: true
+  schedule:
+    - cron: "23 2 3 * *"
+  push:
+    branches: [main]
+    paths:
+      - "map/**"
+      - ".github/workflows/tiles.yml"
+
+concurrency:
+  group: map-tiles
+  cancel-in-progress: false
+
+env:
+  R2_BUCKET: ${{ vars.R2_BUCKET || 'dalada-tiles' }}
+  RCLONE_CONFIG_R2_TYPE: s3
+  RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+  RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  RCLONE_CONFIG_R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+  RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+
+jobs:
+  assets:
+    name: Styles, fonts and sprites
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check secrets
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+        run: |
+          if [ -z "$R2_ACCOUNT_ID" ] || [ -z "$RCLONE_CONFIG_R2_ACCESS_KEY_ID" ] || [ -z "$RCLONE_CONFIG_R2_SECRET_ACCESS_KEY" ]; then
+            echo "::error::Нет секретов R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY (map/README.md)"
+            exit 1
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq rclone > /dev/null
+
+      - name: Build styles
+        run: python3 map/build_style.py public
+
+      # Шрифты Noto Sans для подписей (OFL) — из maplibre/demotiles.
+      - name: Fonts
+        run: |
+          git clone -q --depth 1 --filter=blob:none --sparse https://github.com/maplibre/demotiles "$RUNNER_TEMP/demotiles"
+          git -C "$RUNNER_TEMP/demotiles" sparse-checkout set font
+          mkdir -p public/fonts
+          for font in "Noto Sans Regular" "Noto Sans Bold" "Noto Sans Italic"; do
+            cp -r "$RUNNER_TEMP/demotiles/font/$font" public/fonts/
+          done
+
+      - name: Upload
+        run: |
+          base=$(python3 -c "import json; print(json.load(open('map/config.json'))['public_base'])")
+          rclone copy public/fonts "r2:$R2_BUCKET/fonts" --checksum --transfers 32 \
+            --header-upload "Cache-Control: public, max-age=604800" --header-upload "Content-Type: application/x-protobuf"
+          rclone copy public/sprites "r2:$R2_BUCKET/sprites" --checksum \
+            --header-upload "Cache-Control: public, max-age=604800"
+          rclone copy public/styles "r2:$R2_BUCKET/styles" --checksum \
+            --header-upload "Cache-Control: public, max-age=300" --header-upload "Content-Type: application/json"
+          for path in styles/liberty.ru.json "fonts/Noto%20Sans%20Regular/1024-1279.pbf" sprites/v1/ofm@2x.png; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$base/$path")
+            echo "$base/$path → $code"
+            [ "$code" = 200 ] || { echo "::error::Файл не открывается по публичному адресу — включён ли Public Development URL у бакета?"; exit 1; }
+          done
+
+  tiles:
+    name: Region tiles
+    needs: assets
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tiles)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq rclone osmium-tool > /dev/null
+          curl -sSfL -o "$RUNNER_TEMP/planetiler.jar" https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar
+
+      # Казахстан и Кыргызстан (у границы, к югу от Алматы) — выгрузки Geofabrik, обрезанные по региону.
+      - name: OpenStreetMap extract
+        run: |
+          mkdir -p data
+          curl -sSfL -o data/kz.osm.pbf https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf
+          curl -sSfL -o data/kg.osm.pbf https://download.geofabrik.de/asia/kyrgyzstan-latest.osm.pbf
+          bounds=$(python3 -c "import json; print(','.join(map(str, json.load(open('map/config.json'))['bounds'])))")
+          osmium merge data/kz.osm.pbf data/kg.osm.pbf -o data/merged.osm.pbf
+          osmium extract --bbox "$bounds" --strategy smart data/merged.osm.pbf -o data/region.osm.pbf
+          osmium fileinfo -e data/region.osm.pbf | grep -E "Number of (nodes|ways|relations)|Timestamp"
+          echo "BOUNDS=$bounds" >> "$GITHUB_ENV"
+
+      - name: Planetiler
+        run: |
+          java -Xmx10g -jar "$RUNNER_TEMP/planetiler.jar" \
+            --osm_path=data/region.osm.pbf --download --download_dir=data/sources \
+            --bounds="$BOUNDS" --maxzoom=14 --languages=ru,kk,en \
+            --tile_compression=gzip --output=data/region.mbtiles --force
+          python3 map/dump_mbtiles.py data/region.mbtiles public/tiles
+
+      - name: Upload
+        run: |
+          base=$(python3 -c "import json; print(json.load(open('map/config.json'))['public_base'])")
+          rclone copy public/tiles "r2:$R2_BUCKET/tiles" --checksum --transfers 96 --checkers 96 --fast-list \
+            --header-upload "Content-Encoding: gzip" --header-upload "Content-Type: application/x-protobuf" \
+            --header-upload "Cache-Control: public, max-age=86400" --stats 60s --stats-one-line
+          tile=$(cd public/tiles && ls -d 10/*/* | head -1)
+          curl -sS -D - -o /dev/null "$base/tiles/$tile" | grep -iE "^HTTP|content-encoding|content-type"
+          echo "Тайлы: $(find public/tiles -name '*.pbf' | wc -l), $(du -sh public/tiles | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
