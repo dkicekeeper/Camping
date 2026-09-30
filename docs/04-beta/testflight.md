@@ -70,4 +70,10 @@ GitHub или на github.com в Safari. Сборку после каждой в
   или другой Bundle ID.
 - **Ошибка подписи / «Cloud signing permission error»** — у ключа роль ниже Admin; создайте
   новый ключ с Admin и обновите три секрета `ASC_*`.
+- **«cannot register bundle identifier "app.dalada.ios.widgets"»** — идентификаторы приложения и
+  виджета Live Activity регистрирует шаг «Register bundle identifiers» через API. Если он пишет
+  «нужна роль Admin», либо создайте ключ с Admin, либо зарегистрируйте вручную:
+  [developer.apple.com](https://developer.apple.com/account/resources/identifiers/list) →
+  Identifiers → «+» → App IDs → App → Description «Dalada Widgets», Bundle ID (Explicit)
+  `app.dalada.ios.widgets` → Continue → Register.
 - Остальное — пришлите ссылку на запуск в Actions или текст ошибки.

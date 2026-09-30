@@ -66,6 +66,57 @@ jobs:
           printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
           echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
 
+      # Идентификаторы приложения и расширения. Для отладочной сборки Xcode обходится общим профилем
+      # команды, а для App Store каждому таргету нужен свой зарегистрированный идентификатор;
+      # из xcodebuild по ключу API он его не создаёт («cannot register bundle identifier»).
+      - name: Register bundle identifiers
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          python3 -m venv "$RUNNER_TEMP/ascenv"
+          "$RUNNER_TEMP/ascenv/bin/pip" install --quiet pyjwt cryptography
+          "$RUNNER_TEMP/ascenv/bin/python" - <<'PY'
+          import json, os, sys, time, urllib.error, urllib.parse, urllib.request
+          import jwt
+
+          now = int(time.time())
+          token = jwt.encode(
+              {"iss": os.environ["ASC_ISSUER_ID"], "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
+              open(os.environ["ASC_KEY_PATH"]).read(),
+              algorithm="ES256",
+              headers={"kid": os.environ["ASC_KEY_ID"], "typ": "JWT"},
+          )
+
+          def call(method, path, body=None):
+              request = urllib.request.Request(
+                  "https://api.appstoreconnect.apple.com/v1" + path,
+                  method=method,
+                  data=json.dumps(body).encode() if body else None,
+                  headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+              )
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      return json.load(response)
+              except urllib.error.HTTPError as error:
+                  print(f"::error::App Store Connect API {method} {path}: HTTP {error.code} "
+                        + error.read().decode(errors="replace")[:500])
+                  if error.code in (401, 403):
+                      print("::error::Ключ не может регистрировать идентификаторы: нужна роль Admin "
+                            "(docs/04-beta/testflight.md, шаг 2) или регистрация вручную на developer.apple.com.")
+                  sys.exit(1)
+
+          for identifier, name in [("app.dalada.ios", "Dalada"), ("app.dalada.ios.widgets", "Dalada Widgets")]:
+              query = urllib.parse.urlencode({"filter[identifier]": identifier, "limit": 200})
+              found = call("GET", "/bundleIds?" + query).get("data", [])
+              if any(item["attributes"]["identifier"] == identifier for item in found):
+                  print(f"{identifier}: уже зарегистрирован")
+                  continue
+              call("POST", "/bundleIds", {"data": {"type": "bundleIds", "attributes": {
+                  "identifier": identifier, "name": name, "platform": "IOS"}}})
+              print(f"{identifier}: зарегистрирован")
+          PY
+
       - name: Archive
         working-directory: ios
         env:
