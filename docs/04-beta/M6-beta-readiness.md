@@ -194,27 +194,32 @@ Policy URL — адрес политики выше. Для App Store позже
 Function `push` (через pg_net) → функция отправляет в APNs и отчитывается. Пока ключ и секреты не
 настроены, уведомления ждут в очереди сутки и пропадают — приложение работает как раньше.
 
-### Настройка (один раз, ~15 минут)
+### Настройка (один раз, ~20 минут)
+
+Ключ `.p8` и токены — только в Supabase и GitHub, не в чат и не в репозиторий.
 
 1. **Ключ APNs.** [developer.apple.com](https://developer.apple.com/account/resources/authkeys/list)
-   → Keys → «+» → название «Dalada Push», галочка **Apple Push Notifications service (APNs)** →
-   Configure → Environment: **Sandbox & Production** → Save → Continue → Register → **Download**
-   (файл `AuthKey_XXXXXXXXXX.p8`, скачать можно один раз). Запомните **Key ID** и **Team ID**
-   (Membership → Team ID). Ключ — секрет: только в Supabase, не в чат и не в репозиторий.
+   → Keys → «+» → Key Name «Dalada Push», галочка **Apple Push Notifications service (APNs)** →
+   Configure → Environment **Sandbox & Production**, Key Restriction **Team Scoped (All Topics)** →
+   Save → Continue → Register → **Download** (файл `AuthKey_XXXXXXXXXX.p8`, скачать можно один раз).
+   Запишите **Key ID** (10 символов, есть в имени файла) и **Team ID** (`SY2L2VMQP7`).
 2. **Секреты функции.** Supabase → Edge Functions → **Secrets** → добавить:
    - `APNS_KEY_ID` — Key ID;
    - `APNS_TEAM_ID` — Team ID;
-   - `APNS_PRIVATE_KEY` — всё содержимое файла `.p8` (вместе со строками `-----BEGIN…`);
-   - `PUSH_WORKER_SECRET` — любая длинная случайная строка (например, из генератора паролей).
-3. **Vault** — Supabase → SQL Editor → выполнить (подставьте свой project ref и ту же строку):
+   - `APNS_PRIVATE_KEY` — всё содержимое файла `.p8` (вместе со строками `-----BEGIN…`; переносы
+     строк не важны);
+   - `PUSH_WORKER_SECRET` — любая длинная случайная строка (например, сгенерированный пароль).
+3. **Деплой функции из GitHub.** supabase.com → аватар → Account preferences → **Access Tokens** →
+   Generate new token. В GitHub → Settings → Secrets and variables → Actions:
+   `SUPABASE_ACCESS_TOKEN` (токен) и `SUPABASE_PROJECT_REF` (id проекта из адреса дашборда). Потом
+   Actions → **Edge Functions** → Run workflow (дальше — сам при изменениях в `supabase/functions`
+   в `main`).
+4. **Vault** — Supabase → SQL Editor → выполнить (подставьте свой project ref и ту же строку, что в
+   `PUSH_WORKER_SECRET`):
    ```sql
    select vault.create_secret('https://<project-ref>.supabase.co/functions/v1/push', 'push_function_url');
    select vault.create_secret('<та же строка, что PUSH_WORKER_SECRET>', 'push_worker_secret');
    ```
-4. **Деплой функции из GitHub.** supabase.com → Account → **Access Tokens** → Generate. В GitHub →
-   Settings → Secrets and variables → Actions: `SUPABASE_ACCESS_TOKEN` (токен) и
-   `SUPABASE_PROJECT_REF` (id проекта из адреса дашборда). Потом Actions → **Edge Functions** → Run
-   workflow (дальше — сам при изменениях в `supabase/functions` в `main`).
 
 Проверка: второй аккаунт отправляет вам запрос в друзья — через минуту приходит пуш. Если нет —
 Supabase → Edge Functions → push → Logs и `select * from private.push_outbox order by id desc` (поле
