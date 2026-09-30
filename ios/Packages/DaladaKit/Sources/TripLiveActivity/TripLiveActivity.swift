@@ -6,7 +6,7 @@ import WidgetKit
 ///
 /// Тексты (вид поездки, дистанция, «Пауза») готовит приложение на своём языке — расширению
 /// не нужны свои переводы. Время идёт само (`Text(timerInterval:)`), без обновлений из приложения.
-public struct TripActivityAttributes: ActivityAttributes {
+public struct TripActivityAttributes: ActivityAttributes, Sendable {
     public struct ContentState: Codable, Hashable, Sendable {
         /// «12,4 км».
         public var distanceText: String
