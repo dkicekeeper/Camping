@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(33);
+select plan(35);
 
 create function pg_temp.act_as_anon() returns void language plpgsql as $$
 begin
@@ -282,6 +282,23 @@ select throws_ok(
   $$ insert into public.gear_items (name) values ('Тысяча первый') $$,
   'DL004', null,
   'не больше 1000 предметов экипировки'
+);
+
+select lives_ok(
+  $$ insert into public.gear_items (id, name, category, updated_at)
+     values ('aaaaaaaa-0000-0000-0000-000000000001', 'Фидер 4,2 м', 'rods', now())
+     on conflict (id) do update
+       set id = excluded.id, name = excluded.name, category = excluded.category, updated_at = excluded.updated_at $$,
+  'на лимите свой предмет можно поправить через upsert (как отправляет приложение)'
+);
+
+update public.gear_items set id = 'aaaaaaaa-0000-0000-0000-000000000009'
+ where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+
+select is(
+  (select name from public.gear_items where id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  'Фидер 4,2 м',
+  'id строки не меняется'
 );
 
 select pg_temp.act_as('22222222-2222-2222-2222-222222222222');
