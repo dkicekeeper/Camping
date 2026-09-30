@@ -2,6 +2,7 @@ import Backend
 import DaladaCore
 import DaladaUI
 import DesignTokens
+import MapEngine
 import Persistence
 import SwiftUI
 
@@ -130,6 +131,7 @@ struct LifehacksHomeView: View {
     @Environment(ArticlesStore.self) private var articles
     @State private var startsPacking = false
     @State private var opened: UUID?
+    @State private var offlineMaps = OfflineMaps.shared
 
     var body: some View {
         NavigationStack {
@@ -166,6 +168,17 @@ struct LifehacksHomeView: View {
                             Label("gear.title", systemImage: "backpack")
                                 .font(AppTypography.bodyEmphasis)
                             Text(verbatim: lists.gear.isEmpty ? String(localized: "gear.summary.none") : GearFormat.summary(lists.gear))
+                                .font(AppTypography.caption)
+                                .foregroundStyle(AppColors.textSecondary)
+                        }
+                    }
+                    NavigationLink {
+                        OfflineMapsView(environment: environment)
+                    } label: {
+                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                            Label("offlineMaps.title", systemImage: "map")
+                                .font(AppTypography.bodyEmphasis)
+                            Text(verbatim: OfflineMapsFormat.summary(offlineMaps))
                                 .font(AppTypography.caption)
                                 .foregroundStyle(AppColors.textSecondary)
                         }
