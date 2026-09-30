@@ -44,6 +44,9 @@ public struct CacheKey: Hashable, Sendable {
     /// Справочник рыб — общий для всех.
     public static let species = CacheKey(rawValue: "shared/species")
 
+    /// Правила и запреты (зоны с границами) — общие для всех, нужны без сети.
+    public static let rules = CacheKey(rawValue: "shared/rules")
+
     public static func profile(_ user: UUID) -> CacheKey {
         CacheKey(rawValue: userPrefix(user) + "profile")
     }

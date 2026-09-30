@@ -23,6 +23,7 @@ public struct RootView: View {
     @State private var sync: SyncEngine
     @State private var recorder: TripRecorder
     @State private var reactions: ReactionStore
+    @State private var rules: RulesStore
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
     @State private var showsRecording = false
@@ -45,6 +46,7 @@ public struct RootView: View {
         _sync = State(initialValue: SyncEngine(outbox: environment.database.outbox, sender: sender))
         _recorder = State(initialValue: TripRecorder(store: environment.database.trips))
         _reactions = State(initialValue: ReactionStore(backend: environment.backend))
+        _rules = State(initialValue: RulesStore(backend: environment.backend, cache: environment.cache))
     }
 
     public var body: some View {
@@ -59,7 +61,7 @@ public struct RootView: View {
                 PlacesHomeView(environment: environment)
             }
             Tab("tab.lifehacks", systemImage: "lightbulb", value: AppTab.lifehacks) {
-                LifehacksHomeView()
+                LifehacksHomeView(environment: environment)
             }
             Tab(value: AppTab.quickAction) {
                 Color.clear
@@ -91,6 +93,7 @@ public struct RootView: View {
                 .environment(sync)
                 .environment(species)
                 .environment(reactions)
+                .environment(rules)
         }
         // Ссылка-приглашение из QR-кода или сообщения — профиль человека.
         .onOpenURL { url in
@@ -114,6 +117,7 @@ public struct RootView: View {
             .environment(species)
             .environment(sync)
             .environment(reactions)
+            .environment(rules)
         }
         // После первого входа — выбор username, пока он не сохранён.
         .fullScreenCover(isPresented: $session.isUsernameOnboardingPresented) {
@@ -125,7 +129,10 @@ public struct RootView: View {
         .environment(sync)
         .environment(recorder)
         .environment(reactions)
+        .environment(rules)
         .task { await session.start() }
+        // Правила нужны без сети (карта, форма улова): сохранённая копия и обновление.
+        .task { await rules.loadIfNeeded() }
         // Незаконченная запись поездки (приложение закрыли или система выгрузила) продолжается.
         .task { await recorder.restore() }
         // Офлайн-очередь: отправляем при появлении сети, возврате в приложение и входе.

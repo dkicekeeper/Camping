@@ -19,6 +19,7 @@ struct PlaceCardView: View {
     @Environment(SpeciesStore.self) private var speciesStore
     @Environment(SyncEngine.self) private var sync
     @Environment(ReactionStore.self) private var reactions
+    @Environment(RulesStore.self) private var rules
     @State private var state: LoadState = .loading
     @State private var reports: [PlaceReport] = []
     /// Подписанные ссылки на фото отчётов: путь в хранилище → ссылка (действует час).
@@ -74,9 +75,10 @@ struct PlaceCardView: View {
         }
         .sheet(isPresented: $showsCheckin) {
             if case .loaded(let place) = state {
-                CheckinFormView(placeID: place.id, placeName: place.name) {}
+                CheckinFormView(placeID: place.id, placeName: place.name, coordinate: place.coordinate) {}
                     .environment(speciesStore)
                     .environment(sync)
+                    .environment(rules)
             }
         }
     }
@@ -147,6 +149,9 @@ struct PlaceCardView: View {
                         .secondaryButton()
                     }
                 }
+
+                // Запреты и промысловая мера в этой точке (работает без сети).
+                PlaceRulesSection(coordinate: place.coordinate, environment: environment)
 
                 reportsSection
 

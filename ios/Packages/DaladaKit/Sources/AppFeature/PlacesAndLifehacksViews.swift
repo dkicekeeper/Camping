@@ -120,18 +120,74 @@ struct PlaceRow: View {
     }
 }
 
-/// Вкладка «Лайфхаки» — заглушка до этапа M5.
+/// Вкладка «Лайфхаки»: правила и запреты, справочник рыб. Чеклисты, экипировка и статьи —
+/// в следующих частях M5.
 struct LifehacksHomeView: View {
+    let environment: AppEnvironment
+
+    @Environment(RulesStore.self) private var rules
+
     var body: some View {
         NavigationStack {
-            PlaceholderScreen(
-                icon: "checklist",
-                title: String(localized: "lifehacks.empty.title"),
-                description: String(localized: "lifehacks.empty.description")
-            )
+            List {
+                Section {
+                    NavigationLink {
+                        RulesListView(environment: environment)
+                    } label: {
+                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                            Label("rules.title", systemImage: "exclamationmark.shield")
+                                .font(AppTypography.bodyEmphasis)
+                            if let summary = rulesSummary {
+                                Text(verbatim: summary)
+                                    .font(AppTypography.caption)
+                                    .foregroundStyle(AppColors.textSecondary)
+                            }
+                        }
+                    }
+                    NavigationLink {
+                        FishGuideView()
+                    } label: {
+                        Label("fish.guide.title", systemImage: "fish")
+                            .font(AppTypography.bodyEmphasis)
+                    }
+                } header: {
+                    Text("lifehacks.section.knowledge")
+                }
+
+                Section {
+                    Text("lifehacks.soon")
+                        .font(AppTypography.bodySmall)
+                        .foregroundStyle(AppColors.textSecondary)
+                } header: {
+                    Text("lifehacks.section.soon")
+                }
+            }
             .navigationTitle("tab.lifehacks")
+            .task { await rules.loadIfNeeded() }
         }
     }
-}
 
-#Preview("Лайфхаки") { LifehacksHomeView() }
+    /// «Сейчас действуют запреты: 2» или ближайший: «Капшагайское водохранилище — с 5 апреля».
+    private var rulesSummary: String? {
+        guard let pack = rules.pack else { return nil }
+        let today = RulesStore.today
+        let active = pack.zones.filter { pack.banState(ofZone: $0.id, on: today) == .active }
+        if !active.isEmpty {
+            return String(localized: "rules.summary.active \(active.count)")
+        }
+        let upcoming = pack.regulations
+            .filter { $0.kind == .fishingBan }
+            .compactMap { regulation -> (Regulation, CalendarDay)? in
+                switch pack.status(of: regulation, on: today) {
+                case .soon(let start, _, _), .later(let start, _): (regulation, start)
+                case .active, .yearRound: nil
+                }
+            }
+            .min { $0.1 < $1.1 }
+        guard let next = upcoming,
+              let zoneID = next.0.zoneIDs.first,
+              let zone = pack.zone(zoneID)
+        else { return nil }
+        return String(localized: "rules.summary.next \(zone.name.text(for: RulesStore.language)) \(RuleFormat.day(next.1))")
+    }
+}

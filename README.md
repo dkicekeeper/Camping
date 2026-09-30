@@ -24,7 +24,7 @@
 | 1. Анализ рынка и конкурентов | [`docs/01-market-analysis.md`](docs/01-market-analysis.md) | ✅ готово |
 | 2. План по каждому разделу | [`docs/02-plan/`](docs/02-plan/README.md) | ✅ готово, решения приняты |
 | 3. Архитектура и стек | [`docs/03-architecture/`](docs/03-architecture/README.md) | ✅ готово, решения приняты (Supabase, TypeScript, MapLibre) |
-| 4–5. Спецификации и реализация по вехам | [`docs/04-beta/`](docs/04-beta/README.md) | 🔨 M0–M1 проверены, M2–M3 на проверке, идёт M4 «Друзья и сообщество» |
+| 4–5. Спецификации и реализация по вехам | [`docs/04-beta/`](docs/04-beta/README.md) | 🔨 M0–M1 проверены, M2–M4 на проверке, идёт M5 «Правила и лайфхаки» |
 
 ## Документы
 

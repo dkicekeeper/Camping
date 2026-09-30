@@ -1,4 +1,5 @@
 import DaladaCore
+import DesignComponents
 import DesignTokens
 import PhotosUI
 import SwiftUI
@@ -9,10 +10,13 @@ import Sync
 /// Сохраняется в офлайн-очередь и уходит на сервер сразу или когда появится сеть.
 struct CheckinFormView: View {
     let placeName: String
+    /// Точка места — для подсказок о запретах и промысловой мере.
+    let coordinate: GeoPoint?
     let onSaved: @MainActor () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SpeciesStore.self) private var speciesStore
+    @Environment(RulesStore.self) private var rules
     @Environment(SyncEngine.self) private var sync
     @State private var draft: CheckinDraft
     @State private var editingCatch: CatchDraft?
@@ -29,15 +33,42 @@ struct CheckinFormView: View {
         case unavailable
     }
 
-    init(placeID: UUID, placeName: String, onSaved: @escaping @MainActor () -> Void) {
+    init(placeID: UUID, placeName: String, coordinate: GeoPoint? = nil, onSaved: @escaping @MainActor () -> Void) {
         self.placeName = placeName
+        self.coordinate = coordinate
         self.onSaved = onSaved
         _draft = State(initialValue: CheckinDraft(placeID: placeID))
+    }
+
+    /// Запреты, которые действуют здесь в день чекина (мягкое предупреждение, без блокировки).
+    private var activeBans: [Regulation] {
+        guard let coordinate, let pack = rules.pack else { return [] }
+        return pack.activeBans(at: coordinate, on: CalendarDay(draft.at, calendar: RulesStore.almatyCalendar))
+    }
+
+    /// Промысловая мера в этом месте: вид → см.
+    private var minSizes: [String: Int] {
+        guard let coordinate, let pack = rules.pack else { return [:] }
+        return pack.minSizes(at: coordinate)
     }
 
     var body: some View {
         NavigationStack {
             Form {
+                if !activeBans.isEmpty, let pack = rules.pack {
+                    Section {
+                        ForEach(activeBans) { ban in
+                            RecommendationBox(
+                                text: String(localized: "rules.checkin.banWarning \(ban.title.text(for: RulesStore.language)) \(RuleFormat.statusText(pack.status(of: ban, on: CalendarDay(draft.at, calendar: RulesStore.almatyCalendar))).lowercased())"),
+                                color: AppColors.destructive,
+                                icon: "nosign"
+                            )
+                        }
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                }
+
                 Section {
                     ChipRow(title: "conditions.bite", options: CheckinConditions.Bite.allCases, selection: $draft.conditions.bite)
                     ChipRow(title: "conditions.crowd", options: CheckinConditions.Crowd.allCases, selection: $draft.conditions.crowd)
@@ -143,7 +174,7 @@ struct CheckinFormView: View {
                 }
             }
             .sheet(item: $editingCatch) { catchDraft in
-                CatchFormView(draft: catchDraft) { updated in
+                CatchFormView(draft: catchDraft, minSizes: minSizes) { updated in
                     if let index = draft.catches.firstIndex(where: { $0.id == updated.id }) {
                         draft.catches[index] = updated
                     } else {

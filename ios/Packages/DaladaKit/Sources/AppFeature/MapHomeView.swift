@@ -3,14 +3,22 @@ import DesignTokens
 import MapEngine
 import SwiftUI
 
+/// Зона правил, открытая с карты — для `.sheet(item:)`.
+struct RuleZoneSelection: Identifiable, Hashable {
+    let id: String
+}
+
 /// Вкладка «Карта»: места в видимой области, карточка по тапу, новое место долгим нажатием
-/// или кнопкой «+».
+/// или кнопкой «+», зоны запретов (цвет — действует сейчас, скоро или нет).
 struct MapHomeView: View {
     let environment: AppEnvironment
 
     @Environment(SessionStore.self) private var session
+    @Environment(RulesStore.self) private var rules
+    @AppStorage("map.showsRules") private var showsRules = true
     @State private var model: MapScreenModel
     @State private var showsSignInHint = false
+    @State private var selectedZone: RuleZoneSelection?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -24,11 +32,32 @@ struct MapHomeView: View {
             initialZoom: 8,
             places: model.mapPlaces,
             draftPin: model.newPlace?.coordinate,
+            ruleAreas: showsRules ? rules.mapAreas() : [],
             onRegionChange: { model.visibleAreaChanged($0, viewer: session.profile?.id) },
             onPlaceTap: { model.selectedPlace = PlaceSelection(id: $0) },
+            onRuleAreaTap: { selectedZone = RuleZoneSelection(id: $0) },
             onLongPress: { startNewPlace(at: $0) }
         )
         .ignoresSafeArea(edges: .top)
+        .overlay(alignment: .topLeading) {
+            Button {
+                showsRules.toggle()
+            } label: {
+                Label("map.rules", systemImage: showsRules ? "exclamationmark.shield.fill" : "exclamationmark.shield")
+                    .font(AppTypography.bodyEmphasis)
+            }
+            .secondaryButton()
+            .accessibilityAddTraits(showsRules ? .isSelected : [])
+            .padding(.leading, AppSpacing.lg)
+            .padding(.top, AppSpacing.sm)
+        }
+        .sheet(item: $selectedZone) { selection in
+            NavigationStack {
+                RuleZoneView(zoneID: selection.id, environment: environment)
+            }
+            .presentationDetents([.medium, .large])
+        }
+        .task { await rules.loadIfNeeded() }
         .overlay(alignment: .topTrailing) {
             Button {
                 startNewPlace(at: model.visibleCenter)

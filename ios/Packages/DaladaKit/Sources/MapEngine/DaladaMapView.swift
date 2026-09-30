@@ -21,6 +21,28 @@ public struct MapPlace: Hashable, Sendable, Identifiable {
     }
 }
 
+/// Зона правил на карте: многоугольники (внешний контур и отверстия) и состояние запрета.
+public struct MapRuleArea: Hashable, Sendable, Identifiable {
+    public enum State: String, Hashable, Sendable {
+        /// Запрет действует.
+        case active
+        /// Скоро начнётся.
+        case soon
+        /// Запрета сейчас нет.
+        case none
+    }
+
+    public let id: String
+    public let polygons: [[[GeoPoint]]]
+    public let state: State
+
+    public init(id: String, polygons: [[[GeoPoint]]], state: State) {
+        self.id = id
+        self.polygons = polygons
+        self.state = state
+    }
+}
+
 /// Как ведёт себя камера карты.
 public enum MapCameraMode: Hashable, Sendable {
     /// Пользователь двигает карту сам.
@@ -46,8 +68,11 @@ public struct DaladaMapView: UIViewRepresentable {
     /// Отрезки трека: своя поездка — один, чужая — видимые части без скрытых участков.
     let trackSegments: [[GeoPoint]]
     let cameraMode: MapCameraMode
+    /// Зоны правил (запреты) — под местами и треком.
+    let ruleAreas: [MapRuleArea]
     let onRegionChange: @MainActor (GeoBoundingBox) -> Void
     let onPlaceTap: @MainActor (UUID) -> Void
+    let onRuleAreaTap: @MainActor (String) -> Void
     let onLongPress: @MainActor (GeoPoint) -> Void
 
     public init(
@@ -59,8 +84,10 @@ public struct DaladaMapView: UIViewRepresentable {
         draftPin: GeoPoint? = nil,
         trackSegments: [[GeoPoint]] = [],
         cameraMode: MapCameraMode = .free,
+        ruleAreas: [MapRuleArea] = [],
         onRegionChange: @escaping @MainActor (GeoBoundingBox) -> Void = { _ in },
         onPlaceTap: @escaping @MainActor (UUID) -> Void = { _ in },
+        onRuleAreaTap: @escaping @MainActor (String) -> Void = { _ in },
         onLongPress: @escaping @MainActor (GeoPoint) -> Void = { _ in }
     ) {
         self.styleURL = styleURL
@@ -71,8 +98,10 @@ public struct DaladaMapView: UIViewRepresentable {
         self.draftPin = draftPin
         self.trackSegments = trackSegments
         self.cameraMode = cameraMode
+        self.ruleAreas = ruleAreas
         self.onRegionChange = onRegionChange
         self.onPlaceTap = onPlaceTap
+        self.onRuleAreaTap = onRuleAreaTap
         self.onLongPress = onLongPress
     }
 
@@ -122,6 +151,8 @@ public struct DaladaMapView: UIViewRepresentable {
         weak var mapView: MLNMapView?
         private var source: MLNShapeSource?
         private var trackSource: MLNShapeSource?
+        private var ruleSource: MLNShapeSource?
+        private var renderedRuleAreas: [MapRuleArea]?
         private var renderedPlaces: [MapPlace]?
         private var renderedDraft: GeoPoint?
         private var renderedTrack: [[GeoPoint]]?
@@ -139,11 +170,18 @@ public struct DaladaMapView: UIViewRepresentable {
             static let draft = "dalada-draft-pin"
             static let trackSource = "dalada-track"
             static let trackLine = "dalada-track-line"
+            static let ruleSource = "dalada-rules"
+            static let ruleFill = "dalada-rules-fill"
+            static let ruleLine = "dalada-rules-line"
         }
 
         /// Обновляет источник мест, если данные изменились. До загрузки стиля — ничего не делает:
         /// отрисуем в `didFinishLoading`.
         func render() {
+            if let ruleSource, parent.ruleAreas != renderedRuleAreas {
+                renderedRuleAreas = parent.ruleAreas
+                ruleSource.shape = MLNShapeCollectionFeature(shapes: Self.ruleFeatures(parent.ruleAreas))
+            }
             if let trackSource, parent.trackSegments != renderedTrack {
                 renderedTrack = parent.trackSegments
                 trackSource.shape = Self.trackShape(parent.trackSegments)
@@ -196,7 +234,46 @@ public struct DaladaMapView: UIViewRepresentable {
             }
         }
 
+        static func ruleFeatures(_ areas: [MapRuleArea]) -> [MLNShape & MLNFeature] {
+            areas.compactMap { area -> (MLNShape & MLNFeature)? in
+                let polygons: [MLNPolygon] = area.polygons.compactMap { rings in
+                    guard var outer = rings.first?.map(\.clCoordinate), outer.count >= 3 else { return nil }
+                    let holes: [MLNPolygon] = rings.dropFirst().compactMap { ring in
+                        var coordinates = ring.map(\.clCoordinate)
+                        guard coordinates.count >= 3 else { return nil }
+                        return MLNPolygon(coordinates: &coordinates, count: UInt(coordinates.count))
+                    }
+                    return MLNPolygon(coordinates: &outer, count: UInt(outer.count), interiorPolygons: holes)
+                }
+                guard !polygons.isEmpty else { return nil }
+                let feature = MLNMultiPolygonFeature(polygons: polygons)
+                feature.attributes = ["id": area.id, "state": area.state.rawValue]
+                return feature
+            }
+        }
+
         func installLayers(in style: MLNStyle) {
+            // Зоны правил — ниже трека и мест.
+            let ruleSource = MLNShapeSource(identifier: Layer.ruleSource, shape: nil, options: nil)
+            style.addSource(ruleSource)
+            let stateColor = NSExpression(
+                format: "TERNARY(state == 'active', %@, TERNARY(state == 'soon', %@, %@))",
+                UIColor.systemRed,
+                UIColor.systemOrange,
+                UIColor.systemGray
+            )
+            let ruleFill = MLNFillStyleLayer(identifier: Layer.ruleFill, source: ruleSource)
+            ruleFill.fillColor = stateColor
+            ruleFill.fillOpacity = NSExpression(format: "TERNARY(state == 'active', 0.25, TERNARY(state == 'soon', 0.2, 0.08))")
+            style.addLayer(ruleFill)
+            let ruleLine = MLNLineStyleLayer(identifier: Layer.ruleLine, source: ruleSource)
+            ruleLine.lineColor = stateColor
+            ruleLine.lineWidth = NSExpression(forConstantValue: 1.5)
+            ruleLine.lineOpacity = NSExpression(forConstantValue: 0.7)
+            style.addLayer(ruleLine)
+            self.ruleSource = ruleSource
+            renderedRuleAreas = nil
+
             // Трек — под точками мест.
             let trackSource = MLNShapeSource(identifier: Layer.trackSource, shape: nil, options: nil)
             style.addSource(trackSource)
@@ -276,8 +353,15 @@ public struct DaladaMapView: UIViewRepresentable {
             let hits = mapView.visibleFeatures(in: hitArea, styleLayerIdentifiers: [Layer.points, Layer.areas])
             // Точка важнее круга: если попали в обе, открываем точку.
             let hit = hits.first { ($0.attribute(forKey: "kind") as? String) == "place" } ?? hits.first
-            guard let idString = hit?.attribute(forKey: "id") as? String, let id = UUID(uuidString: idString) else { return }
-            parent.onPlaceTap(id)
+            if let idString = hit?.attribute(forKey: "id") as? String, let id = UUID(uuidString: idString) {
+                parent.onPlaceTap(id)
+                return
+            }
+            // Мимо мест — зона правил под пальцем.
+            let ruleHits = mapView.visibleFeatures(at: point, styleLayerIdentifiers: [Layer.ruleFill])
+            if let zoneID = ruleHits.first?.attribute(forKey: "id") as? String {
+                parent.onRuleAreaTap(zoneID)
+            }
         }
 
         @objc func handleLongPress(_ recognizer: UILongPressGestureRecognizer) {

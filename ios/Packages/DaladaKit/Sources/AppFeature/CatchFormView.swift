@@ -1,10 +1,13 @@
 import DaladaCore
+import DesignComponents
 import DesignTokens
 import PhotosUI
 import SwiftUI
 
 /// Форма улова: вид, вес, длина, количество, фото, способ, приманка, отпущена, скрыть размер.
 struct CatchFormView: View {
+    /// Промысловая мера в месте улова: вид → см (подсказка, без блокировки).
+    let minSizes: [String: Int]
     let onDone: @MainActor (CatchDraft) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -14,9 +17,19 @@ struct CatchFormView: View {
     @State private var isProcessingPhoto = false
     @State private var photoFailed = false
 
-    init(draft: CatchDraft, onDone: @escaping @MainActor (CatchDraft) -> Void) {
+    init(draft: CatchDraft, minSizes: [String: Int] = [:], onDone: @escaping @MainActor (CatchDraft) -> Void) {
+        self.minSizes = minSizes
         self.onDone = onDone
         _draft = State(initialValue: draft)
+    }
+
+    /// Промысловая мера выбранного вида здесь, см.
+    private var minSize: Int? { minSizes[draft.speciesID] }
+
+    /// Длина меньше промысловой меры.
+    private var isUndersized: Bool {
+        guard let minSize, let length = draft.lengthCm else { return false }
+        return length < Double(minSize)
     }
 
     var body: some View {
@@ -48,6 +61,22 @@ struct CatchFormView: View {
                                 .monospacedDigit()
                         }
                     }
+                } footer: {
+                    if let minSize, !isUndersized {
+                        Text("rules.catch.minSizeHint \(minSize)")
+                    }
+                }
+
+                if isUndersized, let minSize {
+                    Section {
+                        RecommendationBox(
+                            text: String(localized: "rules.catch.undersized \(minSize)"),
+                            color: AppColors.warning,
+                            icon: "ruler"
+                        )
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
 
                 Section {
