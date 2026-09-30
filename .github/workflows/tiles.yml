@@ -103,13 +103,16 @@ jobs:
       - name: OpenStreetMap extract
         run: |
           mkdir -p data
-          # Geofabrik ставит cookie и перенаправляет на тот же адрес — без хранилища cookie curl ходит
-          # по кругу. Запасное зеркало — openstreetmap.fr.
+          # Geofabrik с адресов GitHub Actions иногда уводит в бесконечные перенаправления — тогда
+          # берём выгрузку с зеркала openstreetmap.fr (там имена без «-latest»).
           fetch() {
-            curl -sSfL --retry 3 -A "Dalada-tiles (+https://github.com/dkicekeeper/Dalada)" \
-              -b "$RUNNER_TEMP/cookies" -c "$RUNNER_TEMP/cookies" -o "data/$1.osm.pbf" \
-              "https://download.geofabrik.de/asia/$2-latest.osm.pbf" \
-            || curl -sSfL --retry 3 -o "data/$1.osm.pbf" "https://download.openstreetmap.fr/extracts/asia/$2-latest.osm.pbf"
+            local ua="Dalada-tiles (+https://github.com/dkicekeeper/Dalada)"
+            if ! curl -sSfL --retry 3 --max-redirs 5 -A "$ua" -b "$RUNNER_TEMP/cookies" -c "$RUNNER_TEMP/cookies" \
+                -o "data/$1.osm.pbf" "https://download.geofabrik.de/asia/$2-latest.osm.pbf"; then
+              echo "Geofabrik не отдал $2:"
+              curl -sS -o /dev/null -D - -A "$ua" "https://download.geofabrik.de/asia/$2-latest.osm.pbf" | grep -iE "^HTTP|^location" || true
+              curl -sSfL --retry 3 -A "$ua" -o "data/$1.osm.pbf" "https://download.openstreetmap.fr/extracts/asia/$2.osm.pbf"
+            fi
             ls -la "data/$1.osm.pbf"
           }
           fetch kz kazakhstan

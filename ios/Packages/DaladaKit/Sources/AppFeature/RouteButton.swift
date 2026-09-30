@@ -30,14 +30,15 @@ struct RouteButton: View {
     }
 
     private var choices: [Navigator] {
-        let all = Navigator.choices(isInstalled: Self.isInstalled)
+        let installed = Set(Navigator.allCases.compactMap(\.appScheme).filter { Self.isInstalled($0) })
+        let all = Navigator.choices { installed.contains($0) }
         guard let last = all.first(where: { $0.rawValue == lastNavigator }) else { return all }
         return [last] + all.filter { $0 != last }
     }
 
     private func open(_ navigator: Navigator) {
         lastNavigator = navigator.rawValue
-        let installed = navigator.appScheme.map(Self.isInstalled) ?? true
+        let installed = navigator.appScheme.map { Self.isInstalled($0) } ?? true
         if let url = navigator.url(to: destination, installed: installed) {
             openURL(url)
         }

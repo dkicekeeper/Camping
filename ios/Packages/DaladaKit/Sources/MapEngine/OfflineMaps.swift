@@ -28,19 +28,21 @@ public final class OfflineMaps {
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var packsObservation: NSKeyValueObservation?
 
+    // Уведомления MapLibre приходят на главном потоке (`queue: .main`). Из пакета берутся только
+    // id района и состояние — в главный актор передаются значения, а не сам пакет.
     private init() {
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: .MLNOfflinePackProgressChanged, object: nil, queue: .main) { note in
-            guard let pack = note.object as? MLNOfflinePack else { return }
-            MainActor.assumeIsolated { self.update(pack) }
+            guard let pack = note.object as? MLNOfflinePack,
+                  let id = Self.regionID(of: pack) else { return }
+            let state = Self.state(of: pack)
+            MainActor.assumeIsolated { self.apply(state, to: id) }
         })
         observers.append(center.addObserver(forName: .MLNOfflinePackError, object: nil, queue: .main) { note in
             guard let pack = note.object as? MLNOfflinePack,
                   let id = Self.regionID(of: pack) else { return }
-            let error = note.userInfo?[MLNOfflinePackUserInfoKey.error] as? NSError
-            MainActor.assumeIsolated {
-                self.states[id] = .failed(error?.localizedDescription ?? "")
-            }
+            let message = (note.userInfo?[MLNOfflinePackUserInfoKey.error] as? NSError)?.localizedDescription ?? ""
+            MainActor.assumeIsolated { self.states[id] = .failed(message) }
         })
         packsObservation = MLNOfflineStorage.shared.observe(\.packs, options: [.initial, .new]) { _, _ in
             MainActor.assumeIsolated { self.reloadPacks() }
@@ -80,12 +82,15 @@ public final class OfflineMaps {
         let context = (try? JSONEncoder().encode(Context(region: region.id))) ?? Data()
         states[region.id] = .downloading(progress: 0, bytes: 0)
         MLNOfflineStorage.shared.addPack(for: pyramid, withContext: context) { pack, error in
+            // Колбэк MapLibre — на главном потоке; пакет дальше живёт только там.
+            nonisolated(unsafe) let pack = pack
+            let error = error?.localizedDescription
             MainActor.assumeIsolated {
                 if let pack {
                     self.packs[region.id] = pack
                     pack.resume()
                 } else {
-                    self.states[region.id] = .failed(error?.localizedDescription ?? "")
+                    self.states[region.id] = .failed(error ?? "")
                 }
             }
         }
@@ -113,7 +118,7 @@ public final class OfflineMaps {
         var region: String
     }
 
-    private static func regionID(of pack: MLNOfflinePack) -> String? {
+    private nonisolated static func regionID(of pack: MLNOfflinePack) -> String? {
         (try? JSONDecoder().decode(Context.self, from: pack.context))?.region
     }
 
@@ -133,27 +138,35 @@ public final class OfflineMaps {
         isLoaded = MLNOfflineStorage.shared.packs != nil
     }
 
-    private func update(_ pack: MLNOfflinePack) {
-        guard let id = Self.regionID(of: pack) else { return }
+    /// Состояние пакета; `nil` — пока неизвестно (не менять), `.notDownloaded` — пакет удалён.
+    private nonisolated static func state(of pack: MLNOfflinePack) -> State? {
         let progress = pack.progress
         let expected = max(progress.countOfResourcesExpected, 1)
         let share = min(Double(progress.countOfResourcesCompleted) / Double(expected), 1)
         let bytes = Int64(progress.countOfBytesCompleted)
         switch pack.state {
         case .complete:
-            states[id] = .downloaded(bytes: bytes)
+            return .downloaded(bytes: bytes)
         case .active:
-            states[id] = .downloading(progress: share, bytes: bytes)
+            return .downloading(progress: share, bytes: bytes)
         case .inactive:
-            states[id] = share >= 1 && progress.countOfResourcesExpected > 0
+            return share >= 1 && progress.countOfResourcesExpected > 0
                 ? .downloaded(bytes: bytes)
                 : .paused(progress: share, bytes: bytes)
-        case .unknown:
-            break
         case .invalid:
-            states[id] = nil
+            return .notDownloaded
+        case .unknown:
+            return nil
         @unknown default:
-            break
+            return nil
+        }
+    }
+
+    private func apply(_ state: State?, to id: String) {
+        switch state {
+        case nil: break
+        case .notDownloaded?: states[id] = nil
+        case let state?: states[id] = state
         }
     }
 }
