@@ -14,7 +14,6 @@ struct PlaceCardView: View {
     let placeID: UUID
     let environment: AppEnvironment
 
-    @Environment(\.openURL) private var openURL
     @Environment(SessionStore.self) private var session
     @Environment(SpeciesStore.self) private var speciesStore
     @Environment(SyncEngine.self) private var sync
@@ -167,13 +166,7 @@ struct PlaceCardView: View {
                         .primaryButton()
                     }
                     if let destination = routeDestination(place) {
-                        Button {
-                            openURL(Self.appleMapsURL(to: destination))
-                        } label: {
-                            Label("place.card.route", systemImage: "arrow.triangle.turn.up.right.diamond")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .secondaryButton()
+                        RouteButton(destination: destination)
                     }
                 }
 
@@ -224,10 +217,6 @@ struct PlaceCardView: View {
     private func routeDestination(_ place: PlaceDetails) -> GeoPoint? {
         if let access = place.accessPoint { return access }
         return place.isApproximate ? nil : place.coordinate
-    }
-
-    private static func appleMapsURL(to point: GeoPoint) -> URL {
-        URL(string: "https://maps.apple.com/?daddr=\(point.latitude),\(point.longitude)")!
     }
 
     private func load() async {

@@ -19,6 +19,14 @@
 			</array>
 		</dict>
 	</array>
+	<!-- «Маршрут»: какие навигаторы установлены (2GIS, Яндекс Навигатор и Карты, Google Карты). -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>dgis</string>
+		<string>yandexnavi</string>
+		<string>yandexmaps</string>
+		<string>comgooglemaps</string>
+	</array>
 	<!-- Запись трека поездки в фоне (CLBackgroundActivitySession). -->
 	<key>UIBackgroundModes</key>
 	<array>
