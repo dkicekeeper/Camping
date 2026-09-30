@@ -1,0 +1,8 @@
+[
+  {"id": "ice_safety", "category": "safety", "sort_order": 10, "published_on": "2026-09-30"},
+  {"id": "summer_safety", "category": "safety", "sort_order": 20, "published_on": "2026-09-30"},
+  {"id": "fish_release", "category": "rules_ethics", "sort_order": 30, "published_on": "2026-09-30"},
+  {"id": "feeder_basics", "category": "tackle", "sort_order": 40, "published_on": "2026-09-30"},
+  {"id": "three_knots", "category": "knots", "sort_order": 50, "published_on": "2026-09-30"},
+  {"id": "fish_on_coals", "category": "cooking", "sort_order": 60, "published_on": "2026-09-30"}
+]
