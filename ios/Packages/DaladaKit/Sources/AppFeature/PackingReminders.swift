@@ -6,6 +6,11 @@ import UserNotifications
 enum PackingReminders {
     private static let prefix = "packing."
 
+    /// Состояние разрешения на уведомления.
+    static func authorizationStatus() async -> UNAuthorizationStatus {
+        await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+    }
+
     /// Спрашивает разрешение (один раз); `true` — уведомления разрешены.
     static func requestPermission() async -> Bool {
         let center = UNUserNotificationCenter.current()

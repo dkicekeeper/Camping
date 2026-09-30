@@ -2,6 +2,7 @@ import DaladaCore
 import DesignComponents
 import DesignTokens
 import SwiftUI
+import UserNotifications
 
 // MARK: - Согласие
 
@@ -116,5 +117,57 @@ struct AboutView: View {
         }
         .navigationTitle("about.title")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Уведомления
+
+/// «Уведомления» в «Аккаунте»: включены ли, «Включить» или переход в Настройки.
+struct NotificationsSection: View {
+    @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var status: UNAuthorizationStatus?
+
+    var body: some View {
+        Section {
+            HStack {
+                Label("notifications.title", systemImage: "bell")
+                Spacer(minLength: 0)
+                switch status {
+                case .some(let current) where PushRegistrar.isAllowed(current):
+                    Text("notifications.on")
+                        .foregroundStyle(AppColors.textSecondary)
+                case .some(.denied):
+                    Button("notifications.openSettings") {
+                        if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                            openURL(url)
+                        }
+                    }
+                    .buttonStyle(.borderless)
+                case .some:
+                    Button("notifications.enable") {
+                        Task {
+                            await PushRegistrar.shared.requestPermissionIfNeeded()
+                            await refresh()
+                        }
+                    }
+                    .buttonStyle(.borderless)
+                case nil:
+                    ProgressView()
+                }
+            }
+        } footer: {
+            Text("notifications.footer")
+        }
+        .task { await refresh() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await refresh() }
+            }
+        }
+    }
+
+    private func refresh() async {
+        status = await PackingReminders.authorizationStatus()
     }
 }

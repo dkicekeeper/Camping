@@ -159,6 +159,8 @@ final class SessionStore {
     func signOut() async {
         guard let backend else { return }
         let userID = backend.currentUserID
+        // Этот телефон больше не получает уведомления аккаунта (пока сессия ещё действует).
+        await PushRegistrar.shared.unregister()
         await perform { try await backend.signOut() }
         // Сохранённые данные аккаунта на телефоне не остаются. Неотправленные чекины остаются
         // в очереди и уйдут, когда этот пользователь войдёт снова.

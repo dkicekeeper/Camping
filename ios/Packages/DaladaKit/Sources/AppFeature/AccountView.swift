@@ -26,6 +26,8 @@ struct AccountView: View {
                 }
             }
 
+            NotificationsSection()
+
             Section {
                 Button("profile.signOut", systemImage: "rectangle.portrait.and.arrow.right") {
                     Task {

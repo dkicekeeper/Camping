@@ -34,6 +34,8 @@ public struct RootView: View {
     @State private var opensRecordingAfterSheet = false
     /// Открытая ссылка-приглашение `dalada://u/<username>`.
     @State private var profileLink: ProfileLink?
+    /// Обсуждение из пуша `dalada://thread/<id>`.
+    @State private var threadLink: ThreadLinkItem?
 
     public init(environment: AppEnvironment) {
         self.environment = environment
@@ -107,7 +109,16 @@ public struct RootView: View {
         .onOpenURL { url in
             if let username = InviteLink.username(from: url) {
                 profileLink = ProfileLink(username: username)
+            } else if let threadID = ThreadLink.threadID(from: url) {
+                threadLink = ThreadLinkItem(id: threadID)
             }
+        }
+        .sheet(item: $threadLink) { link in
+            NavigationStack {
+                ThreadView(threadID: link.id, environment: environment)
+            }
+            .environment(session)
+            .environment(reactions)
         }
         .sheet(item: $profileLink) { link in
             NavigationStack {
@@ -156,12 +167,15 @@ public struct RootView: View {
             for await _ in NetworkMonitor.becameAvailable() {
                 sync.kick(force: true)
                 lists.scheduleSync(after: .zero)
+                Task { await PushRegistrar.shared.update(userID: session.profile?.id, backend: environment.backend) }
             }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 sync.kick(force: true)
                 lists.scheduleSync(after: .zero)
+                // Разрешение на уведомления могли дать в Настройках.
+                Task { await PushRegistrar.shared.update(userID: session.profile?.id, backend: environment.backend) }
             }
         }
         .onChange(of: session.profile?.id, initial: true) { previous, current in
@@ -171,6 +185,8 @@ public struct RootView: View {
             }
             // Экипировка и чеклисты: свои у каждого аккаунта, у гостя — на телефоне.
             Task { await lists.switchUser(from: previous, to: current) }
+            // Пуши: телефон получает уведомления вошедшего аккаунта (если разрешены).
+            Task { await PushRegistrar.shared.update(userID: current, backend: environment.backend) }
         }
     }
 
@@ -192,4 +208,9 @@ public struct RootView: View {
 
 #Preview {
     RootView(environment: .preview)
+}
+
+/// Обсуждение, открытое по ссылке из пуша.
+struct ThreadLinkItem: Identifiable, Hashable {
+    let id: UUID
 }

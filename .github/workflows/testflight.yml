@@ -115,6 +115,30 @@ jobs:
               call("POST", "/bundleIds", {"data": {"type": "bundleIds", "attributes": {
                   "identifier": identifier, "name": name, "platform": "IOS"}}})
               print(f"{identifier}: зарегистрирован")
+
+          # Пуш-уведомления (aps-environment в Dalada.entitlements): возможность у идентификатора
+          # приложения. Обычно её включает и сама подпись; ошибка здесь — только предупреждение.
+          query = urllib.parse.urlencode({"filter[identifier]": "app.dalada.ios", "limit": 200})
+          app = next(item for item in call("GET", "/bundleIds?" + query)["data"]
+                     if item["attributes"]["identifier"] == "app.dalada.ios")
+          capabilities = call("GET", f"/bundleIds/{app['id']}/bundleIdCapabilities").get("data", [])
+          if any(c["attributes"].get("capabilityType") == "PUSH_NOTIFICATIONS" for c in capabilities):
+              print("app.dalada.ios: пуши уже включены")
+          else:
+              request = urllib.request.Request(
+                  "https://api.appstoreconnect.apple.com/v1/bundleIdCapabilities",
+                  method="POST",
+                  data=json.dumps({"data": {"type": "bundleIdCapabilities",
+                                            "attributes": {"capabilityType": "PUSH_NOTIFICATIONS"},
+                                            "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": app["id"]}}}}}).encode(),
+                  headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+              )
+              try:
+                  urllib.request.urlopen(request).read()
+                  print("app.dalada.ios: пуши включены")
+              except urllib.error.HTTPError as error:
+                  print(f"::warning::Не удалось включить пуши у app.dalada.ios: HTTP {error.code} "
+                        + error.read().decode(errors="replace")[:300])
           PY
 
       - name: Archive

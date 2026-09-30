@@ -655,6 +655,8 @@ struct ThreadFormView: View {
         defer { isSaving = false }
         do {
             try await backend.createThread(draft)
+            // Ответы на обсуждение приходят пушем — спросим разрешение (один раз).
+            await PushRegistrar.shared.requestPermissionIfNeeded()
             dismiss()
         } catch {
             saveError = CommunityMessage.text(for: error)
@@ -907,6 +909,7 @@ struct ThreadView: View {
         defer { isSending = false }
         do {
             try await backend.createPost(replyDraft)
+            await PushRegistrar.shared.requestPermissionIfNeeded()
             replyText = ""
             replyQuote = nil
             replyID = UUID()

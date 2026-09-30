@@ -518,6 +518,8 @@ struct UserProfileView: View {
         switch try? await backend.sendFriendRequest(to: profile.id) {
         case .sent?:
             self.profile = profile.with(isFriend: false, requestStatus: .outgoing)
+            // Ответ на запрос придёт пушем — спросим разрешение (один раз).
+            await PushRegistrar.shared.requestPermissionIfNeeded()
         case .accepted?, .alreadyFriends?:
             self.profile = profile.with(isFriend: true, requestStatus: nil)
         case nil:
