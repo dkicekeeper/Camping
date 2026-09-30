@@ -121,6 +121,17 @@ public struct PlaceSummary: Codable, Identifiable, Hashable, Sendable {
     }
 }
 
+/// Редакция Dalada — служебный аккаунт, автор редакционных мест (`private.editorial_id()`).
+public enum Editorial {
+    public static let username = "dalada"
+}
+
+/// Откуда место: добавлено человеком, редакцией или взято из OpenStreetMap (`attributes.source`).
+public enum PlaceSource: String, Codable, Sendable {
+    case editorial
+    case osm
+}
+
 /// Карточка места — строка `place_card`.
 public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
     public let id: UUID
@@ -137,6 +148,11 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
     public let visibility: Visibility
     public let status: PlaceStatus
     public let isOwn: Bool
+    /// Источник места редакции; у мест людей — `nil`.
+    public let source: PlaceSource?
+
+    /// Место редакции Dalada.
+    public var isEditorial: Bool { ownerUsername == Editorial.username }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -151,9 +167,15 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
         case radiusM = "radius_m"
         case accessLon = "access_lon"
         case accessLat = "access_lat"
+        case attributes
         case visibility
         case status
         case isOwn = "is_own"
+    }
+
+    /// Из `attributes` приложению нужен только источник.
+    struct Attributes: Codable, Hashable {
+        var source: String?
     }
 
     public init(from decoder: any Decoder) throws {
@@ -180,6 +202,8 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
         status = try c.decode(PlaceStatus.self, forKey: .status)
         // У гостя старый сервер отдавал null вместо false.
         isOwn = try c.decodeIfPresent(Bool.self, forKey: .isOwn) ?? false
+        let attributes = try? c.decodeIfPresent(Attributes.self, forKey: .attributes)
+        source = attributes?.source.flatMap(PlaceSource.init(rawValue:))
     }
 
     /// В том же виде, что приходит с сервера, — для локального кэша.
@@ -197,6 +221,7 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
         try c.encode(radiusM, forKey: .radiusM)
         try c.encode(accessPoint?.longitude, forKey: .accessLon)
         try c.encode(accessPoint?.latitude, forKey: .accessLat)
+        try c.encode(Attributes(source: source?.rawValue), forKey: .attributes)
         try c.encode(visibility, forKey: .visibility)
         try c.encode(status, forKey: .status)
         try c.encode(isOwn, forKey: .isOwn)

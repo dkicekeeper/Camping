@@ -7284,6 +7284,29 @@
         }
       }
     },
+    "place.card.editorial" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dalada editors"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Dalada редакциясы"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Редакция Dalada"
+          }
+        }
+      }
+    },
     "place.card.failed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7349,6 +7372,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Место недоступно"
+          }
+        }
+      }
+    },
+    "place.card.osm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data: © OpenStreetMap contributors"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Деректер: © OpenStreetMap қатысушылары"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Данные: © участники OpenStreetMap"
           }
         }
       }

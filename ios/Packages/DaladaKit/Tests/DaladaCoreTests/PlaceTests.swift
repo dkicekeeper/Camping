@@ -31,6 +31,24 @@ struct PlaceTests {
         #expect(place.ownerUsername == "arman")
         #expect(place.accessPoint == nil)
         #expect(place.visibility == .friends)
+        #expect(!place.isEditorial)
+        #expect(place.source == nil)
+    }
+
+    @Test func editorialPlaceKeepsItsSourceInCache() throws {
+        let json = """
+        {"id": "aaaaaaaa-0000-0000-0000-000000000003", "owner_id": "da1ada00-0000-4000-8000-000000000001",
+         "owner_username": "dalada", "type": "water_body", "name": "Бартогайское водохранилище",
+         "description": null, "lon": 78.5055, "lat": 43.3537, "approximate": false, "radius_m": 0,
+         "access_lon": null, "access_lat": null, "attributes": {"source": "osm", "osm": "r19802418"},
+         "visibility": "public", "status": "published", "is_own": false}
+        """
+        let place = try JSONDecoder().decode(PlaceDetails.self, from: Data(json.utf8))
+        #expect(place.isEditorial)
+        #expect(place.source == .osm)
+
+        let cached = try JSONDecoder().decode(PlaceDetails.self, from: JSONEncoder().encode(place))
+        #expect(cached == place)
     }
 
     @Test func draftValidation() {

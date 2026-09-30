@@ -68,12 +68,15 @@ struct PlaceCardView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Чужое место: пожаловаться или заблокировать автора (место тогда пропадёт).
+                // Редакцию не блокируют — только жалоба.
                 if case .loaded(let place) = state, !place.isOwn {
                     ToolbarItem(placement: .topBarTrailing) {
                         ModerationMenu(
                             target: .place,
                             targetID: place.id,
-                            author: FeedAuthor(id: place.ownerID, username: place.ownerUsername, displayName: nil),
+                            author: place.isEditorial
+                                ? nil
+                                : FeedAuthor(id: place.ownerID, username: place.ownerUsername, displayName: nil),
                             isToolbar: true
                         ) {
                             Task { await load() }
@@ -138,8 +141,17 @@ struct PlaceCardView: View {
                         .font(AppTypography.body)
                 }
 
-                if let username = place.ownerUsername, !place.isOwn {
+                if place.isEditorial {
+                    Label("place.card.editorial", systemImage: "checkmark.seal")
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                } else if let username = place.ownerUsername, !place.isOwn {
                     Text(verbatim: "@" + username)
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textTertiary)
+                }
+                if place.source == .osm {
+                    Text("place.card.osm")
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textTertiary)
                 }
