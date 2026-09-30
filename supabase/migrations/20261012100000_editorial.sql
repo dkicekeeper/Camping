@@ -9,15 +9,23 @@ language sql immutable
 set search_path = ''
 as $$ select 'da1ada00-0000-4000-8000-000000000001'::uuid $$;
 
--- Профиль создаёт триггер on_auth_user_created (имя — из full_name).
+-- Профиль создаёт триггер on_auth_user_created (имя — из full_name). Пустые строки вместо NULL
+-- в служебных полях: иначе Supabase Auth не может прочитать пользователя (список в дашборде).
 insert into auth.users (
-  id, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, banned_until, created_at, updated_at
+  id, instance_id, aud, role, encrypted_password, confirmation_token, recovery_token,
+  email_change_token_new, email_change, raw_app_meta_data, raw_user_meta_data, banned_until,
+  created_at, updated_at
 )
 values (
   private.editorial_id(),
   '00000000-0000-0000-0000-000000000000',
   'authenticated',
   'authenticated',
+  '',
+  '',
+  '',
+  '',
+  '',
   '{"provider": "editorial", "providers": []}'::jsonb,
   '{"full_name": "Dalada"}'::jsonb,
   '2999-12-31 00:00:00+00',
