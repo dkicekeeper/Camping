@@ -105,6 +105,18 @@ public struct OutboxStore: Sendable {
         }
     }
 
+    /// Удалить всю очередь человека (при удалении аккаунта): чекины с фото, поездки с точками.
+    public func removeAll(owner: UUID) async throws {
+        try await writer.write { db in
+            try db.execute(sql: "DELETE FROM outbox_checkin WHERE owner_id = ?", arguments: [owner])
+            try db.execute(
+                sql: "DELETE FROM track_point WHERE trip_id IN (SELECT id FROM outbox_trip WHERE owner_id = ?)",
+                arguments: [owner]
+            )
+            try db.execute(sql: "DELETE FROM outbox_trip WHERE owner_id = ?", arguments: [owner])
+        }
+    }
+
     /// Неудачная попытка: следующая — через паузу по `RetryPolicy`. Возвращает число попыток.
     @discardableResult
     public func recordFailedAttempt(_ id: UUID, error: String?, now: Date) async throws -> Int {

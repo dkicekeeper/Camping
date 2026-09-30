@@ -29,11 +29,14 @@ final class SessionStore {
     let backend: BackendClient?
     /// Профиль на случай запуска без сети.
     private let cache: CacheStore?
+    /// Локальная база — стереть данные удалённого аккаунта.
+    private let database: LocalDatabase?
     private var appleNonce: String?
 
-    init(backend: BackendClient?, cache: CacheStore? = nil) {
+    init(backend: BackendClient?, cache: CacheStore? = nil, database: LocalDatabase? = nil) {
         self.backend = backend
         self.cache = cache
+        self.database = database
     }
 
     var profile: UserProfile? {
@@ -153,6 +156,26 @@ final class SessionStore {
         if let userID, !backend.isSignedIn {
             try? await cache?.removeUserData(userID)
         }
+    }
+
+    /// Удаляет аккаунт со всеми данными на сервере и на телефоне. Возвращает текст ошибки или
+    /// `nil` при успехе (тогда человек — снова гость).
+    func deleteAccount() async -> String? {
+        guard let backend, let userID = backend.currentUserID else {
+            return String(localized: "auth.error.generic")
+        }
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            try await backend.deleteMyAccount()
+        } catch {
+            return error.localizedDescription
+        }
+        try? await cache?.removeUserData(userID)
+        try? await database?.outbox.removeAll(owner: userID)
+        try? await database?.ownRecords.removeAll(account: OwnRecordStore.account(for: userID))
+        state = .guest
+        return nil
     }
 
     // MARK: Username

@@ -37,7 +37,9 @@ public struct RootView: View {
 
     public init(environment: AppEnvironment) {
         self.environment = environment
-        _session = State(initialValue: SessionStore(backend: environment.backend, cache: environment.cache))
+        _session = State(initialValue: SessionStore(
+            backend: environment.backend, cache: environment.cache, database: environment.database
+        ))
         _species = State(initialValue: SpeciesStore(backend: environment.backend, cache: environment.cache))
         let sender: any OutboxSending
         if let backend = environment.backend {

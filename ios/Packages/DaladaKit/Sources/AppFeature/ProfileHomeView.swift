@@ -15,6 +15,7 @@ struct ProfileHomeView: View {
     @Environment(SessionStore.self) private var session
     @State private var connection: ConnectionState = .checking
     @State private var showsPrivacyZones = false
+    @State private var showsAccount = false
 
     var body: some View {
         NavigationStack {
@@ -31,6 +32,9 @@ struct ProfileHomeView: View {
             .navigationDestination(isPresented: $showsPrivacyZones) {
                 PrivacyZonesView(environment: environment)
             }
+            .navigationDestination(isPresented: $showsAccount) {
+                AccountView()
+            }
             .task { await checkConnection() }
             .toolbar {
                 if session.profile != nil {
@@ -38,6 +42,9 @@ struct ProfileHomeView: View {
                         Menu {
                             Button("privacyZones.title", systemImage: "house.circle") {
                                 showsPrivacyZones = true
+                            }
+                            Button("account.title", systemImage: "person.text.rectangle") {
+                                showsAccount = true
                             }
                             Button("profile.signOut", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                                 Task { await session.signOut() }

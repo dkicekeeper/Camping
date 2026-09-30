@@ -165,6 +165,14 @@ public struct OwnRecordStore: Sendable {
         }
     }
 
+    /// Удалить все списки аккаунта, в том числе неотправленные (при удалении аккаунта).
+    public func removeAll(account: String) async throws {
+        try await writer.write { db in
+            try db.execute(sql: "DELETE FROM own_record WHERE account = ?", arguments: [account])
+            try db.execute(sql: "DELETE FROM own_sync_cursor WHERE account = ?", arguments: [account])
+        }
+    }
+
     private static func upsert(
         _ db: Database,
         kind: String,

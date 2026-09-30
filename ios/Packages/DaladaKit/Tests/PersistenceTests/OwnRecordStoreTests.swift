@@ -110,6 +110,16 @@ struct OwnRecordStoreTests {
         #expect(try await store.cursor(kind: GearItem.recordKind, account: account) == nil)
     }
 
+    @Test func deletedAccountLosesEverything() async throws {
+        let store = try LocalDatabase.inMemory().ownRecords
+        try await store.save(gear("Неотправленный"), account: account)
+        try await store.applyRemote([gear("Отправленный")], account: account)
+        try await store.save(gear("Гостевой"), account: OwnRecordStore.guestAccount)
+        try await store.removeAll(account: account)
+        #expect(try await store.all(GearItem.self, account: account, includeDeleted: true).isEmpty)
+        #expect(try await store.all(GearItem.self, account: OwnRecordStore.guestAccount).count == 1)
+    }
+
     @Test func checklistRoundTripsWithItems() async throws {
         let store = try LocalDatabase.inMemory().ownRecords
         let checklist = Checklist(

@@ -42,6 +42,16 @@ struct OutboxTests {
         #expect(restored.photoUploads.count == 3)
     }
 
+    @Test func removeAllClearsOnlyThatOwner() async throws {
+        let outbox = try LocalDatabase.inMemory().outbox
+        try await outbox.enqueue(draft(), owner: owner, placeName: "Место", now: start)
+        let other = UUID()
+        try await outbox.enqueue(draft(), owner: other, placeName: "Место", now: start)
+        try await outbox.removeAll(owner: owner)
+        #expect(try await outbox.pending(owner: owner).isEmpty)
+        #expect(try await outbox.pending(owner: other).count == 1)
+    }
+
     @Test func dueRespectsOwnerAndRetryPause() async throws {
         let outbox = try LocalDatabase.inMemory().outbox
         let item = draft()
