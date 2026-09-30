@@ -101,13 +101,12 @@ struct UserContentSections: View {
     private func load() async {
         defer { isLoaded = true }
         guard let backend = environment.backend else { return }
-        async let loadedStats = try? backend.userStats(userID)
-        async let loadedTrips = try? backend.userTrips(userID, limit: 3)
-        async let loadedPlaces = try? backend.userPlaces(userID)
-        let (s, t, p) = await (loadedStats, loadedTrips, loadedPlaces)
-        stats = s ?? nil
-        trips = t ?? []
-        places = p ?? []
+        async let loadedStats = backend.userStats(userID)
+        async let loadedTrips = backend.userTrips(userID, limit: 3)
+        async let loadedPlaces = backend.userPlaces(userID)
+        stats = try? await loadedStats
+        trips = (try? await loadedTrips) ?? []
+        places = (try? await loadedPlaces) ?? []
     }
 }
 
@@ -218,25 +217,25 @@ struct FeedLoader {
 
     static let pageSize = 20
 
-    struct Result {
+    struct Loaded {
         var page: FeedPage
         var error: String?
     }
 
-    func firstPage() async -> Result {
+    func firstPage() async -> Loaded {
         let key = CacheKey.feed(userID)
         var failure: String?
         if let backend = environment.backend {
             do {
                 let page = try await backend.friendsFeed(limit: Self.pageSize)
                 try? await environment.cache.save(page.items, for: key)
-                return Result(page: page, error: nil)
+                return Loaded(page: page, error: nil)
             } catch {
                 failure = error.localizedDescription
             }
         }
         let saved = (try? await environment.cache.load([FeedItem].self, for: key)) ?? []
-        return Result(page: FeedPage(items: saved, next: nil), error: saved.isEmpty ? failure : nil)
+        return Loaded(page: FeedPage(items: saved, next: nil), error: saved.isEmpty ? failure : nil)
     }
 }
 
