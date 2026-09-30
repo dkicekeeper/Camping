@@ -282,7 +282,8 @@ public struct PlaceReport: Codable, Identifiable, Hashable, Sendable {
         verified = try c.decode(Bool.self, forKey: .verified)
         conditions = try c.decode(CheckinConditions.self, forKey: .conditions)
         note = try c.decodeIfPresent(String.self, forKey: .note)
-        isOwn = try c.decode(Bool.self, forKey: .isOwn)
+        // У гостя старый сервер отдавал null вместо false.
+        isOwn = try c.decodeIfPresent(Bool.self, forKey: .isOwn) ?? false
         catches = try c.decode([ReportCatch].self, forKey: .catches)
         // До миграции с фото сервер поля не отдавал.
         media = try c.decodeIfPresent([ReportMedia].self, forKey: .media) ?? []

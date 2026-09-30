@@ -100,7 +100,8 @@ public struct PlaceSummary: Codable, Identifiable, Hashable, Sendable {
         radiusM = try c.decode(Int.self, forKey: .radiusM)
         visibility = try c.decode(Visibility.self, forKey: .visibility)
         status = try c.decode(PlaceStatus.self, forKey: .status)
-        isOwn = try c.decode(Bool.self, forKey: .isOwn)
+        // У гостя старый сервер отдавал null вместо false.
+        isOwn = try c.decodeIfPresent(Bool.self, forKey: .isOwn) ?? false
     }
 
     /// В том же виде, что приходит с сервера, — для локального кэша.
@@ -177,7 +178,8 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
         }
         visibility = try c.decode(Visibility.self, forKey: .visibility)
         status = try c.decode(PlaceStatus.self, forKey: .status)
-        isOwn = try c.decode(Bool.self, forKey: .isOwn)
+        // У гостя старый сервер отдавал null вместо false.
+        isOwn = try c.decodeIfPresent(Bool.self, forKey: .isOwn) ?? false
     }
 
     /// В том же виде, что приходит с сервера, — для локального кэша.

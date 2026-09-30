@@ -107,6 +107,23 @@ public struct FeedPlace: Codable, Hashable, Sendable {
     }
 }
 
+/// Отзыв друга в ленте.
+public struct FeedReview: Codable, Hashable, Sendable {
+    public let placeID: UUID
+    public let placeName: String
+    public let placeType: PlaceType
+    public let rating: Int
+    public let body: String?
+
+    enum CodingKeys: String, CodingKey {
+        case placeID = "place_id"
+        case placeName = "place_name"
+        case placeType = "place_type"
+        case rating
+        case body
+    }
+}
+
 /// С какой записи продолжать ленту: время и id последней показанной.
 public struct FeedCursor: Hashable, Sendable {
     public let at: Date
@@ -124,6 +141,7 @@ public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
         case trip(FeedTrip)
         case checkin(FeedCheckin)
         case place(FeedPlace)
+        case review(FeedReview)
         /// Вид записи из новой версии сервера (например, отзыв) — эта версия приложения его не показывает.
         case unsupported
     }
@@ -141,6 +159,16 @@ public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
     }
 
     public var cursor: FeedCursor { FeedCursor(at: at, id: id) }
+
+    /// Объект реакции («респект») для записи; у нового места реакций нет.
+    public var reactionKey: ReactionKey? {
+        switch content {
+        case .trip: ReactionKey(.trip, id)
+        case .checkin: ReactionKey(.checkin, id)
+        case .review: ReactionKey(.review, id)
+        case .place, .unsupported: nil
+        }
+    }
 
     public var isSupported: Bool {
         if case .unsupported = content { return false }
@@ -176,6 +204,8 @@ public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
             content = (try? c.decode(FeedCheckin.self, forKey: .data)).map(Content.checkin) ?? .unsupported
         case "place":
             content = (try? c.decode(FeedPlace.self, forKey: .data)).map(Content.place) ?? .unsupported
+        case "review":
+            content = (try? c.decode(FeedReview.self, forKey: .data)).map(Content.review) ?? .unsupported
         default:
             content = .unsupported
         }
@@ -199,6 +229,9 @@ public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
         case .place(let place):
             try c.encode("place", forKey: .kind)
             try c.encode(place, forKey: .data)
+        case .review(let review):
+            try c.encode("review", forKey: .kind)
+            try c.encode(review, forKey: .data)
         case .unsupported:
             try c.encode("unsupported", forKey: .kind)
         }

@@ -7,7 +7,8 @@ import SwiftUI
 import Sync
 
 /// Карточка места (RPC `place_card`): тип, название, видимость, описание, автор, маршрут,
-/// «Я здесь» и свежие отчёты (RPC `place_reports`). Без сети — сохранённая карточка и отчёты,
+/// «Я здесь», свежие отчёты (RPC `place_reports`) с «респектом», а у публичных мест — отзывы и
+/// обсуждения. Без сети — сохранённая карточка и отчёты,
 /// а свои чекины из очереди — с пометкой «Ожидает отправки».
 struct PlaceCardView: View {
     let placeID: UUID
@@ -17,6 +18,7 @@ struct PlaceCardView: View {
     @Environment(SessionStore.self) private var session
     @Environment(SpeciesStore.self) private var speciesStore
     @Environment(SyncEngine.self) private var sync
+    @Environment(ReactionStore.self) private var reactions
     @State private var state: LoadState = .loading
     @State private var reports: [PlaceReport] = []
     /// Подписанные ссылки на фото отчётов: путь в хранилище → ссылка (действует час).
@@ -147,6 +149,12 @@ struct PlaceCardView: View {
                 }
 
                 reportsSection
+
+                // Отзывы и обсуждения — только у публичных опубликованных мест.
+                if place.visibility == .public && place.status == .published && !isShowingSavedCopy {
+                    PlaceReviewsSection(place: place, environment: environment)
+                    PlaceThreadsSection(place: place, environment: environment)
+                }
             }
             .screenPadding()
             .padding(.vertical, AppSpacing.lg)
@@ -224,6 +232,7 @@ struct PlaceCardView: View {
         let urls = (try? await backend.signedMediaURLs(paths: paths)) ?? [:]
         photoURLs = urls
         reports = loaded
+        await reactions.load(loaded.map { ReactionKey(.checkin, $0.id) })
         try? await cache.save(loaded, for: .reports(placeID, viewer: viewerID))
     }
 }
@@ -275,6 +284,8 @@ struct ReportRow: View {
             if !report.media.isEmpty {
                 ReportPhotoStrip(media: report.media, urls: photoURLs)
             }
+
+            ReactionButton(key: ReactionKey(.checkin, report.id), isOwn: report.isOwn)
         }
         .cardContentPadding()
         .cardStyle()

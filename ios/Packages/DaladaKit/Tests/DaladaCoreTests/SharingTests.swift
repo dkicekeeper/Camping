@@ -91,9 +91,9 @@ struct SharingTests {
           "author_id": "11111111-1111-1111-1111-111111111111", "author_username": "author",
           "author_display_name": null, "author_avatar_path": null,
           "data": {"place_type": "water_body", "name": "Приблизительное", "approximate": true}},
-         {"kind": "review", "id": "bbbbbbbb-0000-0000-0000-000000000001", "at": "2026-09-29T10:00:00Z",
+         {"kind": "story", "id": "bbbbbbbb-0000-0000-0000-000000000001", "at": "2026-09-29T10:00:00Z",
           "author_id": "11111111-1111-1111-1111-111111111111", "author_username": "author",
-          "data": {"rating": 5}},
+          "data": {"text": "из будущей версии"}},
          {"kind": "trip", "id": "77777777-0000-0000-0000-000000000002", "at": "2026-09-28T10:00:00Z",
           "author_id": "11111111-1111-1111-1111-111111111111", "author_username": "author",
           "data": {"activity": "fishing", "title": "Публичная", "note": null,
@@ -109,7 +109,7 @@ struct SharingTests {
         """
         let rows = try decoder.decode([FeedItem].self, from: Data(json.utf8))
         let page = FeedPage(rows: rows, limit: 4)
-        #expect(page.items.count == 3, "отзыв из будущей версии не показываем")
+        #expect(page.items.count == 3, "запись незнакомого вида не показываем")
         #expect(page.next == rows.last?.cursor, "курсор — по последней полученной записи")
         guard case .trip(let trip) = page.items[1].content else {
             Issue.record("ожидалась поездка")

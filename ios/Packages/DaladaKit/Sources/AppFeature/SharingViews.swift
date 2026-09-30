@@ -291,6 +291,7 @@ struct FriendsFeedView: View {
     let userID: UUID
 
     @Environment(SpeciesStore.self) private var speciesStore
+    @Environment(ReactionStore.self) private var reactions
     @State private var items: [FeedItem] = []
     @State private var next: FeedCursor?
     @State private var photoURLs: [String: URL] = [:]
@@ -361,6 +362,7 @@ struct FriendsFeedView: View {
         next = result.page.next
         loadError = result.error
         isLoaded = true
+        await reactions.load(items.compactMap(\.reactionKey))
         await signPhotos(for: items)
     }
 
@@ -373,6 +375,7 @@ struct FriendsFeedView: View {
         let fresh = page.items.filter { !known.contains($0.id) }
         items += fresh
         next = page.next
+        await reactions.load(fresh.compactMap(\.reactionKey))
         await signPhotos(for: fresh)
     }
 
@@ -388,7 +391,8 @@ struct FriendsFeedView: View {
     }
 }
 
-/// Запись ленты с переходом: поездка — страница поездки, отчёт и место — карточка места.
+/// Запись ленты с переходом: поездка — страница поездки, отчёт, отзыв и место — карточка места.
+/// В полной ленте под записью — «респект» (вне ссылки, чтобы нажатие не открывало запись).
 struct FeedItemLink: View {
     let item: FeedItem
     let environment: AppEnvironment
@@ -397,6 +401,21 @@ struct FeedItemLink: View {
     let onPlaceTap: @MainActor (UUID) -> Void
 
     var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            link
+            if !isCompact, let key = item.reactionKey {
+                HStack {
+                    Spacer()
+                        .frame(width: AppIconSize.avatar + AppSpacing.md)
+                    ReactionButton(key: key)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var link: some View {
         switch item.content {
         case .trip:
             NavigationLink {
@@ -415,6 +434,13 @@ struct FeedItemLink: View {
         case .place:
             Button {
                 onPlaceTap(item.id)
+            } label: {
+                FeedItemRow(item: item, isCompact: isCompact, photoURLs: photoURLs)
+            }
+            .buttonStyle(.plain)
+        case .review(let review):
+            Button {
+                onPlaceTap(review.placeID)
             } label: {
                 FeedItemRow(item: item, isCompact: isCompact, photoURLs: photoURLs)
             }
@@ -517,6 +543,28 @@ struct FeedItemRow: View {
             }
             if !isCompact, !checkin.media.isEmpty {
                 ReportPhotoStrip(media: checkin.media, urls: photoURLs)
+            }
+        case .review(let review):
+            Text("feed.review")
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
+            HStack(spacing: AppSpacing.sm) {
+                Label {
+                    Text(verbatim: review.placeName)
+                        .font(AppTypography.body)
+                        .foregroundStyle(AppColors.textPrimary)
+                        .lineLimit(1)
+                } icon: {
+                    Image(systemName: review.placeType.systemImage)
+                        .foregroundStyle(AppColors.accent)
+                }
+                StarsView(rating: Double(review.rating), size: 12)
+            }
+            if let body = review.body, !body.isEmpty {
+                Text(verbatim: body)
+                    .font(AppTypography.bodySmall)
+                    .foregroundStyle(AppColors.textPrimary)
+                    .lineLimit(isCompact ? 2 : nil)
             }
         case .place(let place):
             Text("feed.newPlace")

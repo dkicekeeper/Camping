@@ -588,6 +588,7 @@ struct TripDetailView: View {
 
     @Environment(SessionStore.self) private var session
     @Environment(SpeciesStore.self) private var speciesStore
+    @Environment(ReactionStore.self) private var reactions
     @State private var trip: TripDetails?
     @State private var checkins: [TripCheckin] = []
     @State private var photoURLs: [String: URL] = [:]
@@ -676,6 +677,7 @@ struct TripDetailView: View {
                             .font(AppTypography.caption)
                             .foregroundStyle(AppColors.textSecondary)
                     }
+                    ReactionButton(key: ReactionKey(.trip, trip.summary.id), isOwn: trip.isOwn)
                 }
 
                 VStack(spacing: AppSpacing.md) {
@@ -776,6 +778,7 @@ struct TripDetailView: View {
                     trip = loaded
                     loadError = nil
                     try? await environment.cache.save(loaded, for: key)
+                    await reactions.load([ReactionKey(.trip, tripID)])
                     checkins = (try? await backend.tripCheckins(tripID: tripID)) ?? []
                     let paths = checkins.flatMap { checkin in checkin.media.flatMap { [$0.thumbnailPath, $0.path] } }
                     photoURLs = (try? await backend.signedMediaURLs(paths: paths)) ?? [:]

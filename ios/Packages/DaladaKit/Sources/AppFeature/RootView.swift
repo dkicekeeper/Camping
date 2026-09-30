@@ -22,6 +22,7 @@ public struct RootView: View {
     @State private var species: SpeciesStore
     @State private var sync: SyncEngine
     @State private var recorder: TripRecorder
+    @State private var reactions: ReactionStore
     @State private var selection: AppTab = .profile
     @State private var showsQuickActions = false
     @State private var showsRecording = false
@@ -43,6 +44,7 @@ public struct RootView: View {
         }
         _sync = State(initialValue: SyncEngine(outbox: environment.database.outbox, sender: sender))
         _recorder = State(initialValue: TripRecorder(store: environment.database.trips))
+        _reactions = State(initialValue: ReactionStore(backend: environment.backend))
     }
 
     public var body: some View {
@@ -88,6 +90,7 @@ public struct RootView: View {
                 .environment(session)
                 .environment(sync)
                 .environment(species)
+                .environment(reactions)
         }
         // Ссылка-приглашение из QR-кода или сообщения — профиль человека.
         .onOpenURL { url in
@@ -108,6 +111,9 @@ public struct RootView: View {
                 }
             }
             .environment(session)
+            .environment(species)
+            .environment(sync)
+            .environment(reactions)
         }
         // После первого входа — выбор username, пока он не сохранён.
         .fullScreenCover(isPresented: $session.isUsernameOnboardingPresented) {
@@ -118,6 +124,7 @@ public struct RootView: View {
         .environment(species)
         .environment(sync)
         .environment(recorder)
+        .environment(reactions)
         .task { await session.start() }
         // Незаконченная запись поездки (приложение закрыли или система выгрузила) продолжается.
         .task { await recorder.restore() }
