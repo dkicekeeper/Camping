@@ -37,11 +37,11 @@ final class RulesStore {
     }
 
     /// Сегодня по времени Алматы: сроки в приказах — календарные дни.
-    static var today: CalendarDay {
+    nonisolated static var today: CalendarDay {
         CalendarDay(Date(), calendar: almatyCalendar)
     }
 
-    static let almatyCalendar: Calendar = {
+    nonisolated static let almatyCalendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Asia/Almaty") ?? .current
         return calendar
