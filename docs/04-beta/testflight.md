@@ -76,4 +76,7 @@ GitHub или на github.com в Safari. Сборку после каждой в
   [developer.apple.com](https://developer.apple.com/account/resources/identifiers/list) →
   Identifiers → «+» → App IDs → App → Description «Dalada Widgets», Bundle ID (Explicit)
   `app.dalada.ios.widgets` → Continue → Register.
+- **«Invalid bundle… UISupportedInterfaceOrientations… iPad multitasking» (90474)** — приложение
+  только в портрете, поэтому в `ios/project.yml` стоит `UIRequiresFullScreen: YES`; если ключ
+  пропал — верните.
 - Остальное — пришлите ссылку на запуск в Actions или текст ошибки.

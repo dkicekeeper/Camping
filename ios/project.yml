@@ -50,6 +50,9 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.travel
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        # Только портрет → нужен полноэкранный режим, иначе App Store отклоняет сборку (ошибка 90474:
+        # без него приложение обязано поддерживать все ориентации ради многозадачности iPad).
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Чтобы показать вас на карте, отмечаться в местах и записывать поездки."
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
