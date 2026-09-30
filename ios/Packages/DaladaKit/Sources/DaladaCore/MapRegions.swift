@@ -37,9 +37,12 @@ public struct GeoBounds: Hashable, Sendable {
 public struct MapRegion: Identifiable, Hashable, Sendable {
     public let id: String
     public let bounds: GeoBounds
-    /// До какого масштаба скачивать: подробно (14) — для небольших районов, для больших — 13
-    /// (крупнее карта растягивает тайлы 13-го масштаба).
+    /// До какого масштаба скачивать: подробно (14 — тропы, грунтовки, мелкие объекты), для очень
+    /// больших районов — 13 (крупнее карта растягивает тайлы 13-го масштаба).
     public let maxZoom: Int
+    /// Средний размер тайла района, байт (замерено по тайлам в бакете: город и горы у Алматы —
+    /// ~13 КБ, степь и вода — меньше 1–2 КБ).
+    public let averageTileBytes: Int
 
     /// С какого масштаба скачивать: мельче район целиком виден и так.
     public static let minZoom = 6
@@ -48,8 +51,8 @@ public struct MapRegion: Identifiable, Hashable, Sendable {
     public var zooms: ClosedRange<Int> { Self.minZoom...maxZoom }
     public var tileCount: Int { bounds.tileCount(zooms: zooms) }
 
-    /// Примерный размер: в среднем ~16 КБ на тайл за городом (по сборке тайлов региона).
-    public var estimatedBytes: Int64 { Int64(tileCount) * 16 * 1024 }
+    /// Примерный размер: тайлы плюс ~2 МБ шрифтов, значков и стиля.
+    public var estimatedBytes: Int64 { Int64(tileCount) * Int64(averageTileBytes) + 2 * 1024 * 1024 }
 }
 
 public enum MapRegions {
@@ -58,13 +61,13 @@ public enum MapRegions {
     public static let coverage = GeoBounds(south: 42.15, west: 73.6, north: 47.35, east: 82.7)
 
     public static let all: [MapRegion] = [
-        MapRegion(id: "almaty_mountains", bounds: GeoBounds(south: 42.95, west: 76.55, north: 43.45, east: 77.75), maxZoom: 14),
-        MapRegion(id: "kapshagay", bounds: GeoBounds(south: 43.55, west: 76.95, north: 44.10, east: 78.15), maxZoom: 14),
-        MapRegion(id: "ile", bounds: GeoBounds(south: 43.80, west: 76.10, north: 44.90, east: 77.20), maxZoom: 13),
-        MapRegion(id: "charyn_kolsay", bounds: GeoBounds(south: 42.85, west: 78.00, north: 43.60, east: 79.40), maxZoom: 13),
-        MapRegion(id: "ile_delta_balkhash", bounds: GeoBounds(south: 44.70, west: 74.40, north: 46.40, east: 77.60), maxZoom: 12),
-        MapRegion(id: "taldykorgan", bounds: GeoBounds(south: 44.75, west: 77.80, north: 45.45, east: 79.00), maxZoom: 13),
-        MapRegion(id: "alakol", bounds: GeoBounds(south: 45.60, west: 80.50, north: 46.75, east: 82.30), maxZoom: 13),
+        MapRegion(id: "almaty_mountains", bounds: GeoBounds(south: 42.95, west: 76.55, north: 43.45, east: 77.75), maxZoom: 14, averageTileBytes: 13_500),
+        MapRegion(id: "kapshagay", bounds: GeoBounds(south: 43.55, west: 76.95, north: 44.10, east: 78.15), maxZoom: 14, averageTileBytes: 1_300),
+        MapRegion(id: "ile", bounds: GeoBounds(south: 43.80, west: 76.10, north: 44.90, east: 77.20), maxZoom: 14, averageTileBytes: 700),
+        MapRegion(id: "charyn_kolsay", bounds: GeoBounds(south: 42.85, west: 78.00, north: 43.60, east: 79.40), maxZoom: 14, averageTileBytes: 1_300),
+        MapRegion(id: "ile_delta_balkhash", bounds: GeoBounds(south: 44.70, west: 74.40, north: 46.40, east: 77.60), maxZoom: 13, averageTileBytes: 400),
+        MapRegion(id: "taldykorgan", bounds: GeoBounds(south: 44.75, west: 77.80, north: 45.45, east: 79.00), maxZoom: 14, averageTileBytes: 1_000),
+        MapRegion(id: "alakol", bounds: GeoBounds(south: 45.60, west: 80.50, north: 46.75, east: 82.30), maxZoom: 14, averageTileBytes: 400),
     ]
 
     public static func region(id: String) -> MapRegion? {

@@ -22,8 +22,8 @@ struct MapRegionsTests {
         #expect(Set(MapRegions.all.map(\.id)).count == MapRegions.all.count)
         for region in MapRegions.all {
             #expect(region.maxZoom <= 14)
-            #expect((500...5_000).contains(region.tileCount), "\(region.id): \(region.tileCount)")
-            #expect(region.estimatedBytes < 100 * 1024 * 1024)
+            #expect((500...10_000).contains(region.tileCount), "\(region.id): \(region.tileCount)")
+            #expect(region.estimatedBytes < 50 * 1024 * 1024)
         }
         #expect(MapRegions.region(id: "kapshagay")?.titleKey == "offlineMaps.region.kapshagay")
     }
