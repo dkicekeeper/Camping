@@ -18,6 +18,9 @@ sql() {
 table() { jq -r '(.[0] | keys_unsorted | join(" | ")), (.[] | [.[] | tostring] | join(" | "))' 2>/dev/null || cat; }
 say() { echo "$1" | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"; }
 
+say "### База: последние применённые миграции"
+sql "select version, name from supabase_migrations.schema_migrations order by version desc limit 3" | table | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
 say "### Секреты функции push"
 names=$(supabase secrets list --project-ref "$REF" 2>/dev/null | awk -F'|' 'NR>2 {gsub(/ /, "", $1); print $1}')
 for name in APNS_KEY_ID APNS_TEAM_ID APNS_PRIVATE_KEY PUSH_WORKER_SECRET; do
