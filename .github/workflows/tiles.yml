@@ -79,8 +79,9 @@ jobs:
             "SELECT geometry, CAST(ele AS INTEGER) AS ele, 1 AS idx FROM contour WHERE ST_Length(geometry) > 0.006"
           rm data/c20.fgb data/c100.fgb data/dem90.tif
           ls -la data/*.fgb
-          tippecanoe -q -f -o data/contours-low.mbtiles -l contour -Z"$z0" -z"$((z1 - 1))" data/m100.fgb
-          tippecanoe -q -f -o data/contours-high.mbtiles -l contour -Z"$z1" -z"$z1" data/m20.fgb
+          # -T: из FlatGeobuf tippecanoe читает целые как строки — просим числа.
+          tippecanoe -q -f -o data/contours-low.mbtiles -l contour -T ele:int -T idx:int -Z"$z0" -z"$((z1 - 1))" data/m100.fgb
+          tippecanoe -q -f -o data/contours-high.mbtiles -l contour -T ele:int -T idx:int -Z"$z1" -z"$z1" data/m20.fgb
           tile-join -q -f -o data/contours.mbtiles data/contours-low.mbtiles data/contours-high.mbtiles
           python3 map/dump_mbtiles.py data/contours.mbtiles public/contours
 

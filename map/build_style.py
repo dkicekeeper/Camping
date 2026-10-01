@@ -41,7 +41,9 @@ RELIEF_COLOR = "#7d6a55"
 
 
 def relief_layers(language: str) -> list[dict]:
-    """Отмывка рельефа и горизонтали: 100 м — с 11-го масштаба, 20 м — с 13-го, подписи — на 100 м."""
+    """Отмывка рельефа и горизонтали: 100 м — с 11-го масштаба, 20 м — с 13-го, подписи — на 100 м.
+    Поля `ele` и `idx` в тайлах первой сборки — строки (tippecanoe из FlatGeobuf), поэтому сравниваем
+    через to-number."""
     return [
         {
             "id": "hillshade",
@@ -60,7 +62,7 @@ def relief_layers(language: str) -> list[dict]:
             "source": "contours",
             "source-layer": "contour",
             "minzoom": 13,
-            "filter": ["==", ["get", "idx"], 0],
+            "filter": ["==", ["to-number", ["get", "idx"]], 0],
             "paint": {
                 "line-color": RELIEF_COLOR,
                 "line-opacity": 0.35,
@@ -73,11 +75,12 @@ def relief_layers(language: str) -> list[dict]:
             "source": "contours",
             "source-layer": "contour",
             "minzoom": 11,
-            "filter": ["==", ["get", "idx"], 1],
+            "filter": ["==", ["to-number", ["get", "idx"]], 1],
             "paint": {
                 "line-color": RELIEF_COLOR,
-                "line-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0.3, 13, 0.5],
-                "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.6, 13, 1, 16, 1.5],
+                # На 11-м масштабе в горах линии через 100 м идут почти сплошь — там они едва видны.
+                "line-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0.15, 12, 0.3, 13, 0.5],
+                "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.5, 13, 1, 16, 1.5],
             },
         },
         {
@@ -86,7 +89,7 @@ def relief_layers(language: str) -> list[dict]:
             "source": "contours",
             "source-layer": "contour",
             "minzoom": 13,
-            "filter": ["==", ["get", "idx"], 1],
+            "filter": ["==", ["to-number", ["get", "idx"]], 1],
             "layout": {
                 "symbol-placement": "line",
                 "text-field": ["concat", ["to-string", ["get", "ele"]], METERS[language]],
