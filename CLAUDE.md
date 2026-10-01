@@ -64,7 +64,10 @@ iOS собирается только на Mac (Xcode 26, iOS 26): `cd ios && xc
 в DesignKit): кнопки, карточки (`cardStyle`), строки (`UniversalRow`, `InfoRow`), бейджи
 (`BadgeView`, `TrendBadge`), `StatTile`, `AvatarView`, `RatingView`/`RatingPicker`, `ChipPicker`,
 `SelectionIndicator`, `LinearProgressBar(value:)`, `EmptyStateView`, `RecommendationBox`,
-`DisclosureChevron`. Своё — только если в DesignKit нет подходящего.
+`DisclosureChevron`, скелетоны загрузки (`SkeletonRow`, `.skeletonLoadingLabel()`),
+`LoadingButtonLabel`, `ExpandableText`, `ActivityTimeline`, `MonthCalendar`,
+`PermissionPrimerView` (перед системным запросом разрешения), `OnboardingPager` /
+`OnboardingPage`. Своё — только если в DesignKit нет подходящего.
 
 Компонент идёт в DesignKit, если выполнены все три условия:
 1. **Не знает данных приложения**: принимает текст, числа, даты, цвета, иконки, замыкания и

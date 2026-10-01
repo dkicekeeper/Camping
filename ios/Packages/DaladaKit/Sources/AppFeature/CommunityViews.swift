@@ -161,8 +161,7 @@ struct ReviewRow: View {
                     .foregroundStyle(AppColors.textSecondary)
             }
             if let body = review.body, !body.isEmpty {
-                Text(verbatim: body)
-                    .font(AppTypography.bodySmall)
+                ExpandableText(body, lineLimit: 4, font: AppTypography.bodySmall)
             }
             HStack(spacing: AppSpacing.md) {
                 ReactionButton(key: ReactionKey(.review, review.id), isOwn: review.isOwn, style: .helpful)
@@ -658,8 +657,12 @@ struct ThreadView: View {
                     style: .error
                 )
             } else {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(spacing: 0) {
+                    ForEach(0..<4, id: \.self) { _ in SkeletonRow() }
+                }
+                .screenPadding()
+                .frame(maxHeight: .infinity, alignment: .top)
+                .skeletonLoadingLabel()
             }
         }
         .navigationTitle(Text(verbatim: thread?.placeName ?? ""))

@@ -6,6 +6,7 @@ import UIKit
 
 /// Перед системным запросом уведомлений — наше объяснение, в момент первой пользы (первый чекин,
 /// сохранённое место, запрос в друзья, обсуждение). «Не сейчас» — не спрашиваем неделю.
+/// Сам лист — `PermissionPrimerView` из DesignKit (общий с Tenra), тексты `push.primer.*`.
 ///
 /// Лист показывается поверх самого верхнего экрана (UIKit): вызвать можно откуда угодно, даже из
 /// листа поверх листа — SwiftUI из корня так не умеет.
@@ -27,8 +28,13 @@ final class NotificationPrimer {
         // Даём закрыться листу, из которого пришли (форма чекина и т. п.).
         try? await Task.sleep(for: .milliseconds(700))
         guard presented == nil, let top = Self.topViewController() else { return }
-        let host = UIHostingController(rootView: NotificationPrimerView(
-            onAllow: { [weak self] in self?.allow() },
+        let host = UIHostingController(rootView: PermissionPrimerView(
+            systemImage: "bell.badge",
+            title: String(localized: "push.primer.title"),
+            message: String(localized: "push.primer.body"),
+            allowTitle: String(localized: "push.primer.allow"),
+            laterTitle: String(localized: "push.primer.later"),
+            onAllow: { [weak self] in await MainActor.run { self?.allow() } },
             onLater: { [weak self] in self?.later() }
         ))
         host.isModalInPresentation = true
@@ -65,44 +71,5 @@ final class NotificationPrimer {
             top = next
         }
         return top
-    }
-}
-
-/// Лист «Не пропустите ответы»: зачем уведомления, «Включить» и «Не сейчас».
-struct NotificationPrimerView: View {
-    let onAllow: () -> Void
-    let onLater: () -> Void
-
-    var body: some View {
-        VStack(spacing: AppSpacing.lg) {
-            Image(systemName: "bell.badge")
-                .font(.system(size: AppIconSize.md * 2.5))
-                .foregroundStyle(AppColors.accent)
-                .padding(.top, AppSpacing.xl)
-            VStack(spacing: AppSpacing.sm) {
-                Text("push.primer.title")
-                    .font(AppTypography.h3)
-                    .multilineTextAlignment(.center)
-                Text("push.primer.body")
-                    .font(AppTypography.body)
-                    .foregroundStyle(AppColors.textSecondary)
-                    .multilineTextAlignment(.center)
-            }
-            Spacer(minLength: 0)
-            VStack(spacing: AppSpacing.sm) {
-                Button(action: onAllow) {
-                    Text("push.primer.allow")
-                        .frame(maxWidth: .infinity)
-                }
-                .primaryButton()
-                Button(action: onLater) {
-                    Text("push.primer.later")
-                        .frame(maxWidth: .infinity)
-                }
-                .secondaryButton()
-            }
-        }
-        .screenPadding()
-        .padding(.bottom, AppSpacing.lg)
     }
 }

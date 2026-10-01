@@ -280,6 +280,13 @@ struct RuleZoneView: View {
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textSecondary)
                 }
+                let bans = pack.regulations(inZone: zone.id).filter { $0.kind == .fishingBan && $0.window != nil }
+                if !bans.isEmpty {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                        SectionHeaderView(String(localized: "rules.calendar"), systemImage: "calendar")
+                        ZoneBanCalendar(bans: bans)
+                    }
+                }
                 ForEach(pack.regulations(inZone: zone.id)) { regulation in
                     RegulationCard(regulation: regulation, status: pack.status(of: regulation, on: today))
                 }
@@ -288,6 +295,49 @@ struct RuleZoneView: View {
             .screenPadding()
             .padding(.vertical, AppSpacing.lg)
         }
+    }
+}
+
+/// Календарь запретов зоны: в какие дни недели и месяца лов запрещён (`MonthCalendar` из
+/// DesignKit; знак запрета — на каждом дне срока).
+struct ZoneBanCalendar: View {
+    let bans: [Regulation]
+
+    @State private var range = CalendarRange()
+    @State private var bansByDay: [Date: [Regulation]] = [:]
+
+    var body: some View {
+        MonthCalendar(
+            range: range,
+            itemsByDay: bansByDay,
+            itemName: { $0.title.text(for: RulesStore.language) }
+        ) { _ in
+            Image(systemName: "nosign")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(AppColors.destructive)
+        }
+        .task(id: bans.map(\.id)) {
+            let calendar = range.calendar
+            bansByDay = range.itemsByDay(bans) { ban, interval in
+                Self.days(of: ban, in: interval, calendar: calendar)
+            }
+        }
+    }
+
+    /// Дни из `interval`, в которые идёт срок запрета.
+    nonisolated static func days(of ban: Regulation, in interval: DateInterval, calendar: Calendar) -> [Date] {
+        guard let window = ban.window else { return [] }
+        var days: [Date] = []
+        var date = calendar.startOfDay(for: interval.start)
+        while date < interval.end {
+            let day = CalendarDay(date, calendar: calendar)
+            if window.period(around: day).contains(day) {
+                days.append(date)
+            }
+            guard let next = calendar.date(byAdding: .day, value: 1, to: date) else { break }
+            date = next
+        }
+        return days
     }
 }
 

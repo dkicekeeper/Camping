@@ -590,8 +590,15 @@ struct TripDetailView: View {
                     style: .error
                 )
             } else {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                    SkeletonView(height: 260, cornerRadius: AppRadius.xl)
+                    SkeletonView(height: 14, width: 160)
+                    SkeletonView(height: 150, cornerRadius: AppRadius.card)
+                }
+                .screenPadding()
+                .padding(.vertical, AppSpacing.lg)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .skeletonLoadingLabel()
             }
         }
         .navigationTitle(Text(verbatim: trip?.summary.title ?? ""))
@@ -709,7 +716,12 @@ struct TripDetailView: View {
                 if !checkins.isEmpty {
                     VStack(alignment: .leading, spacing: AppSpacing.md) {
                         SectionHeaderView(String(localized: "trip.detail.checkins"), systemImage: "mappin.circle")
-                        ForEach(checkins) { checkin in
+                        // Чекины по порядку на линии поездки: подтверждённые — зелёной печатью.
+                        ActivityTimeline(checkins) { checkin in
+                            checkin.verified
+                                ? TimelineMarker(systemImage: "checkmark.seal.fill", color: AppColors.success)
+                                : TimelineMarker(systemImage: "mappin")
+                        } content: { checkin in
                             TripCheckinRow(checkin: checkin, photoURLs: photoURLs) {
                                 if let placeID = checkin.placeID {
                                     selectedPlace = PlaceSelection(id: placeID)

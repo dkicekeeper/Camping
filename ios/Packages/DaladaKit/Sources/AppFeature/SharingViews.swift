@@ -323,8 +323,12 @@ struct FriendsFeedView: View {
                     )
                 }
             } else if items.isEmpty {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(spacing: 0) {
+                    ForEach(0..<5, id: \.self) { _ in SkeletonRow() }
+                }
+                .screenPadding()
+                .frame(maxHeight: .infinity, alignment: .top)
+                .skeletonLoadingLabel()
             } else {
                 List {
                     ForEach(items) { item in
