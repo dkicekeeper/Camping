@@ -150,6 +150,8 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
     public let isOwn: Bool
     /// Источник места редакции; у мест людей — `nil`.
     public let source: PlaceSource?
+    /// «Информация»: рыба, подъезд, стоимость, удобства и прочее (`attributes`).
+    public let info: PlaceAttributes
 
     /// Место редакции Dalada.
     public var isEditorial: Bool { ownerUsername == Editorial.username }
@@ -173,9 +175,31 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
         case isOwn = "is_own"
     }
 
-    /// Из `attributes` приложению нужен только источник.
+    /// `attributes`: служебный источник и «Информация» — в одном объекте.
     struct Attributes: Codable, Hashable {
         var source: String?
+        var info: PlaceAttributes
+
+        enum SourceKey: String, CodingKey {
+            case source
+        }
+
+        init(source: String?, info: PlaceAttributes) {
+            self.source = source
+            self.info = info
+        }
+
+        init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: SourceKey.self)
+            source = try? c.decodeIfPresent(String.self, forKey: .source)
+            info = (try? PlaceAttributes(from: decoder)) ?? PlaceAttributes()
+        }
+
+        func encode(to encoder: any Encoder) throws {
+            try info.encode(to: encoder)
+            var c = encoder.container(keyedBy: SourceKey.self)
+            try c.encodeIfPresent(source, forKey: .source)
+        }
     }
 
     public init(from decoder: any Decoder) throws {
@@ -204,6 +228,7 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
         isOwn = try c.decodeIfPresent(Bool.self, forKey: .isOwn) ?? false
         let attributes = try? c.decodeIfPresent(Attributes.self, forKey: .attributes)
         source = attributes?.source.flatMap(PlaceSource.init(rawValue:))
+        info = attributes?.info ?? PlaceAttributes()
     }
 
     /// В том же виде, что приходит с сервера, — для локального кэша.
@@ -221,7 +246,7 @@ public struct PlaceDetails: Codable, Identifiable, Hashable, Sendable {
         try c.encode(radiusM, forKey: .radiusM)
         try c.encode(accessPoint?.longitude, forKey: .accessLon)
         try c.encode(accessPoint?.latitude, forKey: .accessLat)
-        try c.encode(Attributes(source: source?.rawValue), forKey: .attributes)
+        try c.encode(Attributes(source: source?.rawValue, info: info), forKey: .attributes)
         try c.encode(visibility, forKey: .visibility)
         try c.encode(status, forKey: .status)
         try c.encode(isOwn, forKey: .isOwn)

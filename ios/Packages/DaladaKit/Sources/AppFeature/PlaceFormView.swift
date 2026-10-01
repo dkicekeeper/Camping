@@ -47,7 +47,7 @@ struct PlaceFormView: View {
                 } header: {
                     Text("place.form.visibility")
                 } footer: {
-                    Text(visibilityFooter)
+                    Text(Self.visibilityFooter(draft.visibility, approximate: draft.effectiveApproximate))
                 }
 
                 Section {
@@ -85,8 +85,9 @@ struct PlaceFormView: View {
         }
     }
 
-    private var visibilityFooter: String {
-        switch (draft.visibility, draft.effectiveApproximate) {
+    /// Кто увидит место и как — под выбором видимости (новое место и правка своего).
+    static func visibilityFooter(_ visibility: Visibility, approximate: Bool) -> String {
+        switch (visibility, approximate) {
         case (.private, _):
             String(localized: "place.form.footer.private")
         case (.friends, false):

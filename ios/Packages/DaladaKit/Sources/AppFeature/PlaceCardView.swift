@@ -7,8 +7,9 @@ import SwiftUI
 import Sync
 
 /// Карточка места (RPC `place_card`): тип, название, видимость, описание, автор, маршрут,
-/// «Я здесь», свежие отчёты (RPC `place_reports`) с «респектом», а у публичных мест — отзывы и
-/// обсуждения. Без сети — сохранённая карточка и отчёты,
+/// «Я здесь», свежие отчёты (RPC `place_reports`) со сводкой за 7 дней и «респектом», «Информация»,
+/// а у публичных мест — отзывы и обсуждения; внизу — похожие места рядом. Своё место можно изменить,
+/// к чужому публичному — предложить правку. Без сети — сохранённая карточка и отчёты,
 /// а свои чекины из очереди — с пометкой «Ожидает отправки».
 struct PlaceCardView: View {
     let placeID: UUID
@@ -19,6 +20,7 @@ struct PlaceCardView: View {
     @Environment(SyncEngine.self) private var sync
     @Environment(ReactionStore.self) private var reactions
     @Environment(RulesStore.self) private var rules
+    @Environment(PlacesStore.self) private var places: PlacesStore?
     @State private var state: LoadState = .loading
     @State private var reports: [PlaceReport] = []
     /// Подписанные ссылки на фото отчётов: путь в хранилище → ссылка (действует час).
@@ -28,6 +30,16 @@ struct PlaceCardView: View {
     @State private var showsCheckin = false
     /// Показана сохранённая копия — сервер недоступен.
     @State private var isShowingSavedCopy = false
+    @State private var showsEdit = false
+    @State private var suggestion: PlaceSuggestionKind?
+    /// Мои предложения к месту, которые ещё на проверке.
+    @State private var pendingSuggestions: Set<PlaceSuggestionKind> = []
+    /// Место из «Рядом» — открывается поверх карточки.
+    @State private var nearbySelection: PlaceSelection?
+
+    /// Отчётов загружаем больше, чем показываем, — для сводки за 7 дней.
+    private static let reportsLimit = 50
+    private static let reportsShown = 20
 
     private var backend: BackendClient? { environment.backend }
     private var cache: CacheStore { environment.cache }
@@ -68,6 +80,19 @@ struct PlaceCardView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Поделиться ссылкой на место (приватное — некому).
+                if case .loaded(let place) = state, place.visibility != .private {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ShareLink(
+                            item: PlaceLink.url(placeID: place.id),
+                            subject: Text(verbatim: place.name),
+                            message: shareMessage(place)
+                        ) {
+                            Image(systemName: "square.and.arrow.up")
+                                .accessibilityLabel(Text("place.share"))
+                        }
+                    }
+                }
                 // Сохранить место (закладка) — после входа.
                 if case .loaded(let place) = state, session.profile != nil, !place.isOwn {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -105,6 +130,37 @@ struct PlaceCardView: View {
                     .environment(sync)
                     .environment(rules)
             }
+        }
+        .sheet(isPresented: $showsEdit) {
+            PlaceEditView(placeID: placeID, environment: environment) {
+                Task { await load() }
+            }
+            .environment(speciesStore)
+        }
+        .sheet(item: $suggestion, onDismiss: { Task { await loadSuggestions() } }) { kind in
+            if case .loaded(let place) = state {
+                PlaceSuggestView(place: place, kind: kind, environment: environment)
+                    .environment(speciesStore)
+            }
+        }
+        .sheet(item: $nearbySelection) { selection in
+            PlaceCardView(placeID: selection.id, environment: environment)
+                .environment(session)
+                .environment(speciesStore)
+                .environment(sync)
+                .environment(reactions)
+                .environment(rules)
+                .environment(places)
+        }
+    }
+
+    /// Текст к ссылке: название, а у чужого публичного места с точной точкой — и ссылка на карту
+    /// для тех, у кого нет приложения.
+    private func shareMessage(_ place: PlaceDetails) -> Text {
+        if let map = PlaceLink.mapURL(for: place) {
+            Text("place.share.messageWithMap \(place.name) \(map.absoluteString)")
+        } else {
+            Text("place.share.message \(place.name)")
         }
     }
 
@@ -192,10 +248,25 @@ struct PlaceCardView: View {
 
                 reportsSection
 
+                PlaceInfoSection(
+                    place: place,
+                    canEdit: place.isOwn && !isShowingSavedCopy,
+                    canSuggest: canSuggest(place),
+                    pendingSuggestions: pendingSuggestions,
+                    onEdit: { showsEdit = true },
+                    onSuggest: { suggestion = $0 }
+                )
+
                 // Отзывы и обсуждения — только у публичных опубликованных мест.
                 if place.visibility == .public && place.status == .published && !isShowingSavedCopy {
                     PlaceReviewsSection(place: place, environment: environment)
                     PlaceThreadsSection(place: place, environment: environment)
+                }
+
+                if !isShowingSavedCopy {
+                    NearbyPlacesSection(place: place, environment: environment) { id in
+                        nearbySelection = PlaceSelection(id: id)
+                    }
                 }
             }
             .screenPadding()
@@ -207,6 +278,9 @@ struct PlaceCardView: View {
     private var reportsSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             SectionHeaderView(String(localized: "place.card.reports"), systemImage: "clock")
+            if let summary = PlaceReportsSummary.make(reports, limit: Self.reportsLimit) {
+                PlaceReportsSummaryView(summary: summary)
+            }
             ForEach(pendingHere) { item in
                 PendingReportRow(item: item)
             }
@@ -215,13 +289,19 @@ struct PlaceCardView: View {
                     .font(AppTypography.bodySmall)
                     .foregroundStyle(AppColors.textSecondary)
             } else {
-                ForEach(reports) { report in
+                ForEach(reports.prefix(Self.reportsShown)) { report in
                     ReportRow(report: report, photoURLs: photoURLs) { blocked in
                         reports.removeAll { $0.authorID == blocked }
                     }
                 }
             }
         }
+    }
+
+    /// Предложить правку или сообщить о проблеме — к чужому публичному месту, после входа.
+    private func canSuggest(_ place: PlaceDetails) -> Bool {
+        session.profile != nil && !place.isOwn && place.visibility == .public && place.status == .published
+            && !isShowingSavedCopy
     }
 
     /// Свои чекины в этом месте, ещё не принятые сервером.
@@ -249,6 +329,7 @@ struct PlaceCardView: View {
                 isShowingSavedCopy = false
                 try? await cache.save(place, for: key)
                 await loadReports()
+                await loadSuggestions()
             } else {
                 state = .notFound
             }
@@ -266,17 +347,25 @@ struct PlaceCardView: View {
 
     private func loadReports() async {
         guard let backend,
-              let loaded = try? await backend.placeReports(placeID: placeID)
+              let loaded = try? await backend.placeReports(placeID: placeID, limit: Self.reportsLimit)
         else { return }
         let photos = (try? await backend.placePhotos(placeID: placeID, limit: 12)) ?? []
-        let paths = loaded.flatMap { report in report.media.flatMap { [$0.thumbnailPath, $0.path] } }
+        let paths = loaded.prefix(Self.reportsShown).flatMap { report in report.media.flatMap { [$0.thumbnailPath, $0.path] } }
             + photos.flatMap { [$0.thumbnailPath, $0.path] }
         let urls = (try? await backend.signedMediaURLs(paths: paths)) ?? [:]
         photoURLs = urls
         placePhotos = photos
         reports = loaded
-        await reactions.load(loaded.map { ReactionKey(.checkin, $0.id) })
+        await reactions.load(loaded.prefix(Self.reportsShown).map { ReactionKey(.checkin, $0.id) })
         try? await cache.save(loaded, for: .reports(placeID, viewer: viewerID))
+    }
+
+    /// Мои открытые предложения к месту — чтобы показать «на проверке».
+    private func loadSuggestions() async {
+        guard let backend, case .loaded(let place) = state, canSuggest(place),
+              let open = try? await backend.openPlaceSuggestions(placeID: place.id)
+        else { return }
+        pendingSuggestions = open
     }
 }
 

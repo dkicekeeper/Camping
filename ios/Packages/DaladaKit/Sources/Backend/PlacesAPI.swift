@@ -68,3 +68,110 @@ struct PlaceInsert: Encodable, Sendable {
         approximate = draft.effectiveApproximate
     }
 }
+
+// MARK: - Правка места
+
+extension BackendClient {
+    /// Своё место для правки (строка `places`); `nil` — не моё или удалено.
+    public func ownPlace(id: UUID) async throws -> OwnPlaceDraft? {
+        let rows: [OwnPlaceDraft] = try await supabase
+            .from("places")
+            .select("type,name,description,visibility,approximate,attributes")
+            .eq("id", value: id.uuidString)
+            .is("deleted_at", value: nil)
+            .limit(1)
+            .execute()
+            .value
+        return rows.first
+    }
+
+    /// Изменить своё место: название, тип, описание, видимость, «Информацию». Публичное место у
+    /// новых авторов снова уходит на проверку — это решает база.
+    public func updatePlace(id: UUID, _ draft: OwnPlaceDraft) async throws {
+        try await supabase
+            .from("places")
+            .update(PlaceUpdate(draft), returning: .minimal)
+            .eq("id", value: id.uuidString)
+            .execute()
+    }
+
+    /// Предложить правку чужого публичного места или сообщить о проблеме (RPC
+    /// `suggest_place_change`). Повторное предложение того же вида обновляет открытое.
+    public func suggestPlaceChange(
+        placeID: UUID,
+        kind: PlaceSuggestionKind,
+        changes: PlaceChanges?,
+        note: String?
+    ) async throws {
+        try await supabase
+            .rpc("suggest_place_change", params: SuggestParams(place: placeID, kind: kind, changes: changes, note: note))
+            .execute()
+    }
+
+    /// Мои предложения к месту, которые ещё на проверке.
+    public func openPlaceSuggestions(placeID: UUID) async throws -> Set<PlaceSuggestionKind> {
+        let rows: [SuggestionRow] = try await supabase
+            .from("place_suggestions")
+            .select("kind")
+            .eq("place_id", value: placeID.uuidString)
+            .eq("status", value: "open")
+            .execute()
+            .value
+        return Set(rows.compactMap { PlaceSuggestionKind(rawValue: $0.kind) })
+    }
+}
+
+/// Изменения своего места. Пустое описание — `null` (явно, чтобы стереть прежнее).
+struct PlaceUpdate: Encodable, Sendable {
+    let type: PlaceType
+    let name: String
+    let description: String?
+    let attributes: PlaceAttributes
+    let visibility: Visibility
+    let approximate: Bool
+
+    init(_ draft: OwnPlaceDraft) {
+        type = draft.fields.type
+        name = draft.fields.trimmedName
+        description = draft.fields.trimmedDescription.isEmpty ? nil : draft.fields.trimmedDescription
+        attributes = draft.fields.attributes.normalized
+        visibility = draft.visibility
+        approximate = draft.effectiveApproximate
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case type, name, description, attributes, visibility, approximate
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(type, forKey: .type)
+        try c.encode(name, forKey: .name)
+        if let description {
+            try c.encode(description, forKey: .description)
+        } else {
+            try c.encodeNil(forKey: .description)
+        }
+        try c.encode(attributes, forKey: .attributes)
+        try c.encode(visibility, forKey: .visibility)
+        try c.encode(approximate, forKey: .approximate)
+    }
+}
+
+struct SuggestParams: Encodable, Sendable {
+    let place: UUID
+    let kind: PlaceSuggestionKind
+    let changes: PlaceChanges?
+    let note: String?
+
+    enum CodingKeys: String, CodingKey {
+        case place = "p_place"
+        case kind = "p_kind"
+        case changes = "p_changes"
+        case note = "p_note"
+    }
+}
+
+private struct SuggestionRow: Decodable, Sendable {
+    let kind: String
+}

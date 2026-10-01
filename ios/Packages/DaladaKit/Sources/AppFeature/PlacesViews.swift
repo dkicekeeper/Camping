@@ -259,7 +259,7 @@ private struct PlaceCarousel: View {
 }
 
 /// Карточка места в карусели: фото или значок типа, название, расстояние, оценка, друзья.
-private struct PlaceItemCard: View {
+struct PlaceItemCard: View {
     let item: PlaceItem
     let photoURL: URL?
 

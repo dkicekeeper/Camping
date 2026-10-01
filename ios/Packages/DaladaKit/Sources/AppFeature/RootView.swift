@@ -40,6 +40,8 @@ public struct RootView: View {
     @State private var profileLink: ProfileLink?
     /// Обсуждение из пуша `dalada://thread/<id>`.
     @State private var threadLink: ThreadLinkItem?
+    /// Место по ссылке `dalada://place/<id>` («Поделиться»).
+    @State private var placeLink: PlaceSelection?
 
     public init(environment: AppEnvironment, background: BackgroundSync) {
         self.environment = environment
@@ -114,13 +116,24 @@ public struct RootView: View {
                 .environment(reactions)
                 .environment(rules)
         }
-        // Ссылка-приглашение из QR-кода или сообщения — профиль человека.
+        // Ссылка-приглашение из QR-кода или сообщения — профиль человека; ссылка на место или обсуждение.
         .onOpenURL { url in
             if let username = InviteLink.username(from: url) {
                 profileLink = ProfileLink(username: username)
             } else if let threadID = ThreadLink.threadID(from: url) {
                 threadLink = ThreadLinkItem(id: threadID)
+            } else if let placeID = PlaceLink.placeID(from: url) {
+                placeLink = PlaceSelection(id: placeID)
             }
+        }
+        .sheet(item: $placeLink) { link in
+            PlaceCardView(placeID: link.id, environment: environment)
+                .environment(session)
+                .environment(species)
+                .environment(sync)
+                .environment(reactions)
+                .environment(rules)
+                .environment(places)
         }
         .sheet(item: $threadLink) { link in
             NavigationStack {
