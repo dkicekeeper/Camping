@@ -240,6 +240,8 @@ struct CheckinFormView: View {
             try await sync.submit(checkin, placeName: placeName)
             onSaved()
             dismiss()
+            // Первый чекин — момент первой пользы: объясним, зачем уведомления.
+            Task { await NotificationPrimer.shared.offer() }
         } catch {
             saveError = String(localized: "checkin.save.failed")
         }

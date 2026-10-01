@@ -37,4 +37,15 @@ struct MapRegionsTests {
             #expect(region.estimatedBytes > Int64(region.reliefBytes), "\(region.id)")
         }
     }
+
+    @Test func suggestsRegionByLocation() {
+        #expect(MapRegions.suggested(near: nil).id == "almaty_mountains")
+        #expect(MapRegions.suggested(near: .almaty).id == "almaty_mountains")
+        // Капшагай (Конаев) — внутри района Капшагая.
+        #expect(MapRegions.suggested(near: GeoPoint(latitude: 43.87, longitude: 77.07)).id == "kapshagay")
+        // Ушарал — у Алаколя, вне всех районов: ближайший по центру.
+        #expect(MapRegions.suggested(near: GeoPoint(latitude: 46.17, longitude: 80.94)).id == "alakol")
+        // Шымкент — далеко от всех: всё равно какой-то район, не падаем.
+        #expect(MapRegions.all.contains(MapRegions.suggested(near: GeoPoint(latitude: 42.32, longitude: 69.59))))
+    }
 }

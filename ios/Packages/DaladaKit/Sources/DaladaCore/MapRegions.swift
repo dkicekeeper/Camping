@@ -10,6 +10,18 @@ public struct GeoBounds: Hashable, Sendable {
         northEast = GeoPoint(latitude: north, longitude: east)
     }
 
+    public func contains(_ point: GeoPoint) -> Bool {
+        (southWest.latitude...northEast.latitude).contains(point.latitude)
+            && (southWest.longitude...northEast.longitude).contains(point.longitude)
+    }
+
+    public var center: GeoPoint {
+        GeoPoint(
+            latitude: (southWest.latitude + northEast.latitude) / 2,
+            longitude: (southWest.longitude + northEast.longitude) / 2
+        )
+    }
+
     public func contains(_ other: GeoBounds) -> Bool {
         other.southWest.latitude >= southWest.latitude && other.southWest.longitude >= southWest.longitude
             && other.northEast.latitude <= northEast.latitude && other.northEast.longitude <= northEast.longitude
@@ -77,5 +89,17 @@ public enum MapRegions {
 
     public static func region(id: String) -> MapRegion? {
         all.first { $0.id == id }
+    }
+
+    /// Район для «скачайте заранее»: тот, где человек сейчас (самый маленький из подходящих),
+    /// иначе ближайший по центру. Без позиции — Алматы и горы: там живёт большинство.
+    public static func suggested(near point: GeoPoint?) -> MapRegion {
+        let fallback = all[0]
+        guard let point else { return fallback }
+        let containing = all.filter { $0.bounds.contains(point) }
+        if let smallest = containing.min(by: { $0.tileCount < $1.tileCount }) {
+            return smallest
+        }
+        return all.min { point.distance(to: $0.bounds.center) < point.distance(to: $1.bounds.center) } ?? fallback
     }
 }

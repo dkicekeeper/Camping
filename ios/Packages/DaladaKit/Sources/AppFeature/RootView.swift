@@ -29,6 +29,8 @@ public struct RootView: View {
     @State private var articles: ArticlesStore
     @State private var places: PlacesStore
     @State private var selection: AppTab = .profile
+    /// Знакомство при первом запуске пройдено (или пропущено).
+    @AppStorage("intro.completed") private var introCompleted = false
     @State private var showsQuickActions = false
     @State private var showsRecording = false
     /// Выбор из «+», который выполняется, когда лист «+» закроется.
@@ -79,6 +81,15 @@ public struct RootView: View {
         }
         // Идущая запись поездки — мини-плеер над вкладками.
         .modifier(TripAccessoryModifier(isEnabled: recorder.isActive) { showsRecording = true })
+        // Знакомство — поверх вкладок, один раз; вход отсюда открывает согласие и username.
+        .overlay {
+            if !introCompleted {
+                IntroOnboardingView(environment: environment) {
+                    withAnimation { introCompleted = true }
+                }
+                .transition(.opacity)
+            }
+        }
         // «+» не открывает вкладку: возвращаем прежнюю и показываем быстрые действия.
         .onChange(of: selection) { previous, current in
             guard current == .quickAction else { return }
