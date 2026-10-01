@@ -49,26 +49,6 @@ enum TripFormat {
     }
 }
 
-/// Показатель: подпись и крупное число.
-struct TripStat: View {
-    let titleKey: LocalizedStringKey
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-            Text(titleKey)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-            Text(verbatim: value)
-                .font(AppTypography.h4)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
 // MARK: - Старт
 
 /// Выбор вида поездки и «Старт» (открывается из «+»).
@@ -202,15 +182,15 @@ struct TripRecordingView: View {
                 }
             }
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                TripStat(
-                    titleKey: "trip.stat.time",
+                StatTile(
+                    title: String(localized: "trip.stat.time"),
                     value: TripFormat.clock(context.date.timeIntervalSince(recorder.startedAt ?? context.date))
                 )
             }
             HStack(spacing: AppSpacing.md) {
-                TripStat(titleKey: "trip.stat.distance", value: TripFormat.distance(recorder.stats.distanceM))
-                TripStat(titleKey: "trip.stat.speed", value: TripFormat.speed(recorder.phase == .recording ? recorder.currentSpeed : nil))
-                TripStat(titleKey: "trip.stat.elevation", value: TripFormat.elevation(recorder.stats.elevationGainM))
+                StatTile(title: String(localized: "trip.stat.distance"), value: TripFormat.distance(recorder.stats.distanceM))
+                StatTile(title: String(localized: "trip.stat.speed"), value: TripFormat.speed(recorder.phase == .recording ? recorder.currentSpeed : nil))
+                StatTile(title: String(localized: "trip.stat.elevation"), value: TripFormat.elevation(recorder.stats.elevationGainM))
             }
             HStack(spacing: AppSpacing.md) {
                 if recorder.phase == .recording {
@@ -272,15 +252,15 @@ struct TripFinishView: View {
             Form {
                 Section {
                     HStack(spacing: AppSpacing.md) {
-                        TripStat(titleKey: "trip.stat.distance", value: TripFormat.distance(recorder.stats.distanceM))
-                        TripStat(titleKey: "trip.stat.moving", value: TripFormat.duration(recorder.stats.movingSeconds))
+                        StatTile(title: String(localized: "trip.stat.distance"), value: TripFormat.distance(recorder.stats.distanceM))
+                        StatTile(title: String(localized: "trip.stat.moving"), value: TripFormat.duration(recorder.stats.movingSeconds))
                     }
                     HStack(spacing: AppSpacing.md) {
-                        TripStat(
-                            titleKey: "trip.stat.duration",
+                        StatTile(
+                            title: String(localized: "trip.stat.duration"),
                             value: TripFormat.duration(endedAt.timeIntervalSince(recorder.startedAt ?? endedAt))
                         )
-                        TripStat(titleKey: "trip.stat.elevation", value: TripFormat.elevation(recorder.stats.elevationGainM))
+                        StatTile(title: String(localized: "trip.stat.elevation"), value: TripFormat.elevation(recorder.stats.elevationGainM))
                     }
                 }
 
@@ -470,9 +450,7 @@ struct TripRow: View {
                 .foregroundStyle(AppColors.textSecondary)
             }
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textTertiary)
+            DisclosureChevron()
         }
         .contentShape(Rectangle())
     }
@@ -707,15 +685,15 @@ struct TripDetailView: View {
 
                 VStack(spacing: AppSpacing.md) {
                     HStack(spacing: AppSpacing.md) {
-                        TripStat(titleKey: "trip.stat.distance", value: TripFormat.distance(Double(trip.summary.distanceM)))
-                        TripStat(titleKey: "trip.stat.moving", value: TripFormat.duration(Double(trip.summary.movingSeconds)))
+                        StatTile(title: String(localized: "trip.stat.distance"), value: TripFormat.distance(Double(trip.summary.distanceM)))
+                        StatTile(title: String(localized: "trip.stat.moving"), value: TripFormat.duration(Double(trip.summary.movingSeconds)))
                     }
                     HStack(spacing: AppSpacing.md) {
-                        TripStat(titleKey: "trip.stat.duration", value: TripFormat.duration(trip.summary.duration))
-                        TripStat(titleKey: "trip.stat.elevation", value: TripFormat.elevation(Double(trip.summary.elevationGainM)))
+                        StatTile(title: String(localized: "trip.stat.duration"), value: TripFormat.duration(trip.summary.duration))
+                        StatTile(title: String(localized: "trip.stat.elevation"), value: TripFormat.elevation(Double(trip.summary.elevationGainM)))
                     }
                     HStack(spacing: AppSpacing.md) {
-                        TripStat(titleKey: "trip.stat.maxSpeed", value: TripFormat.speed(trip.summary.maxSpeedMps))
+                        StatTile(title: String(localized: "trip.stat.maxSpeed"), value: TripFormat.speed(trip.summary.maxSpeedMps))
                         Spacer(minLength: 0)
                             .frame(maxWidth: .infinity)
                     }
@@ -833,9 +811,7 @@ struct TripOwnerRow: View {
                 UserProfileView(username: username, environment: environment)
             } label: {
                 PersonRow(displayName: owner.displayName, username: owner.username) {
-                    Image(systemName: "chevron.right")
-                        .font(AppTypography.caption)
-                        .foregroundStyle(AppColors.textTertiary)
+                    DisclosureChevron()
                 }
             }
             .buttonStyle(.plain)

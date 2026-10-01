@@ -53,12 +53,7 @@ struct RuleStatusBadge: View {
     let status: RuleStatus
 
     var body: some View {
-        Text(verbatim: RuleFormat.statusText(status))
-            .font(AppTypography.caption)
-            .foregroundStyle(RuleFormat.statusColor(status))
-            .padding(.horizontal, AppSpacing.sm)
-            .padding(.vertical, AppSpacing.xxs)
-            .background(RuleFormat.statusColor(status).opacity(0.12), in: Capsule())
+        BadgeView(RuleFormat.statusText(status), color: RuleFormat.statusColor(status))
     }
 }
 

@@ -116,10 +116,10 @@ struct UserStatsCard: View {
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
-            TripStat(titleKey: "person.stats.trips", value: "\(stats.tripsCount)")
-            TripStat(titleKey: "person.stats.distance", value: TripFormat.distance(Double(stats.distanceM)))
-            TripStat(titleKey: "person.stats.places", value: "\(stats.placesCount)")
-            TripStat(titleKey: "person.stats.catches", value: "\(stats.catchesCount)")
+            StatTile(title: String(localized: "person.stats.trips"), value: "\(stats.tripsCount)")
+            StatTile(title: String(localized: "person.stats.distance"), value: TripFormat.distance(Double(stats.distanceM)))
+            StatTile(title: String(localized: "person.stats.places"), value: "\(stats.placesCount)")
+            StatTile(title: String(localized: "person.stats.catches"), value: "\(stats.catchesCount)")
         }
         .cardContentPadding()
         .cardStyle()
@@ -461,7 +461,7 @@ struct FeedItemRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
-            PersonAvatar(displayName: item.author.displayName, username: item.author.username)
+            AvatarView(name: item.author.displayName ?? item.author.username)
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 HStack(alignment: .firstTextBaseline, spacing: AppSpacing.xs) {
                     Text(verbatim: authorName)
@@ -558,7 +558,7 @@ struct FeedItemRow: View {
                     Image(systemName: review.placeType.systemImage)
                         .foregroundStyle(AppColors.accent)
                 }
-                StarsView(rating: Double(review.rating), size: 12)
+                RatingView(rating: Double(review.rating), size: 12)
             }
             if let body = review.body, !body.isEmpty {
                 Text(verbatim: body)
