@@ -237,7 +237,15 @@ enum PlaceMonths {
 
 // MARK: - Поля «Информации» в формах
 
-/// Поля атрибутов в форме: своё место и предложение правки.
+extension PlaceAttributes.Access: TitledOption {}
+extension PlaceAttributes.Fee: TitledOption {}
+extension PlaceAttributes.PriceUnit: TitledOption {}
+extension PlaceAttributes.Method: TitledOption {}
+extension PlaceAttributes.Amenity: TitledOption {}
+extension PlaceAttributes.Signal: TitledOption {}
+
+/// Поля атрибутов в форме: своё место и предложение правки. Короткие списки — чипами, рыба —
+/// отдельным списком.
 struct PlaceAttributesFields: View {
     @Binding var attributes: PlaceAttributes
     let type: PlaceType
@@ -247,38 +255,38 @@ struct PlaceAttributesFields: View {
     var body: some View {
         Section {
             if type.isFishing {
-                speciesLink
-                methodsLink
+                fishing
             }
-            accessLink
-            amenitiesLink
-            Picker("place.info.signal", selection: $attributes.signal) {
-                Text("common.notSpecified").tag(PlaceAttributes.Signal?.none)
-                ForEach(PlaceAttributes.Signal.allCases) { signal in
-                    Text(LocalizedStringKey(signal.titleKey)).tag(Optional(signal))
-                }
-            }
+            ChipPicker(
+                String(localized: "place.info.access"),
+                options: PlaceAttributes.Access.allCases,
+                selection: $attributes.access
+            ) { $0.title }
+            ChipPicker(
+                String(localized: "place.info.amenities"),
+                options: PlaceAttributes.Amenity.allCases,
+                selection: $attributes.amenities,
+                systemImage: { $0.systemImage }
+            ) { $0.title }
+            ChipPicker(
+                String(localized: "place.info.signal"),
+                options: PlaceAttributes.Signal.allCases,
+                selection: $attributes.signal
+            ) { $0.title }
+            ChipPicker(
+                String(localized: "place.info.months"),
+                options: Array(1...12),
+                selection: $attributes.months
+            ) { PlaceMonths.shortNames[$0 - 1] }
             if !type.isFishing {
-                speciesLink
-                methodsLink
+                fishing
             }
         } header: {
             Text("place.info.title")
         }
 
         Section {
-            PlaceMonthsPicker(months: $attributes.months)
-        } header: {
-            Text("place.info.months")
-        }
-
-        Section {
-            Picker("place.info.fee", selection: $attributes.fee) {
-                Text("common.notSpecified").tag(PlaceAttributes.Fee?.none)
-                ForEach(PlaceAttributes.Fee.allCases) { fee in
-                    Text(LocalizedStringKey(fee.titleKey)).tag(Optional(fee))
-                }
-            }
+            ChipPicker(options: PlaceAttributes.Fee.allCases, selection: $attributes.fee) { $0.title }
             if attributes.fee == .paid {
                 HStack {
                     TextField("place.info.price", text: priceText)
@@ -286,12 +294,7 @@ struct PlaceAttributesFields: View {
                     Text(verbatim: "₸")
                         .foregroundStyle(AppColors.textSecondary)
                 }
-                Picker("place.info.priceUnit", selection: $attributes.priceUnit) {
-                    Text("common.notSpecified").tag(PlaceAttributes.PriceUnit?.none)
-                    ForEach(PlaceAttributes.PriceUnit.allCases) { unit in
-                        Text(LocalizedStringKey(unit.titleKey)).tag(Optional(unit))
-                    }
-                }
+                ChipPicker(options: PlaceAttributes.PriceUnit.allCases, selection: $attributes.priceUnit) { $0.title }
             }
             TextField("place.info.contact.placeholder", text: text(\.contact))
                 .textContentType(.telephoneNumber)
@@ -317,78 +320,36 @@ struct PlaceAttributesFields: View {
         }
     }
 
-    private var speciesLink: some View {
+    /// Рыба (списком — видов много) и способы ловли.
+    @ViewBuilder
+    private var fishing: some View {
         NavigationLink {
-            MultiSelectList(
-                titleKey: "place.info.species",
-                items: speciesStore.species.sorted { $0.sortOrder < $1.sortOrder },
+            SpeciesSelectList(
+                species: speciesStore.species.sorted { $0.sortOrder < $1.sortOrder },
                 selection: Binding(
                     get: { Set(attributes.species) },
                     set: { selected in
                         let order = Dictionary(uniqueKeysWithValues: speciesStore.species.map { ($0.id, $0.sortOrder) })
                         attributes.species = selected.sorted { (order[$0] ?? .max) < (order[$1] ?? .max) }
                     }
-                ),
-                selectionID: \.id
-            ) { species in
-                Text(verbatim: species.name(for: SpeciesStore.languageCode))
+                )
+            )
+        } label: {
+            LabeledContent {
+                if attributes.species.isEmpty {
+                    Text("common.notSpecified")
+                } else {
+                    Text(verbatim: "\(attributes.species.count)")
+                }
+            } label: {
+                Text("place.info.species")
             }
-        } label: {
-            summaryRow("place.info.species", count: attributes.species.count)
         }
-    }
-
-    private var methodsLink: some View {
-        NavigationLink {
-            MultiSelectList(
-                titleKey: "place.info.methods",
-                items: PlaceAttributes.Method.allCases,
-                selection: $attributes.methods,
-                selectionID: \.self
-            ) { Text(LocalizedStringKey($0.titleKey)) }
-        } label: {
-            summaryRow("place.info.methods", count: attributes.methods.count)
-        }
-    }
-
-    private var accessLink: some View {
-        NavigationLink {
-            MultiSelectList(
-                titleKey: "place.info.access",
-                items: PlaceAttributes.Access.allCases,
-                selection: $attributes.access,
-                selectionID: \.self
-            ) { Text(LocalizedStringKey($0.titleKey)) }
-        } label: {
-            summaryRow("place.info.access", count: attributes.access.count)
-        }
-    }
-
-    private var amenitiesLink: some View {
-        NavigationLink {
-            MultiSelectList(
-                titleKey: "place.info.amenities",
-                items: PlaceAttributes.Amenity.allCases,
-                selection: $attributes.amenities,
-                selectionID: \.self
-            ) { amenity in
-                Label(LocalizedStringKey(amenity.titleKey), systemImage: amenity.systemImage)
-            }
-        } label: {
-            summaryRow("place.info.amenities", count: attributes.amenities.count)
-        }
-    }
-
-    private func summaryRow(_ titleKey: LocalizedStringKey, count: Int) -> some View {
-        LabeledContent {
-            if count > 0 {
-                Text(verbatim: "\(count)")
-            } else {
-                Text("common.notSpecified")
-            }
-        } label: {
-            Text(titleKey)
-        }
+        ChipPicker(
+            String(localized: "place.info.methods"),
+            options: PlaceAttributes.Method.allCases,
+            selection: $attributes.methods
+        ) { $0.title }
     }
 
     private var priceText: Binding<String> {
@@ -413,77 +374,34 @@ private extension Character {
     var isASCIIDigit: Bool { isASCII && isNumber }
 }
 
-/// Список с галочками: выбрать несколько.
-struct MultiSelectList<Item, ID: Hashable, RowLabel: View>: View {
-    let titleKey: LocalizedStringKey
-    let items: [Item]
-    @Binding var selection: Set<ID>
-    let selectionID: KeyPath<Item, ID>
-    @ViewBuilder let label: (Item) -> RowLabel
+/// Виды рыбы места: выбрать несколько.
+private struct SpeciesSelectList: View {
+    let species: [FishSpecies]
+    @Binding var selection: Set<String>
 
     var body: some View {
-        List {
-            ForEach(items.indices, id: \.self) { index in
-                let item = items[index]
-                let id = item[keyPath: selectionID]
-                Button {
-                    if selection.contains(id) {
-                        selection.remove(id)
-                    } else {
-                        selection.insert(id)
-                    }
-                } label: {
-                    HStack {
-                        label(item)
-                            .foregroundStyle(AppColors.textPrimary)
-                        Spacer(minLength: 0)
-                        if selection.contains(id) {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(AppColors.accent)
-                        }
-                    }
-                    .contentShape(Rectangle())
+        List(species) { item in
+            let isSelected = selection.contains(item.id)
+            Button {
+                if isSelected {
+                    selection.remove(item.id)
+                } else {
+                    selection.insert(item.id)
                 }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(selection.contains(id) ? .isSelected : [])
+            } label: {
+                HStack(spacing: AppSpacing.md) {
+                    SelectionIndicator(isSelected: isSelected)
+                    Text(verbatim: item.name(for: SpeciesStore.languageCode))
+                        .foregroundStyle(AppColors.textPrimary)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
         }
-        .navigationTitle(titleKey)
+        .navigationTitle("place.info.species")
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-/// Лучшие месяцы: 12 кнопок-переключателей.
-private struct PlaceMonthsPicker: View {
-    @Binding var months: Set<Int>
-
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 4)
-
-    var body: some View {
-        let names = PlaceMonths.shortNames
-        let fullNames = PlaceMonths.names
-        LazyVGrid(columns: columns, spacing: AppSpacing.xs) {
-            ForEach(1...12, id: \.self) { month in
-                let isOn = months.contains(month)
-                Button {
-                    if isOn {
-                        months.remove(month)
-                    } else {
-                        months.insert(month)
-                    }
-                } label: {
-                    Text(verbatim: names[month - 1])
-                        .font(AppTypography.bodySmall)
-                        .frame(maxWidth: .infinity, minHeight: 32)
-                        .foregroundStyle(isOn ? AppColors.staticWhite : AppColors.textPrimary)
-                        .background(isOn ? AppColors.accent : AppColors.bgMuted, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text(verbatim: fullNames[month - 1]))
-                .accessibilityAddTraits(isOn ? .isSelected : [])
-            }
-        }
-        .padding(.vertical, AppSpacing.xxs)
     }
 }
 
