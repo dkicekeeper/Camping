@@ -153,9 +153,7 @@ private struct PlaceShortcutRow: View {
                 .font(AppTypography.bodyEmphasis)
                 .foregroundStyle(AppColors.textPrimary)
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textTertiary)
+            DisclosureChevron()
         }
         .padding(AppSpacing.md)
         .cardStyle()
@@ -203,11 +201,7 @@ struct PlaceTypeChips: View {
                 }
                 Text(titleKey)
             }
-            .font(AppTypography.bodySmall)
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.vertical, AppSpacing.xs)
-            .foregroundStyle(isOn ? AppColors.staticWhite : AppColors.textPrimary)
-            .background(isOn ? AppColors.accent : AppColors.bgMuted, in: Capsule())
+            .filterChipStyle(isSelected: isOn)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isOn ? .isSelected : [])

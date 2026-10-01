@@ -8,54 +8,6 @@ import Sync
 
 // MARK: - Звёзды
 
-/// Оценка звёздами: 4,3 → четыре полных и половина.
-struct StarsView: View {
-    let rating: Double
-    var size: CGFloat = 14
-
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(1...5, id: \.self) { star in
-                Image(systemName: symbol(for: star))
-                    .font(.system(size: size))
-                    .foregroundStyle(AppColors.warning)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("reviews.stars.accessibility \(rating.formatted(.number.precision(.fractionLength(0...1))))"))
-    }
-
-    private func symbol(for star: Int) -> String {
-        let value = rating - Double(star - 1)
-        if value >= 0.75 { return "star.fill" }
-        if value >= 0.25 { return "star.leadinghalf.filled" }
-        return "star"
-    }
-}
-
-/// Выбор оценки: пять звёзд, тап — оценка.
-struct StarPicker: View {
-    @Binding var rating: Int
-
-    var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            ForEach(1...5, id: \.self) { star in
-                Button {
-                    rating = star
-                } label: {
-                    Image(systemName: star <= rating ? "star.fill" : "star")
-                        .font(.system(size: 32))
-                        .foregroundStyle(AppColors.warning)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("reviews.stars.pick \(star)"))
-                .accessibilityAddTraits(star == rating ? .isSelected : [])
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
 // MARK: - Отзывы
 
 /// Отзывы публичного места в карточке: средняя оценка и распределение, свой отзыв, три самых
@@ -155,7 +107,7 @@ struct ReviewSummaryView: View {
                 Text(verbatim: (summary.ratingAverage ?? 0).formatted(.number.precision(.fractionLength(1))))
                     .font(AppTypography.h2)
                     .monospacedDigit()
-                StarsView(rating: summary.ratingAverage ?? 0, size: 12)
+                RatingView(rating: summary.ratingAverage ?? 0, size: 12)
                 Text("reviews.count \(summary.reviewsCount)")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
@@ -167,8 +119,7 @@ struct ReviewSummaryView: View {
                             .font(AppTypography.caption)
                             .foregroundStyle(AppColors.textSecondary)
                             .frame(width: 12)
-                        ProgressView(value: summary.share(of: star))
-                            .tint(AppColors.warning)
+                        LinearProgressBar(value: summary.share(of: star), color: AppColors.warning, height: 6)
                     }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(Text("reviews.bar.accessibility \(star) \(summary.stars[star - 1])"))
@@ -192,7 +143,7 @@ struct ReviewRow: View {
                 Text(verbatim: review.isOwn ? String(localized: "report.you") : review.author.label)
                     .font(AppTypography.bodyEmphasis)
                     .lineLimit(1)
-                StarsView(rating: Double(review.rating), size: 12)
+                RatingView(rating: Double(review.rating), size: 12)
                 Spacer(minLength: 0)
                 Text(verbatim: review.createdAt.formatted(.relative(presentation: .named)))
                     .font(AppTypography.caption)
@@ -314,7 +265,7 @@ struct ReviewFormView: View {
         NavigationStack {
             Form {
                 Section {
-                    StarPicker(rating: $rating)
+                    RatingPicker(rating: $rating)
                         .padding(.vertical, AppSpacing.sm)
                 } header: {
                     Text("reviews.form.rating")
@@ -966,7 +917,7 @@ struct PostRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
-            PersonAvatar(displayName: post.author.displayName, username: post.author.username, size: 32)
+            AvatarView(name: post.author.displayName ?? post.author.username, size: 32)
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 HStack(spacing: AppSpacing.xs) {
                     Text(verbatim: post.isOwn ? String(localized: "report.you") : post.author.label)

@@ -8,29 +8,6 @@ import SwiftUI
 
 // MARK: - Общие части
 
-/// Кружок с инициалами (фото профиля — позже).
-struct PersonAvatar: View {
-    let displayName: String?
-    let username: String?
-    var size: CGFloat = AppIconSize.avatar
-
-    var body: some View {
-        Circle()
-            .fill(AppColors.accent.opacity(0.15))
-            .frame(width: size, height: size)
-            .overlay {
-                Text(verbatim: initials)
-                    .font(size > 48 ? AppTypography.h3 : AppTypography.bodyEmphasis)
-                    .foregroundStyle(AppColors.accent)
-            }
-    }
-
-    private var initials: String {
-        let source = displayName ?? username ?? "?"
-        return source.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
-    }
-}
-
 /// Строка человека: аватар, имя, @username.
 struct PersonRow<Trailing: View>: View {
     let displayName: String?
@@ -45,7 +22,7 @@ struct PersonRow<Trailing: View>: View {
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
-            PersonAvatar(displayName: displayName, username: username)
+            AvatarView(name: displayName ?? username)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(verbatim: displayName ?? username.map { "@" + $0 } ?? String(localized: "profile.noName"))
                     .font(AppTypography.bodyEmphasis)
@@ -216,21 +193,15 @@ struct FriendsEntryRow: View {
                 }
                 Spacer(minLength: 0)
                 if incomingCount > 0 {
-                    Label {
-                        Text(verbatim: "\(incomingCount)")
-                    } icon: {
-                        Image(systemName: "person.badge.plus")
-                    }
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.staticWhite)
-                    .padding(.horizontal, AppSpacing.sm)
-                    .padding(.vertical, AppSpacing.xxs)
-                    .background(AppColors.destructive, in: Capsule())
+                    BadgeView(
+                        "\(incomingCount)",
+                        systemImage: "person.badge.plus",
+                        color: AppColors.destructive,
+                        style: .filled
+                    )
                     .accessibilityLabel(Text("friends.requests"))
                 }
-                Image(systemName: "chevron.right")
-                    .font(AppTypography.caption)
-                    .foregroundStyle(AppColors.textTertiary)
+                DisclosureChevron()
             }
             .cardContentPadding()
             .cardStyle()
@@ -430,7 +401,7 @@ struct UserProfileView: View {
         ScrollView {
             VStack(spacing: AppSpacing.xl) {
                 VStack(spacing: AppSpacing.lg) {
-                    PersonAvatar(displayName: profile.displayName, username: profile.username, size: AppIconSize.mega)
+                    AvatarView(name: profile.displayName ?? profile.username, size: AppIconSize.mega)
                     VStack(spacing: AppSpacing.xs) {
                         Text(verbatim: profile.displayName ?? "@" + username)
                             .font(AppTypography.h3)

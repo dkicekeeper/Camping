@@ -1,6 +1,7 @@
 import Backend
 import DaladaCore
 import DaladaUI
+import DesignComponents
 import DesignTokens
 import MapEngine
 import Persistence
@@ -32,9 +33,7 @@ struct PlaceRow: View {
                 .foregroundStyle(AppColors.textSecondary)
             }
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textTertiary)
+            DisclosureChevron()
         }
         .contentShape(Rectangle())
     }

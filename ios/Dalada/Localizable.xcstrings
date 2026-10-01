@@ -10895,6 +10895,52 @@
         }
       }
     },
+    "rating.pick %lld %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld out of %2$lld"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%2$lld-тен %1$lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld из %2$lld"
+          }
+        }
+      }
+    },
+    "rating.value %@ %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rated %1$@ out of %2$lld"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Баға: %2$lld-тен %1$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оценка %1$@ из %2$lld"
+          }
+        }
+      }
+    },
     "reaction.helpful %lld" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -11485,52 +11531,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Порядок"
-          }
-        }
-      }
-    },
-    "reviews.stars.accessibility %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rated %@ out of 5"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Баға: 5-тен %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Оценка %@ из 5"
-          }
-        }
-      }
-    },
-    "reviews.stars.pick %lld" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld out of 5"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "5-тен %lld"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld из 5"
           }
         }
       }

@@ -70,10 +70,10 @@ struct CheckinFormView: View {
                 }
 
                 Section {
-                    ChipRow(title: "conditions.bite", options: CheckinConditions.Bite.allCases, selection: $draft.conditions.bite)
-                    ChipRow(title: "conditions.crowd", options: CheckinConditions.Crowd.allCases, selection: $draft.conditions.crowd)
-                    ChipRow(title: "conditions.water", options: CheckinConditions.Water.allCases, selection: $draft.conditions.water)
-                    ChipRow(title: "conditions.road", options: CheckinConditions.Road.allCases, selection: $draft.conditions.road)
+                    ChipPicker(String(localized: "conditions.bite"), options: CheckinConditions.Bite.allCases, selection: $draft.conditions.bite) { $0.title }
+                    ChipPicker(String(localized: "conditions.crowd"), options: CheckinConditions.Crowd.allCases, selection: $draft.conditions.crowd) { $0.title }
+                    ChipPicker(String(localized: "conditions.water"), options: CheckinConditions.Water.allCases, selection: $draft.conditions.water) { $0.title }
+                    ChipPicker(String(localized: "conditions.road"), options: CheckinConditions.Road.allCases, selection: $draft.conditions.road) { $0.title }
                 } header: {
                     Text("checkin.form.conditions")
                 }
@@ -248,39 +248,14 @@ struct CheckinFormView: View {
     }
 }
 
-/// Строка выбора одного варианта чипами (повторный тап снимает выбор).
-struct ChipRow<Option: Identifiable & Hashable>: View where Option: TitledOption {
-    let title: LocalizedStringKey
-    let options: [Option]
-    @Binding var selection: Option?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text(title)
-                .font(AppTypography.caption)
-                .foregroundStyle(AppColors.textSecondary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: AppSpacing.sm) {
-                    ForEach(options) { option in
-                        Button {
-                            selection = selection == option ? nil : option
-                        } label: {
-                            Text(LocalizedStringKey(option.titleKey))
-                        }
-                        .buttonStyle(.plain)
-                        .filterChipStyle(isSelected: selection == option)
-                    }
-                }
-                .padding(.vertical, AppSpacing.xxs)
-            }
-        }
-        .padding(.vertical, AppSpacing.xs)
-    }
-}
-
-/// Вариант с ключом названия в `Localizable.xcstrings`.
+/// Варианты условий с ключом названия в `Localizable.xcstrings`.
 protocol TitledOption {
     var titleKey: String { get }
+}
+
+extension TitledOption {
+    /// Локализованное название для `ChipPicker`.
+    var title: String { String(localized: String.LocalizationValue(titleKey)) }
 }
 
 extension CheckinConditions.Bite: TitledOption {}

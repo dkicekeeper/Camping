@@ -57,6 +57,30 @@ iOS собирается только на Mac (Xcode 26, iOS 26): `cd ios && xc
 в том числе на ветках `claude/**`). Код iOS попадает в `main` только после зелёной сборки на рабочей
 ветке. Сборка в TestFlight — `.github/workflows/testflight.yml` (вручную, см. `docs/04-beta/testflight.md`).
 
+## Компоненты интерфейса: DesignKit или Dalada
+
+Дизайн-система — пакет [DesignKit](https://github.com/dkicekeeper/DesignKit) (общий с Tenra). Перед
+тем как писать новый компонент, ищи готовый в DesignKit (Gallery в TestFlight, `docs/design-system.md`
+в DesignKit): кнопки, карточки (`cardStyle`), строки (`UniversalRow`, `InfoRow`), бейджи
+(`BadgeView`, `TrendBadge`), `StatTile`, `AvatarView`, `RatingView`/`RatingPicker`, `ChipPicker`,
+`SelectionIndicator`, `LinearProgressBar(value:)`, `EmptyStateView`, `RecommendationBox`,
+`DisclosureChevron`. Своё — только если в DesignKit нет подходящего.
+
+Компонент идёт в DesignKit, если выполнены все три условия:
+1. **Не знает данных приложения**: принимает текст, числа, даты, цвета, иконки, замыкания и
+   `@ViewBuilder`-слоты — никаких `Place`, `Trip`, `Catch`, сторов и сервисов. Если зависимость от
+   модели можно заменить параметром — тоже DesignKit, а переходник (`RuleStatus` → `BadgeView`)
+   остаётся здесь маленькой обёрткой.
+2. **Отвечает на «как выглядит», а не «что значит»**: карточка, строка, бейдж, выбор — да;
+   «карточка улова», «форма чекина» — нет.
+3. **Нужен в двух местах** (правило двух): нужен и Tenra, или это базовый паттерн, который должен
+   выглядеть везде одинаково. Новый компонент можно начать здесь, а при втором применении —
+   перенести PR в DesignKit (чеклист переноса — в CLAUDE.md DesignKit).
+
+Признаки, что компонент остаётся в Dalada: в названии слово предметной области (Place, Trip,
+Catch, Rule, Gear), или он сам загружает данные и управляет навигацией. Новая версия DesignKit
+приходит сама (workflow **DesignKit update**), визуальные изменения перечислены в её release notes.
+
 ## Секреты
 
 `ios/Config/Secrets.xcconfig` (хост и publishable key Supabase) — не в git, пример —

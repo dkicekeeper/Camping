@@ -193,7 +193,7 @@ struct FollowRouteView: View {
                     }
                     Text("route.follow.remaining \(TripFormat.distance(progress.remaining))")
                         .font(AppTypography.h3)
-                    ProgressView(value: progress.fraction)
+                    LinearProgressBar(value: progress.fraction, animatesOnAppear: false)
                     Text("route.follow.traveled \(TripFormat.distance(progress.traveled)) \(TripFormat.distance(progress.total))")
                         .font(AppTypography.caption)
                         .foregroundStyle(AppColors.textSecondary)

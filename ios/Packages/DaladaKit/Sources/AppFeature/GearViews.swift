@@ -352,8 +352,7 @@ struct PopularGearView: View {
             }
         } label: {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: isOwned || isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isOwned ? AppColors.textTertiary : isSelected ? AppColors.accent : AppColors.textTertiary)
+                SelectionIndicator(isSelected: isOwned || isSelected, tint: isOwned ? AppColors.textTertiary : AppColors.accent)
                 Text(verbatim: title)
                     .foregroundStyle(isOwned ? AppColors.textSecondary : AppColors.textPrimary)
                 Spacer(minLength: 0)
@@ -366,6 +365,7 @@ struct PopularGearView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isOwned || isSelected ? .isSelected : [])
         .disabled(isOwned)
     }
 }
@@ -421,13 +421,13 @@ struct GearPickerView: View {
             }
         } label: {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: isAdded || isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? AppColors.accent : AppColors.textTertiary)
+                SelectionIndicator(isSelected: isAdded || isSelected, tint: isSelected ? AppColors.accent : AppColors.textTertiary)
                 GearRow(item: item)
             }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isAdded || isSelected ? .isSelected : [])
         .disabled(isAdded)
     }
 }
