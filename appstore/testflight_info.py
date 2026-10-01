@@ -120,7 +120,7 @@ def update_app_information(app_id: str) -> None:
               "App Store Connect → TestFlight → Test Information → Beta App Review Information.")
 
 
-def builds(app_id: str, limit: int = 8) -> list[dict]:
+def builds(app_id: str, limit: int = 15) -> list[dict]:
     query = urllib.parse.urlencode({
         "filter[app]": app_id, "sort": "-uploadedDate", "limit": limit,
         "include": "preReleaseVersion,buildBetaDetail",
