@@ -137,3 +137,35 @@ private struct SavedRow: Decodable, Sendable {
         case placeID = "place_id"
     }
 }
+
+// MARK: - Фото места
+
+extension BackendClient {
+    /// Фото посетителей места (RPC `place_photos`), свежие сверху. `after` — id последнего фото
+    /// предыдущей страницы.
+    public func placePhotos(
+        placeID: UUID,
+        kind: PlacePhotoKind = .all,
+        limit: Int = 60,
+        after: UUID? = nil
+    ) async throws -> [PlacePhoto] {
+        try await supabase
+            .rpc("place_photos", params: PlacePhotosParams(place: placeID, kind: kind, limit: limit, after: after))
+            .execute()
+            .value
+    }
+}
+
+struct PlacePhotosParams: Encodable, Sendable {
+    let place: UUID
+    let kind: PlacePhotoKind
+    let limit: Int
+    let after: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case place = "p_place"
+        case kind = "p_kind"
+        case limit = "p_limit"
+        case after = "p_after"
+    }
+}

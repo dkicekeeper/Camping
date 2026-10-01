@@ -4,15 +4,15 @@
 -- Видимость — та же, что у фото в отчётах: место видно зрителю, фото проходит
 -- private.media_visible (видны чекин и, для фото улова, сам улов; блокировки учитываются).
 -- Фильтр p_kind: null / 'all' — все, 'catches' — фото уловов, 'place' — фото места (без улова).
--- Страницы — свежие сверху, курсор (p_before_at, p_before_id) — время чекина и id последнего фото.
+-- Страницы — свежие сверху; p_after — id последнего фото предыдущей страницы (у фото одного отчёта
+-- общее время, поэтому курсор — по id, а не по времени). Невидимое фото курсором не служит.
 -- Ошибки: 22023 — неизвестный фильтр.
 
 create function public.place_photos(
   p_place uuid,
   p_kind text default null,
   p_limit integer default 60,
-  p_before_at timestamptz default null,
-  p_before_id uuid default null
+  p_after uuid default null
 )
 returns table (
   id uuid,
@@ -37,11 +37,21 @@ as $$
 declare
   viewer uuid := auth.uid();
   n integer := least(greatest(coalesce(p_limit, 60), 1), 100);
-  before_at timestamptz := coalesce(p_before_at, 'infinity'::timestamptz);
-  before_id uuid := coalesce(p_before_id, 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid);
+  before_at timestamptz := 'infinity'::timestamptz;
+  before_id uuid := 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid;
 begin
   if p_kind is not null and p_kind not in ('all', 'catches', 'place') then
     raise exception 'invalid kind' using errcode = '22023';
+  end if;
+  if p_after is not null then
+    select c.at, m.id into before_at, before_id
+      from public.media m
+      join public.checkins c on c.id = m.checkin_id
+     where m.id = p_after
+       and private.media_visible(viewer, m.id);
+    if not found then
+      return;
+    end if;
   end if;
 
   return query
@@ -72,5 +82,5 @@ begin
 end;
 $$;
 
-revoke execute on function public.place_photos(uuid, text, integer, timestamptz, uuid) from public;
-grant execute on function public.place_photos(uuid, text, integer, timestamptz, uuid) to anon, authenticated;
+revoke execute on function public.place_photos(uuid, text, integer, uuid) from public;
+grant execute on function public.place_photos(uuid, text, integer, uuid) to anon, authenticated;

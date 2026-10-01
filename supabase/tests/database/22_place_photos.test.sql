@@ -4,7 +4,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(14);
+select plan(16);
 
 create function pg_temp.act_as_anon() returns void language plpgsql as $$
 begin
@@ -133,9 +133,20 @@ select is((select count(*) from page1), 2::bigint, 'первая страниц�
 select is(
   (select array_agg(right(x.id::text, 1)::int)
      from public.place_photos('aaaaaaaa-0000-0000-0000-000000000001', null, 2,
-            (select at from page1 order by at, id limit 1),
             (select id from page1 order by at, id limit 1)) x),
   array[1], 'следующая страница — после курсора');
+
+-- Два фото одного отчёта (общее время) по одному на страницу — ни одно не теряется.
+select pg_temp.act_as_anon();
+select is(
+  (select array_agg(right(x.id::text, 1)::int)
+     from public.place_photos('aaaaaaaa-0000-0000-0000-000000000001', null, 1,
+            (select y.id from public.place_photos('aaaaaaaa-0000-0000-0000-000000000001', null, 1) y)) x),
+  array[1], 'фото того же отчёта на следующей странице');
+select is(
+  (select count(*) from public.place_photos('aaaaaaaa-0000-0000-0000-000000000001', null, 10,
+     'eeeeeeee-0000-0000-0000-000000000004')),
+  0::bigint, 'невидимое фото курсором не служит');
 
 select throws_ok($$ select * from public.place_photos('aaaaaaaa-0000-0000-0000-000000000001', 'video') $$,
   '22023', null, 'неизвестный фильтр');

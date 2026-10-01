@@ -23,6 +23,8 @@ struct PlaceCardView: View {
     @State private var reports: [PlaceReport] = []
     /// Подписанные ссылки на фото отчётов: путь в хранилище → ссылка (действует час).
     @State private var photoURLs: [String: URL] = [:]
+    /// Фото посетителей для шапки (первые 12).
+    @State private var placePhotos: [PlacePhoto] = []
     @State private var showsCheckin = false
     /// Показана сохранённая копия — сервер недоступен.
     @State private var isShowingSavedCopy = false
@@ -109,6 +111,15 @@ struct PlaceCardView: View {
     private func content(_ place: PlaceDetails) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                if !placePhotos.isEmpty && !isShowingSavedCopy {
+                    PlacePhotosHeader(
+                        photos: placePhotos,
+                        urls: photoURLs,
+                        placeID: place.id,
+                        placeName: place.name,
+                        environment: environment
+                    )
+                }
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     Label(LocalizedStringKey(place.type.titleKey), systemImage: place.type.systemImage)
                         .font(AppTypography.bodySmall)
@@ -257,9 +268,12 @@ struct PlaceCardView: View {
         guard let backend,
               let loaded = try? await backend.placeReports(placeID: placeID)
         else { return }
+        let photos = (try? await backend.placePhotos(placeID: placeID, limit: 12)) ?? []
         let paths = loaded.flatMap { report in report.media.flatMap { [$0.thumbnailPath, $0.path] } }
+            + photos.flatMap { [$0.thumbnailPath, $0.path] }
         let urls = (try? await backend.signedMediaURLs(paths: paths)) ?? [:]
         photoURLs = urls
+        placePhotos = photos
         reports = loaded
         await reactions.load(loaded.map { ReactionKey(.checkin, $0.id) })
         try? await cache.save(loaded, for: .reports(placeID, viewer: viewerID))
