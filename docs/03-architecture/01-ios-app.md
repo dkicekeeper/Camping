@@ -183,12 +183,20 @@ External              DesignKit · MapLibre · GRDB · supabase-swift · Nuke
 
 ## Дизайн-система
 
-- DesignKit подключаем как SPM-зависимость, закреплённую на коммите (тегов пока нет).
-- **Нужно доработать в DesignKit:**
-  - настраиваемый акцент и тема: сейчас `AppColors.accent = Color.indigo` зашит в код → например,
-    `DesignKitTheme.configure(accent:)` или цвет из asset catalog;
-  - «outdoor»-палитра для категорий мест и статусов правил — токенами;
-  - убрать закоммиченные `*.swift.tmp`.
+- DesignKit подключаем как SPM-зависимость с точной версией (`exact: "0.2.0"` в
+  `ios/Packages/DaladaKit/Package.swift`). Новая версия приходит только сменой номера; CI DesignKit
+  собирает Dalada с каждым своим изменением, так что сломать сборку Dalada незаметно нельзя.
+- Обновление автоматическое: workflow **DesignKit update** (`.github/workflows/designkit.yml`) раз в
+  сутки сверяет версию с последним релизом DesignKit, при новом релизе собирает приложение и тесты
+  пакета и, если всё зелёное, коммитит новую версию в `main`. Вручную — Actions → DesignKit update
+  → Run workflow.
+- Правила и каталог компонентов — в DesignKit: `CLAUDE.md`, `docs/design-system.md`,
+  `docs/localization-keys.md` (ключи, которые компоненты берут из нашего `Localizable.xcstrings`).
+  Галерея компонентов с темой Dalada — в TestFlight («DesignKit Gallery»).
+- **Акцент Dalada — зелёный** (`AccentColor` в `Assets.xcassets`: светлая тема #2E8B57, тёмная
+  #3CB371). `AppBootstrap.configure()` передаёт его в DesignKit (`DesignKitTheme.accent`), и тот же
+  цвет красит системные элементы (`ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME`).
+- **Ещё нужно в DesignKit:** «outdoor»-палитра для категорий мест и статусов правил — токенами.
 - Компоненты приложения — в `DaladaUI`; универсальные (карточка статистики со значением и единицей,
   рейтинг, строка-чекбокс) — кандидаты в DesignKit.
 

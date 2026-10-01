@@ -75,18 +75,18 @@
 
 ## Дизайн-система (DesignKit)
 
-Репозиторий: <https://github.com/dkicekeeper/DesignKit> (публичный, v0 — «visual-evaluation milestone»).
+Репозиторий: <https://github.com/dkicekeeper/DesignKit> (публичный, версии с тегами; Dalada — на `0.2.0`).
 
 **Что это.** SwiftUI-пакет (SPM), вынесенный из финансового приложения Tenra. Три таргета:
 `DesignTokens` → `DesignSupport` → `DesignComponents`. Требования: **iOS 26+, Xcode 26+**,
 Swift 5 language mode. Визуальный язык — Liquid Glass (`glassEffect`, `.glassProminent`),
-шрифт Inter (variable, Dynamic Type), 4pt-сетка отступов, акцент `indigo`.
+шрифт Inter (variable, Dynamic Type), 4pt-сетка отступов; акцент задаёт приложение (у Tenra `indigo`, у Dalada зелёный).
 
 **Переиспользуем как есть:**
 - Токены: `AppSpacing`, `AppRadius`, `AppIconSize`, `AppTypography`, `AppAnimation`, `AppColors` (базовые слои и текст).
 - Модификаторы: `cardStyle()`, `formCardStyle()`, `filterChipStyle()`, `primaryButton()` / `secondaryButton()`, `staggeredEntrance()`, `chartAppear()`.
 - Компоненты общего назначения: `UniversalRow`, `InfoRow`, `SectionHeaderView`, `EmptyStateView`,
-  `FormSection`, `FormTextField`, `SegmentedPickerView`, `DonutChart`, `ProportionBar`,
+  `FormSection`, `FormTextField`, `SegmentedPickerView`, `OrbChart`/`MiniDonut` (бывший `DonutChart`), `ProportionBar`,
   `RecommendationBox`, `PackedCircleIconsView` (фейспайл друзей), онбординг-компоненты,
   `IconView`/`IconSource`, `HapticManager`.
 
@@ -99,11 +99,11 @@ Swift 5 language mode. Визуальный язык — Liquid Glass (`glassEff
 **Придётся добавить (кандидаты в DesignKit или в слой приложения):**
 - Карточки места / поездки / улова, фото-галерея, рейтинг-звёзды, тред-комментарии, чекин-кнопка,
   элементы карты (пины, кластеры, bottom sheet), чекбокс-строки для чеклистов, бейджи/ачивки.
-- Цветовая тема «outdoor»: акцент `indigo` унаследован от финансового продукта — стоит
-  обсудить отдельный акцент (зелёный/оранжевый/бирюзовый) через токены, не форком.
+- Цветовая тема «outdoor»: акцент — **зелёный** (#2E8B57 / тёмная тема #3CB371) через
+  `DesignKitTheme.accent`, не форком (решено 2026-09-30).
 
-**Замечания по репозиторию DesignKit** (не блокеры): в `Sources/` закоммичены файлы `*.swift.tmp`;
-пакет ещё не протегирован (подключать по `path`/ветке до выхода `1.0.0`).
+DesignKit с 0.2.0 синхронизирован с Tenra (эталон дизайн-системы), версионируется тегами;
+`*.swift.tmp` удалены.
 
 ## Открытые вопросы
 
