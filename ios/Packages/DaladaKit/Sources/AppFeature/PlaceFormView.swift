@@ -86,7 +86,7 @@ struct PlaceFormView: View {
     }
 
     /// Кто увидит место и как — под выбором видимости (новое место и правка своего).
-    static func visibilityFooter(_ visibility: Visibility, approximate: Bool) -> String {
+    static func visibilityFooter(_ visibility: DaladaCore.Visibility, approximate: Bool) -> String {
         switch (visibility, approximate) {
         case (.private, _):
             String(localized: "place.form.footer.private")

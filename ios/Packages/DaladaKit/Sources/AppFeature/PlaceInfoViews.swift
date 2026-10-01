@@ -110,7 +110,7 @@ struct PlaceInfoSection: View {
             fishing.append(.init(
                 titleKey: "place.info.methods",
                 systemImage: "figure.fishing",
-                value: Self.titles(PlaceAttributes.Method.allCases.filter(info.methods.contains), \.titleKey)
+                value: Self.titles(PlaceAttributes.Method.allCases.filter { info.methods.contains($0) }, \.titleKey)
             ))
         }
         var other: [PlaceInfoRow.Model] = []
@@ -118,7 +118,7 @@ struct PlaceInfoSection: View {
             other.append(.init(
                 titleKey: "place.info.access",
                 systemImage: "car",
-                value: Self.titles(PlaceAttributes.Access.allCases.filter(info.access.contains), \.titleKey)
+                value: Self.titles(PlaceAttributes.Access.allCases.filter { info.access.contains($0) }, \.titleKey)
             ))
         }
         if let fee = feeText {
@@ -131,7 +131,7 @@ struct PlaceInfoSection: View {
             other.append(.init(
                 titleKey: "place.info.amenities",
                 systemImage: "checklist",
-                value: Self.titles(PlaceAttributes.Amenity.allCases.filter(info.amenities.contains), \.titleKey)
+                value: Self.titles(PlaceAttributes.Amenity.allCases.filter { info.amenities.contains($0) }, \.titleKey)
             ))
         }
         if let signal = info.signal {
@@ -482,7 +482,7 @@ struct PlaceEditView: View {
 
             Section {
                 Picker("place.form.visibility", selection: draft.visibility) {
-                    ForEach(Visibility.allCases) { visibility in
+                    ForEach(DaladaCore.Visibility.allCases) { visibility in
                         Text(LocalizedStringKey(visibility.titleKey)).tag(visibility)
                     }
                 }
