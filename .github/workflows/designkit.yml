@@ -1,0 +1,129 @@
+name: DesignKit update
+
+# Автообновление дизайн-системы. Раз в сутки (и вручную) смотрит последний релиз DesignKit
+# (тег X.Y.Z в github.com/dkicekeeper/DesignKit). Если он новее версии в
+# ios/Packages/DaladaKit/Package.swift — меняет версию, собирает приложение и прогоняет тесты
+# пакета (как workflow iOS) и, если всё зелёное, коммитит обновление в main.
+#
+# Риск невелик: CI DesignKit собирает Dalada с каждым своим изменением, так что релиз уже
+# проверен на нашем коде. Если сборка здесь красная — main не трогается, в логе видно почему.
+# Токен не нужен: хватает GITHUB_TOKEN этого репозитория (contents: write).
+on:
+  schedule:
+    - cron: "17 3 * * *" # 03:17 UTC, 08:17 в Алматы
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: designkit-update
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Newer DesignKit?
+    runs-on: ubuntu-latest
+    outputs:
+      current: ${{ steps.versions.outputs.current }}
+      latest: ${{ steps.versions.outputs.latest }}
+      update: ${{ steps.versions.outputs.update }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: versions
+        run: |
+          MANIFEST=ios/Packages/DaladaKit/Package.swift
+          CURRENT=$(sed -nE 's#.*github.com/dkicekeeper/DesignKit", exact: "([0-9]+\.[0-9]+\.[0-9]+)".*#\1#p' "$MANIFEST")
+          LATEST=$(git ls-remote --tags --refs https://github.com/dkicekeeper/DesignKit \
+            | sed -E 's#.*refs/tags/##' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          if [ -z "$CURRENT" ]; then
+            echo "::error::В $MANIFEST нет зависимости DesignKit вида exact: \"X.Y.Z\""
+            exit 1
+          fi
+          if [ -n "$LATEST" ] && [ "$LATEST" != "$CURRENT" ] \
+             && [ "$(printf '%s\n%s\n' "$CURRENT" "$LATEST" | sort -V | tail -1)" = "$LATEST" ]; then
+            echo "update=true" >> "$GITHUB_OUTPUT"
+            echo "DesignKit $CURRENT → $LATEST" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            echo "DesignKit $CURRENT — последняя версия" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  update:
+    name: Build and commit DesignKit ${{ needs.check.outputs.latest }}
+    needs: check
+    if: needs.check.outputs.update == 'true'
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      CURRENT: ${{ needs.check.outputs.current }}
+      LATEST: ${{ needs.check.outputs.latest }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # для git pull --rebase перед отправкой в main
+
+      - name: Bump the version
+        run: |
+          MANIFEST=ios/Packages/DaladaKit/Package.swift
+          sed -i '' -E "s#(github.com/dkicekeeper/DesignKit\", exact: \")$CURRENT(\")#\1$LATEST\2#" "$MANIFEST"
+          grep -n 'dkicekeeper/DesignKit' "$MANIFEST"
+          grep -q "exact: \"$LATEST\"" "$MANIFEST"
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: |
+          brew install xcodegen
+          cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig
+          xcodegen generate
+
+      - name: Build app for iOS Simulator
+        working-directory: ios
+        run: |
+          xcodebuild build \
+            -project Dalada.xcodeproj \
+            -scheme Dalada \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            -quiet \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run package tests
+        working-directory: ios/Packages/DaladaKit
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          ids = [d["udid"] for runtime, items in sorted(devices.items(), reverse=True)
+                 if ".iOS-" in runtime for d in items if d["name"].startswith("iPhone")]
+          print(ids[0])
+          ')
+          SCHEMES=$(xcodebuild -list -json | python3 -c 'import json, sys; print("\n".join(json.load(sys.stdin)["workspace"]["schemes"]))')
+          SCHEME=$(echo "$SCHEMES" | grep -x 'DaladaKit-Package' || echo "$SCHEMES" | grep -x 'DaladaKit' || echo "$SCHEMES" | head -1)
+          xcodebuild test \
+            -scheme "$SCHEME" \
+            -destination "id=$DEVICE_ID" \
+            -derivedDataPath build \
+            -quiet
+
+      - name: Commit to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ios/Packages/DaladaKit/Package.swift
+          git commit -m "Update DesignKit to $LATEST" \
+            -m "Automatic update (workflow DesignKit update): the app builds and the DaladaKit tests pass with DesignKit $LATEST. Release notes: https://github.com/dkicekeeper/DesignKit/releases/tag/$LATEST"
+          # main мог уйти вперёд за время сборки — докатываем поверх, конфликт = остановка.
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 10
+          done
+          echo "::error::Не удалось отправить обновление в main (конфликт или гонка) — обновите версию вручную."
+          exit 1
