@@ -27,4 +27,14 @@ struct MapRegionsTests {
         }
         #expect(MapRegions.region(id: "kapshagay")?.titleKey == "offlineMaps.region.kapshagay")
     }
+
+    @Test func estimateCountsRelief() throws {
+        // Горы у Алматы: ~31 МБ подложки, ~15 МБ рельефа и горизонталей, 2 МБ шрифтов и значков.
+        let mountains = try #require(MapRegions.region(id: "almaty_mountains"))
+        let megabytes = Double(mountains.estimatedBytes) / 1024 / 1024
+        #expect((45...50).contains(megabytes), "\(megabytes)")
+        for region in MapRegions.all {
+            #expect(region.estimatedBytes > Int64(region.reliefBytes), "\(region.id)")
+        }
+    }
 }
