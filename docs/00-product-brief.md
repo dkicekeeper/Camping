@@ -75,7 +75,7 @@
 
 ## Дизайн-система (DesignKit)
 
-Репозиторий: <https://github.com/dkicekeeper/DesignKit> (публичный, версии с тегами; Dalada — на `0.2.0`).
+Репозиторий: <https://github.com/dkicekeeper/DesignKit> (публичный, версии с тегами; Dalada обновляется на новые релизы автоматически).
 
 **Что это.** SwiftUI-пакет (SPM), вынесенный из финансового приложения Tenra. Три таргета:
 `DesignTokens` → `DesignSupport` → `DesignComponents`. Требования: **iOS 26+, Xcode 26+**,
@@ -89,15 +89,18 @@ Swift 5 language mode. Визуальный язык — Liquid Glass (`glassEff
   `FormSection`, `FormTextField`, `SegmentedPickerView`, `OrbChart`/`MiniDonut` (бывший `DonutChart`), `ProportionBar`,
   `RecommendationBox`, `PackedCircleIconsView` (фейспайл друзей), онбординг-компоненты,
   `IconView`/`IconSource`, `HapticManager`.
+- С 0.4.0 (перенесены из Dalada и Tenra): `BadgeView`, `TrendBadge`, `StatTile` (значение + единица
+  вместо `InsightsStatCard`), `AvatarView`, `RatingView`/`RatingPicker`, `ChipPicker`,
+  `LinearProgressBar(value:)`, `SelectionIndicator(tint:)`.
 
 **Не подходит / надо адаптировать:**
 - Финансовые компоненты (`FinanceCard`, `Budget*`, `Calculator*`, `Amount*`, `ExpenseIncome*`,
   `CurrencyInfo`) — не нужны.
-- `InsightsStatCard` завязан на `amount + currency` — для статистики (км, поездки, уловы) нужна
-  обобщённая версия (значение + единица измерения).
+- `InsightsStatCard` завязан на `amount + currency` — для статистики (км, поездки, уловы) есть
+  `StatTile` (0.4.0).
 
 **Придётся добавить (кандидаты в DesignKit или в слой приложения):**
-- Карточки места / поездки / улова, фото-галерея, рейтинг-звёзды, тред-комментарии, чекин-кнопка,
+- Карточки места / поездки / улова, фото-галерея, тред-комментарии, чекин-кнопка,
   элементы карты (пины, кластеры, bottom sheet), чекбокс-строки для чеклистов, бейджи/ачивки.
 - Цветовая тема «outdoor»: акцент — **зелёный** (#2E8B57 / тёмная тема #3CB371) через
   `DesignKitTheme.accent`, не форком (решено 2026-09-30).

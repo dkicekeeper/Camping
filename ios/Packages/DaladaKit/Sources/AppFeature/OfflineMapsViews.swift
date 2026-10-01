@@ -82,7 +82,7 @@ struct OfflineRegionRow: View {
                 .foregroundStyle(AppColors.textSecondary)
         case .downloading(let progress, let bytes):
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                ProgressView(value: progress)
+                LinearProgressBar(value: progress, height: 6, animatesOnAppear: false)
                 Text("offlineMaps.progress \(Int(progress * 100)) \(OfflineMapsFormat.size(bytes))")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)

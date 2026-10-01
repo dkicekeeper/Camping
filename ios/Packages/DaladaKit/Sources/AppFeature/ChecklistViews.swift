@@ -59,8 +59,12 @@ struct ChecklistSummaryRow: View {
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
             } else {
-                ProgressView(value: checklist.progress)
-                    .tint(checklist.isComplete ? AppColors.success : AppColors.accent)
+                LinearProgressBar(
+                    value: checklist.progress,
+                    color: checklist.isComplete ? AppColors.success : AppColors.accent,
+                    height: 6,
+                    animatesOnAppear: false
+                )
                 Text("packing.progress \(checklist.checkedCount) \(checklist.items.count)")
                     .font(AppTypography.caption)
                     .foregroundStyle(AppColors.textSecondary)
@@ -78,9 +82,7 @@ struct ChecklistItemRow: View {
     var body: some View {
         Button(action: onToggle) {
             HStack(spacing: AppSpacing.md) {
-                Image(systemName: item.isChecked ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(item.isChecked ? AppColors.success : AppColors.textTertiary)
+                SelectionIndicator(isSelected: item.isChecked, tint: AppColors.success)
                 Text(verbatim: item.title)
                     .font(AppTypography.body)
                     .strikethrough(item.isChecked)
@@ -474,8 +476,11 @@ struct ChecklistProgressHeader: View {
                             .foregroundStyle(AppColors.success)
                     }
                 }
-                ProgressView(value: checklist.progress)
-                    .tint(checklist.isComplete ? AppColors.success : AppColors.accent)
+                LinearProgressBar(
+                    value: checklist.progress,
+                    color: checklist.isComplete ? AppColors.success : AppColors.accent,
+                    height: 6
+                )
             }
             if let day = checklist.tripDate {
                 Label(PackingFormat.tripDay(day), systemImage: "calendar")
