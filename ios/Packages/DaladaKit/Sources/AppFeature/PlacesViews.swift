@@ -109,9 +109,11 @@ struct PlacesHomeView: View {
                 description: store.loadError ?? String(localized: "places.discover.empty")
             )
         } else if !store.hasLoaded && store.isLoading {
-            ProgressView()
-                .frame(maxWidth: .infinity)
-                .padding(.top, AppSpacing.xl)
+            VStack(spacing: 0) {
+                ForEach(0..<4, id: \.self) { _ in SkeletonRow() }
+            }
+            .padding(.top, AppSpacing.md)
+            .skeletonLoadingLabel()
         }
     }
 
@@ -718,8 +720,12 @@ private struct MyPlacesList: View {
             )
         } else if places.isEmpty {
             if isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                VStack(spacing: 0) {
+                    ForEach(0..<5, id: \.self) { _ in SkeletonRow() }
+                }
+                .screenPadding()
+                .frame(maxHeight: .infinity, alignment: .top)
+                .skeletonLoadingLabel()
             } else {
                 PlaceholderScreen(
                     icon: "mappin.and.ellipse",

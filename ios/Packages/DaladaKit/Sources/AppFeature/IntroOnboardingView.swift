@@ -9,6 +9,7 @@ import UIKit
 /// Знакомство при первом запуске: зачем Dalada (места, правила, поездки), геопозиция с объяснением
 /// до системного запроса, карта района без сети, вход или «без входа». Показывается один раз,
 /// поверх вкладок; вход открывает обычные согласие и выбор username.
+/// Листание, точки, «Пропустить» и вид страниц — `OnboardingPager` / `OnboardingPage` из DesignKit.
 struct IntroOnboardingView: View {
     let environment: AppEnvironment
     let onFinish: () -> Void
@@ -37,29 +38,16 @@ struct IntroOnboardingView: View {
     private var suggestedRegion: MapRegion { MapRegions.suggested(near: location) }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                if page.rawValue < Page.location.rawValue {
-                    Button("intro.skip") { onFinish() }
-                        .font(AppTypography.bodySmall)
-                }
-            }
-            .frame(height: 44)
-            .screenPadding()
-
-            TabView(selection: $page) {
-                ForEach(pages, id: \.self) { page in
-                    content(page)
-                        .tag(page)
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-
+        OnboardingPager(
+            pages: pages,
+            selection: $page,
+            skipTitle: String(localized: "intro.skip"),
+            canSkip: { $0.rawValue < Page.location.rawValue },
+            onSkip: onFinish
+        ) { page in
+            content(page)
+        } actions: { _ in
             buttons
-                .screenPadding()
-                .padding(.vertical, AppSpacing.lg)
         }
         .background(AppColors.bgCard.ignoresSafeArea())
         // Вошли прямо здесь — знакомство закончено, дальше согласие и username.
@@ -74,7 +62,11 @@ struct IntroOnboardingView: View {
     private func content(_ page: Page) -> some View {
         switch page {
         case .welcome:
-            IntroPage(systemImage: "figure.fishing", titleKey: "intro.welcome.title", textKey: "intro.welcome.text") {
+            OnboardingPage(
+                systemImage: "figure.fishing",
+                title: String(localized: "intro.welcome.title"),
+                message: String(localized: "intro.welcome.text")
+            ) {
                 Button {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         UIApplication.shared.open(url)
@@ -89,19 +81,35 @@ struct IntroOnboardingView: View {
                 }
             }
         case .places:
-            IntroPage(systemImage: "mappin.and.ellipse", titleKey: "intro.places.title", textKey: "intro.places.text")
+            OnboardingPage(
+                systemImage: "mappin.and.ellipse",
+                title: String(localized: "intro.places.title"),
+                message: String(localized: "intro.places.text")
+            )
         case .rules:
-            IntroPage(systemImage: "exclamationmark.shield", titleKey: "intro.rules.title", textKey: "intro.rules.text")
+            OnboardingPage(
+                systemImage: "exclamationmark.shield",
+                title: String(localized: "intro.rules.title"),
+                message: String(localized: "intro.rules.text")
+            )
         case .trips:
-            IntroPage(
+            OnboardingPage(
                 systemImage: "point.topleft.down.to.point.bottomright.curvepath",
-                titleKey: "intro.trips.title",
-                textKey: "intro.trips.text"
+                title: String(localized: "intro.trips.title"),
+                message: String(localized: "intro.trips.text")
             )
         case .location:
-            IntroPage(systemImage: "location.circle", titleKey: "intro.location.title", textKey: "intro.location.text")
+            OnboardingPage(
+                systemImage: "location.circle",
+                title: String(localized: "intro.location.title"),
+                message: String(localized: "intro.location.text")
+            )
         case .offline:
-            IntroPage(systemImage: "arrow.down.circle", titleKey: "intro.offline.title", textKey: "intro.offline.text") {
+            OnboardingPage(
+                systemImage: "arrow.down.circle",
+                title: String(localized: "intro.offline.title"),
+                message: String(localized: "intro.offline.text")
+            ) {
                 offlineRegionCard
             }
         case .signIn:
@@ -152,7 +160,7 @@ struct IntroOnboardingView: View {
     private var buttons: some View {
         switch page {
         case .location:
-            pair(primaryKey: "intro.location.allow", isWorking: isLocating) {
+            pair(primaryTitle: String(localized: "intro.location.allow"), isWorking: isLocating) {
                 Task { await allowLocation() }
             }
         case .offline:
@@ -164,7 +172,7 @@ struct IntroOnboardingView: View {
                 }
             }()
             if canDownload {
-                pair(primaryKey: "intro.offline.download", isWorking: false) {
+                pair(primaryTitle: String(localized: "intro.offline.download"), isWorking: false) {
                     offlineMaps.download(region, styleURL: environment.config.mapStyleURL)
                     next()
                 }
@@ -193,20 +201,13 @@ struct IntroOnboardingView: View {
     }
 
     /// Основное действие и «Позже» (просто дальше).
-    private func pair(primaryKey: LocalizedStringKey, isWorking: Bool, action: @escaping () -> Void) -> some View {
+    private func pair(primaryTitle: String, isWorking: Bool, action: @escaping () -> Void) -> some View {
         VStack(spacing: AppSpacing.sm) {
             Button(action: action) {
-                Group {
-                    if isWorking {
-                        ProgressView()
-                    } else {
-                        Text(primaryKey)
-                    }
-                }
-                .frame(maxWidth: .infinity)
+                LoadingButtonLabel(primaryTitle, isLoading: isWorking)
+                    .frame(maxWidth: .infinity)
             }
-            .primaryButton()
-            .disabled(isWorking)
+            .primaryButton(disabled: isWorking)
             Button {
                 next()
             } label: {
@@ -239,44 +240,5 @@ struct IntroOnboardingView: View {
         let code = AppConfig.interfaceLanguage
         return Locale(identifier: code).localizedString(forLanguageCode: code)?.capitalized(with: Locale(identifier: code))
             ?? code
-    }
-}
-
-/// Страница знакомства: большой значок, заголовок, текст и что-то под ним.
-private struct IntroPage<Accessory: View>: View {
-    let systemImage: String
-    let titleKey: LocalizedStringKey
-    let textKey: LocalizedStringKey
-    @ViewBuilder let accessory: () -> Accessory
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: AppSpacing.lg) {
-                Image(systemName: systemImage)
-                    .font(.system(size: AppIconSize.md * 3))
-                    .foregroundStyle(AppColors.accent)
-                    .frame(width: 140, height: 140)
-                    .background(AppColors.accent.opacity(0.12), in: Circle())
-                    .padding(.top, AppSpacing.xl)
-                VStack(spacing: AppSpacing.sm) {
-                    Text(titleKey)
-                        .font(AppTypography.h3)
-                        .multilineTextAlignment(.center)
-                    Text(textKey)
-                        .font(AppTypography.body)
-                        .foregroundStyle(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                }
-                accessory()
-            }
-            .screenPadding()
-            .padding(.bottom, AppSpacing.xxl)
-        }
-    }
-}
-
-extension IntroPage where Accessory == EmptyView {
-    init(systemImage: String, titleKey: LocalizedStringKey, textKey: LocalizedStringKey) {
-        self.init(systemImage: systemImage, titleKey: titleKey, textKey: textKey) { EmptyView() }
     }
 }

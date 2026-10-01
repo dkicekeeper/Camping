@@ -57,8 +57,16 @@ struct PlaceCardView: View {
             Group {
                 switch state {
                 case .loading:
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack(alignment: .leading, spacing: AppSpacing.md) {
+                        SkeletonView(height: 24, width: 200)
+                        SkeletonView(height: 14, width: 120)
+                        SkeletonView(height: 14)
+                        SkeletonView(height: 14, width: 240)
+                    }
+                    .screenPadding()
+                    .padding(.top, AppSpacing.lg)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .skeletonLoadingLabel()
                 case .loaded(let place):
                     content(place)
                 case .notFound:
@@ -209,8 +217,7 @@ struct PlaceCardView: View {
                 }
 
                 if let description = place.description {
-                    Text(verbatim: description)
-                        .font(AppTypography.body)
+                    ExpandableText(description, lineLimit: 5)
                 }
 
                 if place.isEditorial {
