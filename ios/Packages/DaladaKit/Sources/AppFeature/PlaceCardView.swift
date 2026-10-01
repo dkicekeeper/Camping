@@ -66,6 +66,12 @@ struct PlaceCardView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Сохранить место (закладка) — после входа.
+                if case .loaded(let place) = state, session.profile != nil, !place.isOwn {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        SavePlaceButton(placeID: place.id, environment: environment)
+                    }
+                }
                 // Чужое место: пожаловаться или заблокировать автора (место тогда пропадёт).
                 // Редакцию не блокируют — только жалоба.
                 if case .loaded(let place) = state, !place.isOwn {

@@ -82,6 +82,16 @@ public struct CacheKey: Hashable, Sendable {
         CacheKey(rawValue: viewerPrefix(viewer) + "trip/" + id.uuidString.lowercased())
     }
 
+    /// Подборки вкладки «Места».
+    public static func placesDiscover(viewer: UUID?) -> CacheKey {
+        CacheKey(rawValue: viewerPrefix(viewer) + "places_discover")
+    }
+
+    /// Сохранённые места.
+    public static func savedPlaces(_ user: UUID) -> CacheKey {
+        CacheKey(rawValue: userPrefix(user) + "saved_places")
+    }
+
     /// Последние места на карте.
     public static func mapPlaces(viewer: UUID?) -> CacheKey {
         CacheKey(rawValue: viewerPrefix(viewer) + "map_places")
