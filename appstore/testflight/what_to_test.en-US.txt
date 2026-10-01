@@ -1,6 +1,7 @@
 Browse places on the Map tab (editorial places from OpenStreetMap), open a place card, sign in with Apple, add your own place, check in with a catch and a photo, record a trip (+ → Start a trip), add a friend by username, write a review or start a discussion, open checklists and articles in the Tips tab.
 
 New:
+• The Places tab: search, sections (nearby, popular, editors’ picks) and saved places — the bookmark on a place card.
 • The map shows relief and contour lines — zoom into the mountains near Almaty.
 • Offline maps: Tips → Getting ready — download an area and turn on airplane mode.
 • Directions on a place card — 2GIS, Yandex or Google.
