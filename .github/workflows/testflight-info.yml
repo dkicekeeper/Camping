@@ -49,6 +49,9 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          # Демо-аккаунт для проверяющих Apple (вход по почте и паролю).
+          DEMO_USER: ${{ secrets.ASC_DEMO_USER }}
+          DEMO_PASSWORD: ${{ secrets.ASC_DEMO_PASSWORD }}
           BUILD: ${{ inputs.build }}
           WAIT: ${{ inputs.wait || 0 }}
           SUBMIT: ${{ inputs.submit && 'yes' || '' }}

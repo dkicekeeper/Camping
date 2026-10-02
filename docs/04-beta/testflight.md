@@ -72,8 +72,31 @@ TestFlight → **External Testing** → группа → «Public Link». Для
 **Test Information** (TestFlight → Test Information): Feedback Email — dakacom@gmail.com; Privacy
 Policy URL — https://dkicekeeper.github.io/Dalada/privacy-policy.html (страница публикуется через
 GitHub Pages, см. [M6c](M6-beta-readiness.md#m6c-документы-поддержка-согласие)); в Beta App Review
-Information — контакт и, если просят, тестовый вход (у нас вход через Apple/Google — достаточно
-написать, что можно войти своим Apple ID).
+Information — контакт и демо-аккаунт (ниже).
+
+### Демо-аккаунт для проверки Apple
+
+Без демо-аккаунта Apple бету не проверяет (Guideline 2.1(a): «provide a user name and password») —
+так отклонили сборку 107. Вход через Apple/Google проверяющим не подходит, поэтому в приложении есть
+**вход по почте и паролю** (Профиль → «Войти по почте и паролю»). Такой аккаунт заводит только
+редакция: регистрация по почте на сервере закрыта (триггер на `auth.users`), в том числе и через
+«Add user» в панели Supabase.
+
+1. Supabase → **SQL Editor**:
+   `select private.create_review_account('почта', 'пароль');` — пароль от 8 символов, почта любая
+   (лучше своя, например с `+review`: на неё могут прийти письма о сбросе пароля). Функция создаёт
+   аккаунт `@appreview` с согласием и содержимым «только для себя» (другим не видно): два своих
+   места с «Информацией», отчёты с уловами (один — на водоёме редакции, после него можно оставить
+   отзыв), поездка с треком, три сохранённых места. Повторный вызов меняет пароль, содержимое не
+   дублирует. Если проверяющие удалят аккаунт — просто вызовите ещё раз.
+2. GitHub → Settings → Secrets and variables → Actions: **`ASC_DEMO_USER`** (почта) и
+   **`ASC_DEMO_PASSWORD`** (пароль). Пароль — только туда, не в чат и не в репозиторий.
+3. Actions → **TestFlight info** → Run workflow: номер сборки и галочка «отправить на
+   бета-проверку». Workflow отметит «Sign-in required» и передаст почту и пароль в Beta App Review
+   Information (в лог они не попадают); без секретов он предупредит и поля входа не тронет.
+
+Вход по почте в Supabase (Authentication → Sign In / Providers → Email) должен быть включён — он
+включён по умолчанию.
 
 ### Тексты для TestFlight и Beta App Review
 
@@ -83,7 +106,7 @@ info** (`appstore/testflight_info.py`, тот же ключ API из секре�
 | Файл | Куда в App Store Connect |
 |------|--------------------------|
 | `beta_description.<язык>.txt` | Test Information → Beta App Description (+ почта для отзывов и политика конфиденциальности) |
-| `review_notes.txt` | Beta App Review Information → Notes; вход без демо-аккаунта |
+| `review_notes.txt` | Beta App Review Information → Notes; демо-аккаунт — из секретов `ASC_DEMO_*` |
 | `what_to_test.<язык>.txt` | What to Test у сборки |
 
 Когда запускается: после каждой сборки TestFlight (ждёт обработки сборки до 45 минут и ставит What

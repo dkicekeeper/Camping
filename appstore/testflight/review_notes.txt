@@ -1,4 +1,4 @@
-Sign-in: use Sign in with Apple with any Apple ID; no demo account is needed. Without signing in the app works in guest mode (map, places, articles).
+Sign-in: please use the demo account from Sign-in Information (email and password). In the app: Profile tab -> "Sign in with email and password" (the same option is on the last page of the first-launch intro). The account already has a username, its own places with the Info block filled in, check-ins with catches, a recorded trip and saved places (all private, so other users don't see them). A check-in also lets you write a review at that place. Sign in with Apple and Google work as well. Without signing in the app works in guest mode (map, places, articles).
 
 User-generated content (Guideline 1.2):
 - Report: "..." menu on any place, check-in, trip, review, discussion, reply or profile -> Report.

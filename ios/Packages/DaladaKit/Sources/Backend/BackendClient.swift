@@ -99,6 +99,12 @@ extension BackendClient {
     }
     #endif
 
+    /// Вход по почте и паролю. Такие аккаунты заводит только редакция (например, для проверки Apple):
+    /// регистрация по почте на сервере закрыта.
+    public func signInWithPassword(email: String, password: String) async throws {
+        try await supabase.auth.signIn(email: email, password: password)
+    }
+
     public func signOut() async throws {
         try await supabase.auth.signOut()
     }

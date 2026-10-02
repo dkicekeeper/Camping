@@ -149,6 +149,21 @@ final class SessionStore {
         if backend.isSignedIn { await reloadProfile() }
     }
 
+    // MARK: Почта и пароль
+
+    /// Вход по почте и паролю — для аккаунтов, которые заводит редакция (например, для проверки Apple).
+    func signInWithEmail(_ email: String, password: String) async {
+        guard let backend else { return }
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            let address = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            try await backend.signInWithPassword(email: address, password: password)
+        } catch {
+            errorMessage = String(localized: "auth.email.failed")
+        }
+    }
+
     // MARK: Google, выход
 
     func signInWithGoogle() async {

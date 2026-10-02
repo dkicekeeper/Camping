@@ -107,14 +107,25 @@ def update_app_information(app_id: str) -> None:
         print(f"Test Information ({locale}): описание, почта для отзывов, политика — готово")
 
     detail = call("GET", f"/apps/{app_id}/betaAppReviewDetail")["data"]
-    attributes = {"notes": text("review_notes.txt"), "demoAccountRequired": False}
+    attributes = {"notes": text("review_notes.txt")}
+    # Демо-аккаунт для проверяющих Apple (почта и пароль, см. docs/04-beta/testflight.md) — из
+    # секретов; в лог не выводится. Без секретов поля входа не трогаем.
+    demo_user = os.environ.get("DEMO_USER", "").strip()
+    demo_password = os.environ.get("DEMO_PASSWORD", "")
+    if demo_user and demo_password:
+        attributes.update({"demoAccountRequired": True, "demoAccountName": demo_user,
+                           "demoAccountPassword": demo_password})
     if not detail["attributes"].get("contactEmail"):
         attributes["contactEmail"] = FEEDBACK_EMAIL
     call("PATCH", f"/betaAppReviewDetails/{detail['id']}",
          {"data": {"type": "betaAppReviewDetails", "id": detail["id"], "attributes": attributes}})
     missing = [label for key, label in (("contactFirstName", "имя"), ("contactLastName", "фамилия"),
                                         ("contactPhone", "телефон")) if not detail["attributes"].get(key)]
-    print("Beta App Review Information: заметки для проверяющих, вход без демо-аккаунта — готово")
+    print("Beta App Review Information: заметки для проверяющих"
+          + (", демо-аккаунт" if demo_user and demo_password else "") + " — готово")
+    if not (demo_user and demo_password):
+        print("::warning::Демо-аккаунт для бета-проверки не задан (секреты ASC_DEMO_USER и ASC_DEMO_PASSWORD) — "
+              "без него Apple не проверит бету (Guideline 2.1(a)). См. docs/04-beta/testflight.md.")
     if missing:
         print(f"::warning::Контакт для бета-проверки: не заполнено — {', '.join(missing)}. "
               "App Store Connect → TestFlight → Test Information → Beta App Review Information.")

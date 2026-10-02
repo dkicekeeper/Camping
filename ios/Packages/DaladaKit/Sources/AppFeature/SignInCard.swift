@@ -1,11 +1,16 @@
 import AuthenticationServices
+import DesignComponents
 import DesignTokens
 import SwiftUI
 
-/// Карточка входа для гостя: Apple (основная кнопка по правилам App Store) и Google.
+/// Карточка входа для гостя: Apple (основная кнопка по правилам App Store), Google и — свёрнуто —
+/// почта с паролем для аккаунтов, которые заводит редакция (демо-доступ для проверки Apple).
 struct SignInCard: View {
     @Environment(SessionStore.self) private var session
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showsEmail = false
+    @State private var email = ""
+    @State private var password = ""
 
     var body: some View {
         @Bindable var session = session
@@ -37,6 +42,15 @@ struct SignInCard: View {
             }
             .secondaryButton()
 
+            if showsEmail {
+                emailForm
+            } else {
+                Button("auth.email.open") {
+                    withAnimation { showsEmail = true }
+                }
+                .font(AppTypography.bodySmall)
+            }
+
             if session.isWorking {
                 ProgressView()
             }
@@ -48,6 +62,40 @@ struct SignInCard: View {
             Button("common.ok") {}
         } message: {
             Text(session.errorMessage ?? "")
+        }
+    }
+
+    /// Почта и пароль: только вход, регистрации здесь нет.
+    private var emailForm: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            FormTextField(
+                text: $email,
+                placeholder: String(localized: "auth.email.address"),
+                keyboardType: .emailAddress
+            )
+            .textContentType(.username)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+
+            SecureField(String(localized: "auth.email.password"), text: $password)
+                .textContentType(.password)
+                .font(AppTypography.body)
+                .padding(AppSpacing.lg)
+                .background(AppColors.bgCard.opacity(0.5))
+                .clipShape(.rect(cornerRadius: AppRadius.lg))
+
+            Button {
+                Task { await session.signInWithEmail(email, password: password) }
+            } label: {
+                Text("auth.email.signIn")
+                    .frame(maxWidth: .infinity)
+            }
+            .secondaryButton()
+            .disabled(!email.contains("@") || password.count < 8)
+
+            Text("auth.email.hint")
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
         }
     }
 }
