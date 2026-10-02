@@ -85,7 +85,7 @@
 
 ## M10c: фото профиля, комментарии, уведомления о постах друзей
 
-> Статус: **код готов.** Миграции `…_comment_kinds.sql` и `…_comments_avatars.sql`, тесты
+> Статус: **в TestFlight 120.** Миграции `…_comment_kinds.sql` и `…_comments_avatars.sql`, тесты
 > `26_comments_avatars.test.sql` (37 проверок), тексты пушей — `supabase/functions/push/message.ts`.
 
 **Фото профиля.** «Настройки профиля» → «Добавить фото» (или «Изменить», «Удалить»). Телефон
