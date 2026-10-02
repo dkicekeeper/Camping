@@ -111,7 +111,7 @@ info** (`appstore/testflight_info.py`, тот же ключ API из секре�
 |------|--------------------------|
 | `beta_description.<язык>.txt` | Test Information → Beta App Description (+ почта для отзывов и политика конфиденциальности) |
 | `review_notes.txt` | Beta App Review Information → Notes; демо-аккаунт — из секретов `ASC_DEMO_*` |
-| `what_to_test.<язык>.txt` | What to Test у сборки |
+| `what_to_test.<язык>.txt` | What to Test у сборки (без эмодзи: App Store Connect их не принимает) |
 
 Когда запускается: после каждой сборки TestFlight (ждёт обработки сборки до 45 минут и ставит What
 to Test), при изменении текстов в `main` и вручную — Actions → **TestFlight info** → Run workflow;
