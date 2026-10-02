@@ -1,10 +1,11 @@
 import DaladaCore
 import DesignComponents
 import DesignTokens
+import PhotosUI
 import SwiftUI
 
-/// Настройки профиля (нажатие на шапку в «Профиле»): имя, username, зоны приватности, уведомления,
-/// выход, удаление аккаунта, документы и поддержка.
+/// Настройки профиля (нажатие на шапку в «Профиле»): фото, имя, username, зоны приватности,
+/// уведомления, выход, удаление аккаунта, документы и поддержка.
 struct ProfileSettingsView: View {
     let environment: AppEnvironment
 
@@ -15,10 +16,45 @@ struct ProfileSettingsView: View {
     @State private var confirmsDelete = false
     @State private var deleteError: String?
     @State private var showsDeleteError = false
+    @State private var photoItem: PhotosPickerItem?
+    @State private var isSavingPhoto = false
+    @State private var photoError: String?
+    @State private var friendPosts = true
+    @State private var friendPostsError: String?
 
     var body: some View {
         List {
             if let profile = session.profile {
+                Section {
+                    HStack(spacing: AppSpacing.lg) {
+                        PersonAvatar(name: profile.displayName ?? profile.username, path: profile.avatarPath, size: AppIconSize.mega)
+                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                            PhotosPicker(selection: $photoItem, matching: .images) {
+                                Text(LocalizedStringKey(profile.avatarPath == nil ? "profile.photo.add" : "profile.photo.change"))
+                            }
+                            .buttonStyle(.borderless)
+                            if profile.avatarPath != nil {
+                                Button("profile.photo.remove", role: .destructive) {
+                                    Task { await removePhoto() }
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+                        .disabled(isSavingPhoto)
+                        Spacer(minLength: 0)
+                        if isSavingPhoto {
+                            ProgressView()
+                        }
+                    }
+                } footer: {
+                    if let photoError {
+                        Text(verbatim: photoError)
+                            .foregroundStyle(AppColors.destructive)
+                    } else {
+                        Text("profile.photo.footer")
+                    }
+                }
+
                 Section {
                     TextField("account.name.placeholder", text: $name)
                         .textContentType(.name)
@@ -51,6 +87,22 @@ struct ProfileSettingsView: View {
             }
 
             NotificationsSection()
+
+            if session.profile != nil {
+                Section {
+                    Toggle("profile.settings.friendPosts", isOn: Binding(
+                        get: { friendPosts },
+                        set: { isOn in Task { await setFriendPosts(isOn) } }
+                    ))
+                } footer: {
+                    if let friendPostsError {
+                        Text(verbatim: friendPostsError)
+                            .foregroundStyle(AppColors.destructive)
+                    } else {
+                        Text("profile.settings.friendPostsFooter")
+                    }
+                }
+            }
 
             Section {
                 Button("profile.signOut", systemImage: "rectangle.portrait.and.arrow.right") {
@@ -94,7 +146,15 @@ struct ProfileSettingsView: View {
                 }
             }
         }
-        .onAppear { name = session.profile?.displayName ?? "" }
+        .onAppear {
+            name = session.profile?.displayName ?? ""
+            friendPosts = session.profile?.notifyFriendPosts ?? true
+        }
+        .onChange(of: photoItem) { _, item in
+            guard let item else { return }
+            photoItem = nil
+            Task { await setPhoto(item) }
+        }
         .onChange(of: name) { _, _ in nameError = nil }
         .confirmationDialog("account.delete.confirm", isPresented: $confirmsDelete, titleVisibility: .visible) {
             Button("account.delete.confirmButton", role: .destructive) {
@@ -127,6 +187,34 @@ struct ProfileSettingsView: View {
             nameError = error
         } else {
             name = session.profile?.displayName ?? trimmedName
+        }
+    }
+
+    private func setPhoto(_ item: PhotosPickerItem) async {
+        isSavingPhoto = true
+        photoError = nil
+        defer { isSavingPhoto = false }
+        guard let jpeg = await PhotoCompressor.avatar(from: item) else {
+            photoError = String(localized: "photo.failed")
+            return
+        }
+        photoError = await session.setAvatar(jpeg: jpeg)
+    }
+
+    private func removePhoto() async {
+        isSavingPhoto = true
+        photoError = nil
+        defer { isSavingPhoto = false }
+        photoError = await session.removeAvatar()
+    }
+
+    /// Переключатель меняется сразу; если сервер не принял — возвращается обратно.
+    private func setFriendPosts(_ isOn: Bool) async {
+        let before = friendPosts
+        friendPosts = isOn
+        friendPostsError = await session.setNotifyFriendPosts(isOn)
+        if friendPostsError != nil {
+            friendPosts = before
         }
     }
 

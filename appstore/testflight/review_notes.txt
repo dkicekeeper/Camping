@@ -1,7 +1,7 @@
 Sign-in: please use the demo account from Sign-in Information (email and password). In the app: Home or Profile tab -> "Sign in with email and password" (the same option is on the last page of the first-launch intro). The account already has a username, its own places with the Info block filled in, check-ins with catches, a recorded trip and saved places (all private, so other users don't see them). A check-in also lets you write a review at that place. Sign in with Apple and Google work as well. Without signing in the app works in guest mode (map, places, articles).
 
 User-generated content (Guideline 1.2):
-- Report: "..." menu on any place, check-in, trip, review, discussion, reply or profile -> Report.
+- Report: "..." menu on any place, check-in, trip, review, discussion, reply, comment or profile -> Report.
 - Block: the same menu -> Block @user; blocked users disappear for each other.
 - Objectionable words are rejected on the server in any public text.
 - Contact: Support and FAQ, and dakacom@gmail.com in Profile -> tap the header with your name (Profile settings) -> About.

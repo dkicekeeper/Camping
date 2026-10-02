@@ -32,6 +32,35 @@ enum PhotoCompressor {
         return PhotoDraft(full: fullData, thumbnail: thumbnailData, width: full.width, height: full.height)
     }
 
+    /// Фото профиля: квадрат по центру, 512 px, без метаданных.
+    static let avatarPixels = 512
+
+    @MainActor
+    static func avatar(from item: PhotosPickerItem) async -> Data? {
+        guard let data = try? await item.loadTransferable(type: Data.self) else { return nil }
+        return await Task.detached(priority: .userInitiated) {
+            PhotoCompressor.makeAvatar(from: data)
+        }.value
+    }
+
+    static func makeAvatar(from data: Data) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = downsample(source, maxPixels: avatarPixels * 2)
+        else { return nil }
+        let side = min(image.width, image.height)
+        let crop = CGRect(x: (image.width - side) / 2, y: (image.height - side) / 2, width: side, height: side)
+        guard let square = image.cropping(to: crop) else { return nil }
+        let target = min(side, avatarPixels)
+        guard let context = CGContext(
+            data: nil, width: target, height: target, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ) else { return nil }
+        context.interpolationQuality = .high
+        context.draw(square, in: CGRect(x: 0, y: 0, width: target, height: target))
+        guard let scaled = context.makeImage() else { return nil }
+        return jpeg(scaled, quality: 0.8)
+    }
+
     private static func downsample(_ source: CGImageSource, maxPixels: Int) -> CGImage? {
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,

@@ -11,6 +11,7 @@ public enum ReportTarget: String, Codable, Sendable {
     case thread
     case post
     case user
+    case comment
 }
 
 /// Причина жалобы (как `report_reason` в базе).
@@ -32,6 +33,7 @@ public enum ReportReason: String, Codable, CaseIterable, Identifiable, Sendable 
     public static func options(for target: ReportTarget) -> [ReportReason] {
         switch target {
         case .user: [.spam, .abuse, .nsfw, .poaching, .other]
+        case .comment: [.spam, .abuse, .nsfw, .other]
         case .place, .checkin, .trip, .review, .thread, .post: allCases
         }
     }

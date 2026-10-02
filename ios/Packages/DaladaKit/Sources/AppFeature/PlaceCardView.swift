@@ -435,7 +435,10 @@ struct ReportRow: View {
                 ReportPhotoStrip(media: report.media, urls: photoURLs)
             }
 
-            ReactionButton(key: ReactionKey(.checkin, report.id), isOwn: report.isOwn)
+            HStack(spacing: AppSpacing.lg) {
+                ReactionButton(key: ReactionKey(.checkin, report.id), isOwn: report.isOwn)
+                CommentsButton(key: ReactionKey(.checkin, report.id))
+            }
         }
         .cardContentPadding()
         .cardStyle()

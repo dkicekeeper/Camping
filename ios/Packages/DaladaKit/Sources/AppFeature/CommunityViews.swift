@@ -94,6 +94,7 @@ struct PlaceReviewsSection: View {
         for review in reviews {
             reactions.seed(ReactionKey(.review, review.id), review.helpful)
         }
+        await reactions.loadCommentCounts(reviews.map { ReactionKey(.review, $0.id) })
     }
 }
 
@@ -165,6 +166,7 @@ struct ReviewRow: View {
             }
             HStack(spacing: AppSpacing.md) {
                 ReactionButton(key: ReactionKey(.review, review.id), isOwn: review.isOwn, style: .helpful)
+                CommentsButton(key: ReactionKey(.review, review.id))
                 if review.editedAt != nil {
                     Text("reviews.edited")
                         .font(AppTypography.caption)
@@ -241,6 +243,7 @@ struct ReviewsListView: View {
         for review in page {
             reactions.seed(ReactionKey(.review, review.id), review.helpful)
         }
+        Task { await reactions.loadCommentCounts(page.map { ReactionKey(.review, $0.id) }) }
     }
 }
 
@@ -920,7 +923,7 @@ struct PostRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
-            AvatarView(name: post.author.displayName ?? post.author.username, size: 32)
+            PersonAvatar(name: post.author.displayName ?? post.author.username, path: post.author.avatarPath, size: 32)
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 HStack(spacing: AppSpacing.xs) {
                     Text(verbatim: post.isOwn ? String(localized: "report.you") : post.author.label)

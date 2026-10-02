@@ -10,6 +10,8 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
     public var language: String
     /// Какую версию условий и политики человек принял (`LegalDocuments.version`); `nil` — никакую.
     public var termsVersion: Int?
+    /// Уведомления о новых поездках и отчётах друзей; `nil` — старый ответ без поля (включены).
+    public var notifyFriendPosts: Bool?
 
     public init(
         id: UUID,
@@ -18,7 +20,8 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
         avatarPath: String? = nil,
         city: String? = nil,
         language: String = "ru",
-        termsVersion: Int? = nil
+        termsVersion: Int? = nil,
+        notifyFriendPosts: Bool? = nil
     ) {
         self.id = id
         self.username = username
@@ -27,6 +30,7 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
         self.city = city
         self.language = language
         self.termsVersion = termsVersion
+        self.notifyFriendPosts = notifyFriendPosts
     }
 
     /// Нужно принять условия и политику (новый человек или документы изменились).
@@ -42,6 +46,7 @@ public struct UserProfile: Codable, Equatable, Sendable, Identifiable {
         case city
         case language
         case termsVersion = "terms_version"
+        case notifyFriendPosts = "notify_friend_posts"
     }
 }
 

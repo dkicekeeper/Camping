@@ -1,6 +1,8 @@
 Browse places on the Map tab (editorial places from OpenStreetMap), open a place card, sign in with Apple, add your own place, check in with a catch and a photo, record a trip (Start a trip on the map), add a friend by username, write a review or start a discussion, open checklists and articles in the Tips tab.
 
 New:
+• Profile photo: Profile → tap the header with your name → Add photo.
+• Comments on trips, reports and reviews — the 💬 button under a post. Notifications about comments and about friends’ new trips and reports (can be turned off in Profile settings).
 • Home — a feed of posts: your and your friends’ trips with the track, reports with photos, new places and reviews, fresh discussions.
 • Tabs: Home, Map, Places, Tips, Profile. The “+” tab is gone: start a trip with the button on the map, add a place on the map, check in from a place card.
 • Profile: tap the header with your name for Profile settings (name, privacy zones, notifications, account); below are friends, catches, places and trips.
@@ -9,7 +11,6 @@ New:
 • Visitor photos on a place card: a photo row, All photos and a full-screen viewer.
 • The Places tab: search, sections (nearby, popular, editors’ picks) and saved places — the bookmark on a place card.
 • The map shows relief and contour lines — zoom into the mountains near Almaty.
-• Offline maps: Tips → Getting ready — download an area and turn on airplane mode.
 • Directions on a place card — 2GIS, Yandex or Google.
 
 Feedback: the Send Beta Feedback button in TestFlight or dakacom@gmail.com.

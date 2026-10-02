@@ -725,7 +725,10 @@ struct TripDetailView: View {
                             .font(AppTypography.caption)
                             .foregroundStyle(AppColors.textSecondary)
                     }
-                    ReactionButton(key: ReactionKey(.trip, trip.summary.id), isOwn: trip.isOwn)
+                    HStack(spacing: AppSpacing.lg) {
+                        ReactionButton(key: ReactionKey(.trip, trip.summary.id), isOwn: trip.isOwn)
+                        CommentsButton(key: ReactionKey(.trip, trip.summary.id))
+                    }
                 }
 
                 VStack(spacing: AppSpacing.md) {
@@ -860,13 +863,13 @@ struct TripOwnerRow: View {
             NavigationLink {
                 UserProfileView(username: username, environment: environment)
             } label: {
-                PersonRow(displayName: owner.displayName, username: owner.username) {
+                PersonRow(displayName: owner.displayName, username: owner.username, avatarPath: owner.avatarPath) {
                     DisclosureChevron()
                 }
             }
             .buttonStyle(.plain)
         } else {
-            PersonRow(displayName: owner.displayName, username: nil)
+            PersonRow(displayName: owner.displayName, username: nil, avatarPath: owner.avatarPath)
         }
     }
 }

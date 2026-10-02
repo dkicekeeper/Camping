@@ -237,7 +237,7 @@ struct FeedPostCard: View {
 
     private var author: some View {
         HStack(spacing: AppSpacing.md) {
-            AvatarView(name: item.author.displayName ?? item.author.username)
+            PersonAvatar(name: item.author.displayName ?? item.author.username, path: item.author.avatarPath)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(verbatim: authorName)
                     .font(AppTypography.bodyEmphasis)
@@ -448,7 +448,11 @@ struct FeedPostCard: View {
     @ViewBuilder
     private var footer: some View {
         if let key = item.reactionKey {
-            ReactionButton(key: key, isOwn: isOwn)
+            HStack(spacing: AppSpacing.lg) {
+                ReactionButton(key: key, isOwn: isOwn)
+                CommentsButton(key: key)
+                Spacer(minLength: 0)
+            }
         } else if case .thread(let thread) = item.content {
             Label {
                 Text("home.replies \(thread.postsCount)")

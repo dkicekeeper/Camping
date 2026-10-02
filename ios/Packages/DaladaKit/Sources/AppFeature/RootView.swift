@@ -19,6 +19,7 @@ public struct RootView: View {
     @State private var lists: ListsStore
     @State private var articles: ArticlesStore
     @State private var places: PlacesStore
+    @State private var avatars: AvatarStore
     @State private var router = AppRouter()
     /// Знакомство при первом запуске пройдено (или пропущено).
     @AppStorage("intro.completed") private var introCompleted = false
@@ -28,6 +29,10 @@ public struct RootView: View {
     @State private var profileLink: ProfileLink?
     /// Обсуждение из пуша `dalada://thread/<id>`.
     @State private var threadLink: ThreadLinkItem?
+    /// Поездка из пуша `dalada://trip/<id>` (комментарий, поездка друга).
+    @State private var tripLink: TripLinkItem?
+    /// Комментарии из пуша `dalada://comments/<вид>/<id>`.
+    @State private var commentsLink: CommentsLinkItem?
     /// Место по ссылке `dalada://place/<id>` («Поделиться»).
     @State private var placeLink: PlaceSelection?
 
@@ -47,6 +52,7 @@ public struct RootView: View {
         ))
         _articles = State(initialValue: ArticlesStore(backend: environment.backend, cache: environment.cache))
         _places = State(initialValue: PlacesStore(backend: environment.backend, cache: environment.cache))
+        _avatars = State(initialValue: AvatarStore(backend: environment.backend))
     }
 
     public var body: some View {
@@ -91,6 +97,7 @@ public struct RootView: View {
                 .environment(sync)
                 .environment(species)
                 .environment(reactions)
+                .environment(avatars)
                 .environment(rules)
         }
         // Ссылка-приглашение из QR-кода или сообщения — профиль человека; ссылка на место или обсуждение.
@@ -101,7 +108,30 @@ public struct RootView: View {
                 threadLink = ThreadLinkItem(id: threadID)
             } else if let placeID = PlaceLink.placeID(from: url) {
                 placeLink = PlaceSelection(id: placeID)
+            } else if let tripID = TripLink.tripID(from: url) {
+                tripLink = TripLinkItem(id: tripID)
+            } else if let key = CommentsLink.key(from: url) {
+                commentsLink = CommentsLinkItem(key: key)
             }
+        }
+        .sheet(item: $tripLink) { link in
+            NavigationStack {
+                TripDetailView(tripID: link.id, environment: environment)
+            }
+            .environment(session)
+            .environment(species)
+            .environment(sync)
+            .environment(reactions)
+            .environment(rules)
+            .environment(avatars)
+        }
+        .sheet(item: $commentsLink) { link in
+            NavigationStack {
+                CommentsView(key: link.key)
+            }
+            .environment(session)
+            .environment(reactions)
+            .environment(avatars)
         }
         .sheet(item: $placeLink) { link in
             PlaceCardView(placeID: link.id, environment: environment)
@@ -109,6 +139,7 @@ public struct RootView: View {
                 .environment(species)
                 .environment(sync)
                 .environment(reactions)
+                .environment(avatars)
                 .environment(rules)
                 .environment(places)
         }
@@ -118,6 +149,7 @@ public struct RootView: View {
             }
             .environment(session)
             .environment(reactions)
+            .environment(avatars)
         }
         .sheet(item: $profileLink) { link in
             NavigationStack {
@@ -135,6 +167,7 @@ public struct RootView: View {
             .environment(species)
             .environment(sync)
             .environment(reactions)
+            .environment(avatars)
             .environment(rules)
         }
         // После первого входа — согласие с условиями, затем выбор username.
@@ -149,6 +182,7 @@ public struct RootView: View {
             .environment(session)
         }
         .environment(router)
+        .environment(avatars)
         .environment(session)
         .environment(species)
         .environment(sync)
@@ -215,4 +249,15 @@ public struct RootView: View {
 /// Обсуждение, открытое по ссылке из пуша.
 struct ThreadLinkItem: Identifiable, Hashable {
     let id: UUID
+}
+
+/// Поездка, открытая по ссылке из пуша.
+struct TripLinkItem: Identifiable, Hashable {
+    let id: UUID
+}
+
+/// Комментарии к посту, открытые по ссылке из пуша.
+struct CommentsLinkItem: Identifiable, Hashable {
+    let key: ReactionKey
+    var id: String { "\(key.kind.rawValue)/\(key.id.uuidString)" }
 }

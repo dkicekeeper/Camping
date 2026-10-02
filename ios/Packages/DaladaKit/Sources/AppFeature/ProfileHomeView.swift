@@ -222,7 +222,7 @@ struct MyFriendsSection: View {
     @ViewBuilder
     private func friendAvatar(_ friend: Friend) -> some View {
         let label = VStack(spacing: AppSpacing.xs) {
-            AvatarView(name: friend.displayName ?? friend.username, size: AppIconSize.xxxl)
+            PersonAvatar(name: friend.displayName ?? friend.username, path: friend.avatarPath, size: AppIconSize.xxxl)
             Text(verbatim: shortName(friend))
                 .font(AppTypography.caption)
                 .foregroundStyle(AppColors.textPrimary)
@@ -490,7 +490,7 @@ struct ProfileHeader: View {
 
     var body: some View {
         HStack(spacing: AppSpacing.lg) {
-            AvatarView(name: profile.displayName ?? profile.username, size: AppIconSize.mega)
+            PersonAvatar(name: profile.displayName ?? profile.username, path: profile.avatarPath, size: AppIconSize.mega)
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(verbatim: profile.displayName ?? String(localized: "profile.noName"))
                     .font(AppTypography.h4)

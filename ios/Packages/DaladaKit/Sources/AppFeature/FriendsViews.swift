@@ -12,17 +12,24 @@ import SwiftUI
 struct PersonRow<Trailing: View>: View {
     let displayName: String?
     let username: String?
+    let avatarPath: String?
     let trailing: Trailing
 
-    init(displayName: String?, username: String?, @ViewBuilder trailing: () -> Trailing = { EmptyView() }) {
+    init(
+        displayName: String?,
+        username: String?,
+        avatarPath: String? = nil,
+        @ViewBuilder trailing: () -> Trailing = { EmptyView() }
+    ) {
         self.displayName = displayName
         self.username = username
+        self.avatarPath = avatarPath
         self.trailing = trailing()
     }
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
-            AvatarView(name: displayName ?? username)
+            PersonAvatar(name: displayName ?? username, path: avatarPath)
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(verbatim: displayName ?? username.map { "@" + $0 } ?? String(localized: "profile.noName"))
                     .font(AppTypography.bodyEmphasis)
@@ -68,7 +75,7 @@ struct FriendsView: View {
             if !incoming.isEmpty {
                 Section("friends.requests") {
                     ForEach(incoming) { request in
-                        PersonRow(displayName: request.displayName, username: request.username) {
+                        PersonRow(displayName: request.displayName, username: request.username, avatarPath: request.avatarPath) {
                             HStack(spacing: AppSpacing.sm) {
                                 Button("friends.accept") {
                                     Task { await respond(request, accept: true) }
@@ -97,7 +104,7 @@ struct FriendsView: View {
                             UserProfileView(username: username, environment: environment)
                         }
                     } label: {
-                        PersonRow(displayName: friend.displayName, username: friend.username)
+                        PersonRow(displayName: friend.displayName, username: friend.username, avatarPath: friend.avatarPath)
                     }
                 }
                 NavigationLink {
@@ -110,7 +117,7 @@ struct FriendsView: View {
             if !outgoing.isEmpty {
                 Section("friends.outgoing") {
                     ForEach(outgoing) { request in
-                        PersonRow(displayName: request.displayName, username: request.username) {
+                        PersonRow(displayName: request.displayName, username: request.username, avatarPath: request.avatarPath) {
                             Button("friends.cancel") {
                                 Task { await cancel(request) }
                             }
@@ -198,7 +205,7 @@ struct FindPeopleView: View {
                     NavigationLink {
                         UserProfileView(username: username, environment: environment)
                     } label: {
-                        PersonRow(displayName: profile.displayName, username: profile.username) {
+                        PersonRow(displayName: profile.displayName, username: profile.username, avatarPath: profile.avatarPath) {
                             RelationshipBadge(profile: profile)
                         }
                     }
@@ -348,7 +355,7 @@ struct UserProfileView: View {
         ScrollView {
             VStack(spacing: AppSpacing.xl) {
                 VStack(spacing: AppSpacing.lg) {
-                    AvatarView(name: profile.displayName ?? profile.username, size: AppIconSize.mega)
+                    PersonAvatar(name: profile.displayName ?? profile.username, path: profile.avatarPath, size: AppIconSize.mega)
                     VStack(spacing: AppSpacing.xs) {
                         Text(verbatim: profile.displayName ?? "@" + username)
                             .font(AppTypography.h3)
@@ -553,7 +560,7 @@ struct BlockedUsersView: View {
                     .foregroundStyle(AppColors.textSecondary)
             }
             ForEach(blocked) { user in
-                PersonRow(displayName: user.displayName, username: user.username) {
+                PersonRow(displayName: user.displayName, username: user.username, avatarPath: user.avatarPath) {
                     Button("person.unblock") {
                         Task {
                             try? await environment.backend?.unblock(user.id)

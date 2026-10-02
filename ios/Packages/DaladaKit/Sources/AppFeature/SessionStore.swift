@@ -263,6 +263,37 @@ final class SessionStore {
 
     static let displayNameLimit = 60
 
+    // MARK: Фото профиля и уведомления
+
+    /// Ставит фото профиля (готовый квадратный JPEG). Возвращает текст ошибки или `nil`.
+    func setAvatar(jpeg: Data) async -> String? {
+        await updateProfile { try await $0.setAvatar(jpeg: jpeg) }
+    }
+
+    /// Убирает фото профиля. Возвращает текст ошибки или `nil`.
+    func removeAvatar() async -> String? {
+        await updateProfile { try await $0.removeAvatar() }
+    }
+
+    /// Уведомления о новых поездках и отчётах друзей. Возвращает текст ошибки или `nil`.
+    func setNotifyFriendPosts(_ isOn: Bool) async -> String? {
+        await updateProfile { try await $0.setNotifyFriendPosts(isOn) }
+    }
+
+    private func updateProfile(_ change: (BackendClient) async throws -> UserProfile) async -> String? {
+        guard let backend, profile != nil else { return String(localized: "auth.error.generic") }
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            let updated = try await change(backend)
+            apply(updated)
+            try? await cache?.save(updated, for: .profile(updated.id))
+            return nil
+        } catch {
+            return CommunityMessage.text(for: error)
+        }
+    }
+
     // MARK: Помощники
 
     private func perform(_ operation: () async throws -> Void) async {

@@ -4,12 +4,13 @@ import DesignTokens
 import Observation
 import SwiftUI
 
-/// Реакции в памяти — общие для всех экранов (лента, карточка места, поездка, обсуждение):
-/// поставил «респект» в ленте — он виден и на странице поездки.
+/// Реакции и число комментариев в памяти — общие для всех экранов (лента, карточка места, поездка,
+/// обсуждение): поставил «респект» в ленте — он виден и на странице поездки.
 @MainActor
 @Observable
 final class ReactionStore {
     private(set) var states: [ReactionKey: ReactionState] = [:]
+    private(set) var commentCounts: [ReactionKey: Int] = [:]
     private var inFlight: Set<ReactionKey> = []
     private let backend: BackendClient?
 
@@ -21,13 +22,35 @@ final class ReactionStore {
         states[key] ?? ReactionState()
     }
 
-    /// Подгружает реакции к объектам на экране.
-    func load(_ keys: [ReactionKey]) async {
+    func commentCount(for key: ReactionKey) -> Int {
+        commentCounts[key] ?? 0
+    }
+
+    /// Число комментариев после открытия или отправки комментария.
+    func setCommentCount(_ count: Int, for key: ReactionKey) {
+        commentCounts[key] = count
+    }
+
+    /// Только число комментариев (реакции пришли вместе со списком — отзывы).
+    func loadCommentCounts(_ keys: [ReactionKey]) async {
         guard let backend, !keys.isEmpty,
-              let loaded = try? await backend.reactionSummary(keys)
+              let counts = try? await backend.commentSummary(keys)
         else { return }
-        for (key, state) in loaded where !inFlight.contains(key) {
-            states[key] = state
+        commentCounts.merge(counts) { _, new in new }
+    }
+
+    /// Подгружает реакции и число комментариев к объектам на экране.
+    func load(_ keys: [ReactionKey]) async {
+        guard let backend, !keys.isEmpty else { return }
+        async let reactionRows = try? backend.reactionSummary(keys)
+        async let commentRows = try? backend.commentSummary(keys)
+        if let loaded = await reactionRows {
+            for (key, state) in loaded where !inFlight.contains(key) {
+                states[key] = state
+            }
+        }
+        if let counts = await commentRows {
+            commentCounts.merge(counts) { _, new in new }
         }
     }
 
