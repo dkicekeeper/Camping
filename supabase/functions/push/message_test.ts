@@ -41,3 +41,39 @@ Deno.test("проверочное уведомление — без ссылки
   const message = buildMessage({ ...reply, kind: "test", language: "en", payload: {} });
   assertEquals(message, { title: "Dalada", body: "Notifications work — this is a test.", url: undefined });
 });
+
+Deno.test("комментарий к поездке — ссылка на поездку", () => {
+  const message = buildMessage({
+    ...reply,
+    kind: "comment",
+    payload: { actor: "@bob", username: "bob", target_kind: "trip", target_id: "77777777-0000-0000-0000-000000000001", snippet: "Класс!" },
+  });
+  assertEquals(message, { title: "Новый комментарий", body: "@bob: Класс!", url: "dalada://trip/77777777-0000-0000-0000-000000000001" });
+});
+
+Deno.test("комментарий к отчёту — ссылка на комментарии", () => {
+  const message = buildMessage({
+    ...reply,
+    kind: "comment",
+    language: "en",
+    payload: { actor: "@bob", target_kind: "checkin", target_id: "cccccccc-0000-0000-0000-000000000001", snippet: "Nice" },
+  });
+  assertEquals(message.title, "New comment");
+  assertEquals(message.url, "dalada://comments/checkin/cccccccc-0000-0000-0000-000000000001");
+});
+
+Deno.test("пост друга: поездка — на поездку, отчёт — на место", () => {
+  const trip = buildMessage({
+    ...reply,
+    kind: "friend_post",
+    language: "kk",
+    payload: { actor: "Айгерім", target_kind: "trip", target_id: "77777777-0000-0000-0000-000000000002", title: "Балық аулау" },
+  });
+  assertEquals(trip, { title: "Достың сапары", body: "Айгерім: Балық аулау", url: "dalada://trip/77777777-0000-0000-0000-000000000002" });
+  const report = buildMessage({
+    ...reply,
+    kind: "friend_post",
+    payload: { actor: "Айгерім", target_kind: "checkin", target_id: "cccccccc-0000-0000-0000-000000000002", place_id: "aaaaaaaa-0000-0000-0000-000000000001", place_name: "Озеро S" },
+  });
+  assertEquals(report, { title: "Отчёт друга", body: "Айгерім — Озеро S", url: "dalada://place/aaaaaaaa-0000-0000-0000-000000000001" });
+});
