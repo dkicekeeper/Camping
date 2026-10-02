@@ -89,8 +89,12 @@ Information — контакт и демо-аккаунт (ниже).
    места с «Информацией», отчёты с уловами (один — на водоёме редакции, после него можно оставить
    отзыв), поездка с треком, три сохранённых места. Повторный вызов меняет пароль, содержимое не
    дублирует. Если проверяющие удалят аккаунт — просто вызовите ещё раз.
-2. GitHub → Settings → Secrets and variables → Actions: **`ASC_DEMO_USER`** (почта) и
-   **`ASC_DEMO_PASSWORD`** (пароль). Пароль — только туда, не в чат и не в репозиторий.
+2. GitHub → репозиторий **Dalada** → Settings → Secrets and variables → Actions → вкладка
+   **Secrets** → «New repository secret» (не Variables и не Environment): **`ASC_DEMO_USER`**
+   (почта) и **`ASC_DEMO_PASSWORD`** (пароль). Пароль — только туда, не в чат и не в репозиторий.
+   Можно и вручную в App Store Connect → TestFlight → Test Information → Beta App Review
+   Information («Sign-in required», User Name, Password) — без секретов workflow эти поля не
+   трогает. Без демо-аккаунта workflow на бета-проверку не отправит.
 3. Actions → **TestFlight info** → Run workflow: номер сборки и галочка «отправить на
    бета-проверку». Workflow отметит «Sign-in required» и передаст почту и пароль в Beta App Review
    Information (в лог они не попадают); без секретов он предупредит и поля входа не тронет.

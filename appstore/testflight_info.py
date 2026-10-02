@@ -94,7 +94,8 @@ def upsert(kind: str, existing: dict | None, attributes: dict, relationship: tup
                                            "relationships": {name: {"data": {"type": rel_type, "id": rel_id}}}}})
 
 
-def update_app_information(app_id: str) -> None:
+def update_app_information(app_id: str) -> bool:
+    """Тексты Test Information и Beta App Review. Возвращает, задан ли демо-аккаунт."""
     current = {item["attributes"]["locale"]: item for item in call("GET", f"/apps/{app_id}/betaAppLocalizations")["data"]}
     for locale in LOCALES:
         attributes = {
@@ -123,9 +124,13 @@ def update_app_information(app_id: str) -> None:
                                         ("contactPhone", "телефон")) if not detail["attributes"].get(key)]
     print("Beta App Review Information: заметки для проверяющих"
           + (", демо-аккаунт" if demo_user and demo_password else "") + " — готово")
-    if not (demo_user and demo_password):
+    # Демо-аккаунт мог быть введён в App Store Connect вручную — тогда он тоже годится.
+    demo_ready = bool(demo_user and demo_password) or bool(
+        detail["attributes"].get("demoAccountRequired") and detail["attributes"].get("demoAccountName"))
+    if not demo_ready:
         print("::warning::Демо-аккаунт для бета-проверки не задан (секреты ASC_DEMO_USER и ASC_DEMO_PASSWORD) — "
               "без него Apple не проверит бету (Guideline 2.1(a)). См. docs/04-beta/testflight.md.")
+    return demo_ready
     if missing:
         print(f"::warning::Контакт для бета-проверки: не заполнено — {', '.join(missing)}. "
               "App Store Connect → TestFlight → Test Information → Beta App Review Information.")
@@ -229,9 +234,12 @@ def main(argv: list[str]) -> None:
         sys.exit(f"::error::Приложение {BUNDLE_ID} не найдено в App Store Connect")
     app_id = apps[0]["id"]
 
-    update_app_information(app_id)
+    demo_ready = update_app_information(app_id)
     build = find_build(app_id, number, wait)
     update_build(build)
+    if "--submit" in argv and not demo_ready:
+        sys.exit("::error::Не отправляю на бета-проверку: нет демо-аккаунта (Guideline 2.1(a)). "
+                 "Задайте секреты ASC_DEMO_USER и ASC_DEMO_PASSWORD (docs/04-beta/testflight.md).")
     if "--submit" in argv:
         submit(app_id, build)
     report(app_id)
