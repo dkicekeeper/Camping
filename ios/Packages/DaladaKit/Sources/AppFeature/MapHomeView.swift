@@ -9,12 +9,13 @@ struct RuleZoneSelection: Identifiable, Hashable {
 }
 
 /// Вкладка «Карта»: места в видимой области, карточка по тапу, новое место долгим нажатием
-/// или кнопкой «+», зоны запретов (цвет — действует сейчас, скоро или нет).
+/// или кнопкой «Место», зоны запретов (цвет — действует сейчас, скоро или нет), «Начать поездку».
 struct MapHomeView: View {
     let environment: AppEnvironment
 
     @Environment(SessionStore.self) private var session
     @Environment(RulesStore.self) private var rules
+    @Environment(TripRecorder.self) private var recorder
     @AppStorage("map.showsRules") private var showsRules = true
     @State private var model: MapScreenModel
     @State private var showsSignInHint = false
@@ -68,6 +69,15 @@ struct MapHomeView: View {
             .secondaryButton()
             .padding(.trailing, AppSpacing.lg)
             .padding(.top, AppSpacing.sm)
+        }
+        // Во время записи вместо кнопки — мини-плеер над вкладками (где он есть).
+        .overlay(alignment: .bottom) {
+            if !recorder.isActive || !TripAccessoryModifier.isAvailable {
+                StartTripButton()
+                    .font(AppTypography.bodyEmphasis)
+                    .primaryButton()
+                    .padding(.bottom, AppSpacing.lg)
+            }
         }
         .sheet(item: $model.selectedPlace) { selection in
             PlaceCardView(placeID: selection.id, environment: environment)

@@ -36,7 +36,8 @@ public struct FeedAuthor: Codable, Hashable, Sendable {
     }
 }
 
-/// Поездка друга в ленте (без трека: он — на странице поездки).
+/// Поездка в ленте. Трек — упрощённый видимый зрителю (как на странице поездки), для превью
+/// маршрута в посте; в ленте друзей его нет.
 public struct FeedTrip: Codable, Hashable, Sendable {
     public let activity: TripActivity
     public let title: String
@@ -46,6 +47,7 @@ public struct FeedTrip: Codable, Hashable, Sendable {
     public let movingSeconds: Int
     public let distanceM: Int
     public let elevationGainM: Int
+    public let segments: [[GeoPoint]]
 
     enum CodingKeys: String, CodingKey {
         case activity
@@ -56,6 +58,37 @@ public struct FeedTrip: Codable, Hashable, Sendable {
         case movingSeconds = "moving_seconds"
         case distanceM = "distance_m"
         case elevationGainM = "elevation_gain_m"
+        case track
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        activity = try c.decode(TripActivity.self, forKey: .activity)
+        title = try c.decode(String.self, forKey: .title)
+        note = try c.decodeIfPresent(String.self, forKey: .note)
+        startedAt = try c.decode(Date.self, forKey: .startedAt)
+        endedAt = try c.decode(Date.self, forKey: .endedAt)
+        movingSeconds = try c.decode(Int.self, forKey: .movingSeconds)
+        distanceM = try c.decode(Int.self, forKey: .distanceM)
+        elevationGainM = try c.decode(Int.self, forKey: .elevationGainM)
+        // Трек не обязателен: без него пост показывается без карты.
+        segments = ((try? c.decodeIfPresent(TrackGeometry.self, forKey: .track)) ?? nil)?
+            .segments.filter { $0.count >= 2 } ?? []
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(activity, forKey: .activity)
+        try c.encode(title, forKey: .title)
+        try c.encodeIfPresent(note, forKey: .note)
+        try c.encode(startedAt, forKey: .startedAt)
+        try c.encode(endedAt, forKey: .endedAt)
+        try c.encode(movingSeconds, forKey: .movingSeconds)
+        try c.encode(distanceM, forKey: .distanceM)
+        try c.encode(elevationGainM, forKey: .elevationGainM)
+        if !segments.isEmpty {
+            try c.encode(TrackGeometry(segments: segments), forKey: .track)
+        }
     }
 }
 
@@ -124,6 +157,27 @@ public struct FeedReview: Codable, Hashable, Sendable {
     }
 }
 
+/// Обсуждение публичного места в ленте «Главной»: заголовок, начало текста, число ответов.
+public struct FeedThread: Codable, Hashable, Sendable {
+    public let placeID: UUID
+    public let placeName: String
+    public let placeType: PlaceType
+    public let title: String
+    public let body: String
+    public let postsCount: Int
+    public let lastActivityAt: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case placeID = "place_id"
+        case placeName = "place_name"
+        case placeType = "place_type"
+        case title
+        case body
+        case postsCount = "posts_count"
+        case lastActivityAt = "last_activity_at"
+    }
+}
+
 /// С какой записи продолжать ленту: время и id последней показанной.
 public struct FeedCursor: Hashable, Sendable {
     public let at: Date
@@ -135,13 +189,14 @@ public struct FeedCursor: Hashable, Sendable {
     }
 }
 
-/// Запись ленты друзей — строка `friends_feed`.
+/// Запись ленты — строка `friends_feed` или `home_feed`.
 public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
     public enum Content: Hashable, Sendable {
         case trip(FeedTrip)
         case checkin(FeedCheckin)
         case place(FeedPlace)
         case review(FeedReview)
+        case thread(FeedThread)
         /// Вид записи из новой версии сервера (например, отзыв) — эта версия приложения его не показывает.
         case unsupported
     }
@@ -160,13 +215,13 @@ public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
 
     public var cursor: FeedCursor { FeedCursor(at: at, id: id) }
 
-    /// Объект реакции («респект») для записи; у нового места реакций нет.
+    /// Объект реакции («респект») для записи; у нового места и обсуждения реакций нет.
     public var reactionKey: ReactionKey? {
         switch content {
         case .trip: ReactionKey(.trip, id)
         case .checkin: ReactionKey(.checkin, id)
         case .review: ReactionKey(.review, id)
-        case .place, .unsupported: nil
+        case .place, .thread, .unsupported: nil
         }
     }
 
@@ -206,6 +261,8 @@ public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
             content = (try? c.decode(FeedPlace.self, forKey: .data)).map(Content.place) ?? .unsupported
         case "review":
             content = (try? c.decode(FeedReview.self, forKey: .data)).map(Content.review) ?? .unsupported
+        case "thread":
+            content = (try? c.decode(FeedThread.self, forKey: .data)).map(Content.thread) ?? .unsupported
         default:
             content = .unsupported
         }
@@ -232,6 +289,9 @@ public struct FeedItem: Codable, Identifiable, Hashable, Sendable {
         case .review(let review):
             try c.encode("review", forKey: .kind)
             try c.encode(review, forKey: .data)
+        case .thread(let thread):
+            try c.encode("thread", forKey: .kind)
+            try c.encode(thread, forKey: .data)
         case .unsupported:
             try c.encode("unsupported", forKey: .kind)
         }
@@ -347,5 +407,46 @@ public struct PrivacyZoneDraft: Equatable, Sendable {
     /// Точка для базы (EWKT).
     public var ewkt: String {
         "SRID=4326;POINT(\(center.longitude) \(center.latitude))"
+    }
+}
+
+// MARK: - Превью трека в посте
+
+/// Трек для превью маршрута в посте (без карты): точки в квадрате 0…1, север сверху, пропорции
+/// как на местности (долгота сжата на косинус широты), трек — по центру.
+public enum TrackPreview {
+    public struct Point: Equatable, Sendable {
+        public let x: Double
+        public let y: Double
+
+        public init(x: Double, y: Double) {
+            self.x = x
+            self.y = y
+        }
+    }
+
+    /// Отрезки в долях стороны квадрата; пусто, если точек меньше двух.
+    public static func normalized(_ segments: [[GeoPoint]]) -> [[Point]] {
+        let lines = segments.filter { $0.count >= 2 }
+        let points = lines.flatMap { $0 }
+        guard let first = points.first else { return [] }
+        let midLatitude = (points.map(\.latitude).min()! + points.map(\.latitude).max()!) / 2
+        let scaleX = cos(midLatitude * .pi / 180)
+        func project(_ point: GeoPoint) -> (x: Double, y: Double) {
+            ((point.longitude - first.longitude) * scaleX, point.latitude - first.latitude)
+        }
+        let projected = points.map(project)
+        let minX = projected.map(\.x).min()!, maxX = projected.map(\.x).max()!
+        let minY = projected.map(\.y).min()!, maxY = projected.map(\.y).max()!
+        let span = max(maxX - minX, maxY - minY)
+        guard span > 0 else { return [] }
+        let offsetX = (span - (maxX - minX)) / 2
+        let offsetY = (span - (maxY - minY)) / 2
+        return lines.map { line in
+            line.map { point in
+                let p = project(point)
+                return Point(x: (p.x - minX + offsetX) / span, y: 1 - (p.y - minY + offsetY) / span)
+            }
+        }
     }
 }

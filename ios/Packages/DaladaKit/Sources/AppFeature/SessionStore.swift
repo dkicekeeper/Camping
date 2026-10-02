@@ -241,6 +241,28 @@ final class SessionStore {
         }
     }
 
+    // MARK: Имя
+
+    /// Сохраняет имя профиля (до 60 символов). Возвращает текст ошибки или `nil` при успехе.
+    func updateDisplayName(_ name: String) async -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let backend, profile != nil, !trimmed.isEmpty, trimmed.count <= Self.displayNameLimit else {
+            return String(localized: "auth.error.generic")
+        }
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            let updated = try await backend.updateProfile(displayName: trimmed)
+            apply(updated)
+            try? await cache?.save(updated, for: .profile(updated.id))
+            return nil
+        } catch {
+            return CommunityMessage.text(for: error)
+        }
+    }
+
+    static let displayNameLimit = 60
+
     // MARK: Помощники
 
     private func perform(_ operation: () async throws -> Void) async {

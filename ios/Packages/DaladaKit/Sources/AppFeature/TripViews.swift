@@ -51,7 +51,41 @@ enum TripFormat {
 
 // MARK: - Старт
 
-/// Выбор вида поездки и «Старт» (открывается из «+»).
+/// Лист «Начать поездку» (с карты и «Главной»): выбор вида поездки; гостю — вход.
+struct TripStartSheet: View {
+    let onStart: @MainActor (TripActivity) -> Void
+
+    @Environment(SessionStore.self) private var session
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if session.profile != nil {
+                    StartTripView { activity in
+                        onStart(activity)
+                        dismiss()
+                    }
+                } else {
+                    ScrollView {
+                        SignInCard()
+                            .screenPadding()
+                            .padding(.vertical, AppSpacing.lg)
+                    }
+                    .navigationTitle("trip.start.title")
+                    .navigationBarTitleDisplayMode(.inline)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("tab.close", systemImage: "xmark") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+/// Выбор вида поездки и «Старт».
 struct StartTripView: View {
     let onStart: @MainActor (TripActivity) -> Void
 
@@ -412,6 +446,11 @@ struct TripAccessoryModifier: ViewModifier {
     let isEnabled: Bool
     let onOpen: @MainActor () -> Void
 
+    /// Мини-плеер есть с iOS 26.1; на 26.0 запись открывается кнопкой на карте и значком на «Главной».
+    static var isAvailable: Bool {
+        if #available(iOS 26.1, *) { true } else { false }
+    }
+
     func body(content: Content) -> some View {
         if #available(iOS 26.1, *) {
             content.tabViewBottomAccessory(isEnabled: isEnabled) {
@@ -463,34 +502,32 @@ struct MyTripsSection: View {
 
     @Environment(SyncEngine.self) private var sync
     @State private var trips: [TripSummary] = []
+    @State private var isLoaded = false
 
     var body: some View {
-        Group {
+        ProfileSection(
+            "trips.title",
+            systemImage: "point.topleft.down.to.point.bottomright.curvepath",
+            showsAll: trips.count > 3
+        ) {
+            TripsListView(environment: environment, userID: userID)
+        } content: {
             if !trips.isEmpty {
-                VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    HStack {
-                        SectionHeaderView(String(localized: "trips.title"), systemImage: "point.topleft.down.to.point.bottomright.curvepath")
-                        Spacer(minLength: 0)
-                        NavigationLink {
-                            TripsListView(environment: environment, userID: userID)
-                        } label: {
-                            Text("trips.all")
-                                .font(AppTypography.bodySmall)
-                        }
+                ForEach(trips.prefix(3)) { trip in
+                    NavigationLink {
+                        TripDetailView(tripID: trip.id, environment: environment)
+                    } label: {
+                        TripRow(trip: trip)
                     }
-                    VStack(spacing: AppSpacing.md) {
-                        ForEach(trips.prefix(3)) { trip in
-                            NavigationLink {
-                                TripDetailView(tripID: trip.id, environment: environment)
-                            } label: {
-                                TripRow(trip: trip)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .cardContentPadding()
-                    .cardStyle()
+                    .buttonStyle(.plain)
                 }
+            } else if isLoaded {
+                Text("trips.empty.description")
+                    .font(AppTypography.bodySmall)
+                    .foregroundStyle(AppColors.textSecondary)
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
             }
         }
         .task(id: userID) { await load() }
@@ -501,6 +538,7 @@ struct MyTripsSection: View {
 
     private func load() async {
         trips = await TripsLoader(environment: environment, userID: userID).load(limit: 50)
+        isLoaded = true
     }
 }
 

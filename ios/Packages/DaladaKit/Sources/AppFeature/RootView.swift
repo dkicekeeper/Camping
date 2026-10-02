@@ -4,16 +4,7 @@ import DesignComponents
 import SwiftUI
 import Sync
 
-/// Вкладки приложения. `quickAction` — не экран, а кнопка «+» с быстрыми действиями.
-enum AppTab: Hashable {
-    case profile
-    case map
-    case places
-    case lifehacks
-    case quickAction
-}
-
-/// Корень приложения: четыре вкладки и «+» (docs/02-plan/README.md, «Информационная архитектура»).
+/// Корень приложения: Главная, Карта, Места, Лайфхаки, Профиль (docs/04-beta/M10-home.md).
 public struct RootView: View {
     private let environment: AppEnvironment
     private let background: BackgroundSync
@@ -28,14 +19,11 @@ public struct RootView: View {
     @State private var lists: ListsStore
     @State private var articles: ArticlesStore
     @State private var places: PlacesStore
-    @State private var selection: AppTab = .profile
+    @State private var router = AppRouter()
     /// Знакомство при первом запуске пройдено (или пропущено).
     @AppStorage("intro.completed") private var introCompleted = false
-    @State private var showsQuickActions = false
-    @State private var showsRecording = false
-    /// Выбор из «+», который выполняется, когда лист «+» закроется.
+    /// Вид поездки, выбранный в листе «Начать поездку»: запись начинается, когда лист закроется.
     @State private var pendingTripActivity: TripActivity?
-    @State private var opensRecordingAfterSheet = false
     /// Открытая ссылка-приглашение `dalada://u/<username>`.
     @State private var profileLink: ProfileLink?
     /// Обсуждение из пуша `dalada://thread/<id>`.
@@ -62,9 +50,9 @@ public struct RootView: View {
     }
 
     public var body: some View {
-        TabView(selection: $selection) {
-            Tab("tab.profile", systemImage: "person.crop.circle", value: AppTab.profile) {
-                ProfileHomeView(environment: environment)
+        TabView(selection: $router.selection) {
+            Tab("tab.home", systemImage: "house", value: AppTab.home) {
+                HomeView(environment: environment)
             }
             Tab("tab.map", systemImage: "map", value: AppTab.map) {
                 MapHomeView(environment: environment)
@@ -75,14 +63,12 @@ public struct RootView: View {
             Tab("tab.lifehacks", systemImage: "lightbulb", value: AppTab.lifehacks) {
                 LifehacksHomeView(environment: environment)
             }
-            Tab(value: AppTab.quickAction) {
-                Color.clear
-            } label: {
-                PlusTabLabel(isExpanded: showsQuickActions)
+            Tab("tab.profile", systemImage: "person.crop.circle", value: AppTab.profile) {
+                ProfileHomeView(environment: environment)
             }
         }
         // Идущая запись поездки — мини-плеер над вкладками.
-        .modifier(TripAccessoryModifier(isEnabled: recorder.isActive) { showsRecording = true })
+        .modifier(TripAccessoryModifier(isEnabled: recorder.isActive) { router.showsRecording = true })
         // Знакомство — поверх вкладок, один раз; вход отсюда открывает согласие и username.
         .overlay {
             if !introCompleted {
@@ -92,22 +78,13 @@ public struct RootView: View {
                 .transition(.opacity)
             }
         }
-        // «+» не открывает вкладку: возвращаем прежнюю и показываем быстрые действия.
-        .onChange(of: selection) { previous, current in
-            guard current == .quickAction else { return }
-            selection = previous
-            showsQuickActions = true
+        // «Начать поездку» (с карты и «Главной»): вид поездки, гостю — вход.
+        .sheet(isPresented: $router.showsTripStart, onDismiss: runPendingTrip) {
+            TripStartSheet { pendingTripActivity = $0 }
+                .environment(session)
+                .presentationDetents([.medium, .large])
         }
-        .sheet(isPresented: $showsQuickActions, onDismiss: runPendingQuickAction) {
-            QuickActionsSheet(
-                isRecording: recorder.isActive,
-                canRecord: session.profile != nil,
-                onStartTrip: { pendingTripActivity = $0 },
-                onOpenRecording: { opensRecordingAfterSheet = true }
-            )
-            .presentationDetents([.medium, .large])
-        }
-        .fullScreenCover(isPresented: $showsRecording) {
+        .fullScreenCover(isPresented: $router.showsRecording) {
             TripRecordingView(environment: environment)
                 .environment(recorder)
                 .environment(session)
@@ -171,6 +148,7 @@ public struct RootView: View {
             }
             .environment(session)
         }
+        .environment(router)
         .environment(session)
         .environment(species)
         .environment(sync)
@@ -218,18 +196,14 @@ public struct RootView: View {
         }
     }
 
-    /// Действие из «+» выполняется после закрытия листа: иначе полноэкранная запись
+    /// Запись начинается после закрытия листа: иначе полноэкранная запись
     /// не откроется поверх закрывающегося листа.
-    private func runPendingQuickAction() {
-        if let activity = pendingTripActivity {
-            pendingTripActivity = nil
-            Task {
-                await recorder.start(activity: activity)
-                showsRecording = true
-            }
-        } else if opensRecordingAfterSheet {
-            opensRecordingAfterSheet = false
-            showsRecording = true
+    private func runPendingTrip() {
+        guard let activity = pendingTripActivity else { return }
+        pendingTripActivity = nil
+        Task {
+            await recorder.start(activity: activity)
+            router.showsRecording = true
         }
     }
 }

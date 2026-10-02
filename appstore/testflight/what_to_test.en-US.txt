@@ -1,6 +1,9 @@
-Browse places on the Map tab (editorial places from OpenStreetMap), open a place card, sign in with Apple, add your own place, check in with a catch and a photo, record a trip (+ → Start a trip), add a friend by username, write a review or start a discussion, open checklists and articles in the Tips tab.
+Browse places on the Map tab (editorial places from OpenStreetMap), open a place card, sign in with Apple, add your own place, check in with a catch and a photo, record a trip (Start a trip on the map), add a friend by username, write a review or start a discussion, open checklists and articles in the Tips tab.
 
 New:
+• Home — a feed of posts: your and your friends’ trips with the track, reports with photos, new places and reviews, fresh discussions.
+• Tabs: Home, Map, Places, Tips, Profile. The “+” tab is gone: start a trip with the button on the map, add a place on the map, check in from a place card.
+• Profile: tap the header with your name for Profile settings (name, privacy zones, notifications, account); below are friends, catches, places and trips.
 • Place card: a 7-day summary and an Info block (fish, access, price, amenities, season) — Edit on your place, Suggest an edit and Report a problem on others; Nearby at the bottom and Share in the toolbar.
 • A first-launch intro: what the app does, location, an offline area and sign-in.
 • Visitor photos on a place card: a photo row, All photos and a full-screen viewer.
@@ -8,7 +11,5 @@ New:
 • The map shows relief and contour lines — zoom into the mountains near Almaty.
 • Offline maps: Tips → Getting ready — download an area and turn on airplane mode.
 • Directions on a place card — 2GIS, Yandex or Google.
-• Follow this route on a trip page — a warning when you leave the track.
-• Check-ins and trips upload in the background: check in offline, leave the app — they are sent once the network is back.
 
 Feedback: the Send Beta Feedback button in TestFlight or dakacom@gmail.com.

@@ -39,8 +39,33 @@ struct PlaceRow: View {
     }
 }
 
-/// Вкладка «Лайфхаки»: правила и запреты, справочник рыб. Чеклисты, экипировка и статьи —
-/// в следующих частях M5.
+/// Строка «Лайфхаков»: значок слева, справа заголовок и под ним подзаголовок (UniversalRow из
+/// DesignKit; шеврон добавляет NavigationLink).
+private struct LifehackRow: View {
+    let titleKey: LocalizedStringKey
+    let systemImage: String
+    var subtitle: String?
+
+    var body: some View {
+        UniversalRow(config: .settings, leadingIcon: .sfSymbol(systemImage, color: AppColors.accent)) {
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text(titleKey)
+                    .font(AppTypography.bodyEmphasis)
+                    .foregroundStyle(AppColors.textPrimary)
+                if let subtitle {
+                    Text(verbatim: subtitle)
+                        .font(AppTypography.caption)
+                        .foregroundStyle(AppColors.textSecondary)
+                }
+            }
+        } trailing: {
+            EmptyView()
+        }
+    }
+}
+
+/// Вкладка «Лайфхаки»: сборы, чеклисты, экипировка, офлайн-карты; правила и запреты, справочник
+/// рыб; статьи.
 struct LifehacksHomeView: View {
     let environment: AppEnvironment
 
@@ -66,40 +91,34 @@ struct LifehacksHomeView: View {
                     Button {
                         startsPacking = true
                     } label: {
-                        Label("packing.start", systemImage: "bag.badge.plus")
+                        LifehackRow(titleKey: "packing.start", systemImage: "bag.badge.plus")
                     }
                     NavigationLink {
                         ChecklistsView()
                     } label: {
-                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                            Label("checklists.title", systemImage: "checklist")
-                                .font(AppTypography.bodyEmphasis)
-                            Text("checklists.summary \(lists.packingLists.count) \(lists.ownLists.count)")
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
-                        }
+                        LifehackRow(
+                            titleKey: "checklists.title",
+                            systemImage: "checklist",
+                            subtitle: String(localized: "checklists.summary \(lists.packingLists.count) \(lists.ownLists.count)")
+                        )
                     }
                     NavigationLink {
                         GearListView()
                     } label: {
-                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                            Label("gear.title", systemImage: "backpack")
-                                .font(AppTypography.bodyEmphasis)
-                            Text(verbatim: lists.gear.isEmpty ? String(localized: "gear.summary.none") : GearFormat.summary(lists.gear))
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
-                        }
+                        LifehackRow(
+                            titleKey: "gear.title",
+                            systemImage: "backpack",
+                            subtitle: lists.gear.isEmpty ? String(localized: "gear.summary.none") : GearFormat.summary(lists.gear)
+                        )
                     }
                     NavigationLink {
                         OfflineMapsView(environment: environment)
                     } label: {
-                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                            Label("offlineMaps.title", systemImage: "map")
-                                .font(AppTypography.bodyEmphasis)
-                            Text(verbatim: OfflineMapsFormat.summary(offlineMaps))
-                                .font(AppTypography.caption)
-                                .foregroundStyle(AppColors.textSecondary)
-                        }
+                        LifehackRow(
+                            titleKey: "offlineMaps.title",
+                            systemImage: "map",
+                            subtitle: OfflineMapsFormat.summary(offlineMaps)
+                        )
                     }
                 } header: {
                     Text("lifehacks.section.prep")
@@ -113,21 +132,12 @@ struct LifehacksHomeView: View {
                     NavigationLink {
                         RulesListView(environment: environment)
                     } label: {
-                        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                            Label("rules.title", systemImage: "exclamationmark.shield")
-                                .font(AppTypography.bodyEmphasis)
-                            if let summary = rulesSummary {
-                                Text(verbatim: summary)
-                                    .font(AppTypography.caption)
-                                    .foregroundStyle(AppColors.textSecondary)
-                            }
-                        }
+                        LifehackRow(titleKey: "rules.title", systemImage: "exclamationmark.shield", subtitle: rulesSummary)
                     }
                     NavigationLink {
                         FishGuideView()
                     } label: {
-                        Label("fish.guide.title", systemImage: "fish")
-                            .font(AppTypography.bodyEmphasis)
+                        LifehackRow(titleKey: "fish.guide.title", systemImage: "fish")
                     }
                 } header: {
                     Text("lifehacks.section.knowledge")
@@ -150,7 +160,7 @@ struct LifehacksHomeView: View {
                         NavigationLink {
                             ArticlesListView()
                         } label: {
-                            Label("articles.all", systemImage: "books.vertical")
+                            LifehackRow(titleKey: "articles.all", systemImage: "books.vertical")
                         }
                     }
                 } header: {

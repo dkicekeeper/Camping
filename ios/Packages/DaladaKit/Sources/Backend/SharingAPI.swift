@@ -2,7 +2,7 @@ import DaladaCore
 import Foundation
 import Supabase
 
-// MARK: - Профиль другого человека и лента друзей
+// MARK: - Профиль другого человека и лента «Главной»
 
 extension BackendClient {
     /// Поездки человека, которые я вижу (RPC `user_trips`), новые сверху. `before` — `startedAt`
@@ -31,10 +31,11 @@ extension BackendClient {
         return rows.first
     }
 
-    /// Страница ленты друзей (RPC `friends_feed`). `after` — курсор предыдущей страницы.
-    public func friendsFeed(limit: Int = 20, after cursor: FeedCursor? = nil) async throws -> FeedPage {
+    /// Страница ленты «Главной» (RPC `home_feed`): записи друзей и свои, обсуждения публичных
+    /// мест; гостю — только обсуждения. `after` — курсор предыдущей страницы.
+    public func homeFeed(limit: Int = 20, after cursor: FeedCursor? = nil) async throws -> FeedPage {
         let rows: [FeedItem] = try await supabase
-            .rpc("friends_feed", params: FeedParams(limit: limit, cursor: cursor))
+            .rpc("home_feed", params: FeedParams(limit: limit, cursor: cursor))
             .execute()
             .value
         return FeedPage(rows: rows, limit: limit)

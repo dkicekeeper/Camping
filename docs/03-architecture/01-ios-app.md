@@ -49,7 +49,8 @@ External              DesignKit · MapLibre · GRDB · supabase-swift · Nuke
 
 ## Экраны и навигация
 
-- **TabView** (iOS 26): Профиль · Карта · Места · Лайфхаки · «+» (вкладка-действие, `PlusTabLabel`).
+- **TabView** (iOS 26): Главная · Карта · Места · Лайфхаки · Профиль (`AppRouter`; вкладки «+» нет —
+  добавления в контексте разделов, см. `docs/04-beta/M10-home.md`).
 - У каждой вкладки свой `NavigationStack` с типизированными маршрутами (`enum Route`) и
   `@Observable Router`. Диплинки и пуши приводятся к маршрутам.
 - Активная поездка — `tabViewBottomAccessory` (мини-плеер над таб-баром).

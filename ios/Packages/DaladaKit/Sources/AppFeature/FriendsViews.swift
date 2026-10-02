@@ -168,59 +168,6 @@ struct FriendsView: View {
     }
 }
 
-/// «Друзья» в профиле: число друзей и новых запросов.
-struct FriendsEntryRow: View {
-    let environment: AppEnvironment
-    let userID: UUID
-
-    @State private var friendsCount: Int?
-    @State private var incomingCount = 0
-
-    var body: some View {
-        NavigationLink {
-            FriendsView(environment: environment)
-        } label: {
-            HStack(spacing: AppSpacing.md) {
-                Image(systemName: "person.2")
-                    .foregroundStyle(AppColors.accent)
-                Text("friends.title")
-                    .font(AppTypography.bodyEmphasis)
-                    .foregroundStyle(AppColors.textPrimary)
-                if let friendsCount {
-                    Text(verbatim: "\(friendsCount)")
-                        .font(AppTypography.body)
-                        .foregroundStyle(AppColors.textSecondary)
-                }
-                Spacer(minLength: 0)
-                if incomingCount > 0 {
-                    BadgeView(
-                        "\(incomingCount)",
-                        systemImage: "person.badge.plus",
-                        color: AppColors.destructive,
-                        style: .filled
-                    )
-                    .accessibilityLabel(Text("friends.requests"))
-                }
-                DisclosureChevron()
-            }
-            .cardContentPadding()
-            .cardStyle()
-        }
-        .buttonStyle(.plain)
-        .task(id: userID) { await load() }
-    }
-
-    private func load() async {
-        guard let backend = environment.backend else { return }
-        if let friends = try? await backend.myFriends() {
-            friendsCount = friends.count
-        }
-        if let requests = try? await backend.myFriendRequests() {
-            incomingCount = requests.filter { $0.direction == .incoming }.count
-        }
-    }
-}
-
 // MARK: - Поиск
 
 /// Найти людей по имени или @username.

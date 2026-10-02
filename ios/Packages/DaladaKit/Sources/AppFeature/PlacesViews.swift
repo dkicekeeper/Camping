@@ -62,14 +62,10 @@ struct PlacesHomeView: View {
                 .screenPadding()
         }
 
+        // Свои места — в профиле; здесь — сохранённые чужие.
         if session.profile != nil {
-            VStack(spacing: AppSpacing.sm) {
-                NavigationLink(value: PlaceListRoute.mine) {
-                    PlaceShortcutRow(titleKey: "places.mine.title", systemImage: "mappin.and.ellipse")
-                }
-                NavigationLink(value: PlaceListRoute.saved) {
-                    PlaceShortcutRow(titleKey: "places.saved.title", systemImage: "bookmark")
-                }
+            NavigationLink(value: PlaceListRoute.saved) {
+                PlaceShortcutRow(titleKey: "places.saved.title", systemImage: "bookmark")
             }
             .buttonStyle(.plain)
             .screenPadding()
@@ -133,31 +129,26 @@ struct PlacesHomeView: View {
     }
 }
 
-/// Куда ведёт «Все» и строки «Мои места» / «Сохранённые».
+/// Куда ведёт «Все» и строка «Сохранённые».
 enum PlaceListRoute: Hashable {
     case section(PlaceSection)
     case collection(id: UUID, title: String)
     case saved
-    case mine
 }
 
-/// Строка-переход: «Мои места», «Сохранённые».
+/// Строка-переход «Сохранённые».
 private struct PlaceShortcutRow: View {
     let titleKey: LocalizedStringKey
     let systemImage: String
 
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            Image(systemName: systemImage)
-                .foregroundStyle(AppColors.accent)
-                .frame(width: AppIconSize.md)
+        UniversalRow(config: .standard, leadingIcon: .sfSymbol(systemImage, color: AppColors.accent)) {
             Text(titleKey)
                 .font(AppTypography.bodyEmphasis)
                 .foregroundStyle(AppColors.textPrimary)
-            Spacer(minLength: 0)
+        } trailing: {
             DisclosureChevron()
         }
-        .padding(AppSpacing.md)
         .cardStyle()
         .contentShape(Rectangle())
     }
@@ -521,9 +512,7 @@ struct PlaceListScreen: View {
 
     var body: some View {
         Group {
-            if case .mine = route {
-                MyPlacesList(environment: environment)
-            } else if showsMap {
+            if showsMap {
                 mapContent
             } else {
                 listContent
@@ -532,16 +521,14 @@ struct PlaceListScreen: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if route != .mine {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Picker(selection: $showsMap) {
-                        Label("places.view.list", systemImage: "list.bullet").tag(false)
-                        Label("places.view.map", systemImage: "map").tag(true)
-                    } label: {
-                        Text("places.view.list")
-                    }
-                    .pickerStyle(.segmented)
+            ToolbarItem(placement: .topBarTrailing) {
+                Picker(selection: $showsMap) {
+                    Label("places.view.list", systemImage: "list.bullet").tag(false)
+                    Label("places.view.map", systemImage: "map").tag(true)
+                } label: {
+                    Text("places.view.list")
                 }
+                .pickerStyle(.segmented)
             }
         }
         .task(id: LoadKey(route: route, types: types, sort: sort, viewer: session.profile?.id)) { await load() }
@@ -563,7 +550,6 @@ struct PlaceListScreen: View {
         case .section(let section): String(localized: String.LocalizationValue(section.titleKey))
         case .collection(_, let title): title
         case .saved: String(localized: "places.saved.title")
-        case .mine: String(localized: "places.mine.title")
         }
     }
 
@@ -663,8 +649,6 @@ struct PlaceListScreen: View {
                 if let viewer = session.profile?.id {
                     try? await environment.cache.save(loaded, for: .savedPlaces(viewer))
                 }
-            case .mine:
-                return
             }
             items = loaded
             loadError = nil
@@ -689,9 +673,9 @@ struct PlaceListScreen: View {
 
 // MARK: - Мои места
 
-/// «Мои места»: свои места любой видимости, включая места на модерации. Без сети — сохранённый
-/// список.
-private struct MyPlacesList: View {
+/// «Мои места» (из профиля): свои места любой видимости, включая места на модерации. Без сети —
+/// сохранённый список.
+struct MyPlacesView: View {
     let environment: AppEnvironment
 
     @Environment(SessionStore.self) private var session
@@ -702,6 +686,7 @@ private struct MyPlacesList: View {
 
     var body: some View {
         content
+            .navigationTitle("places.mine.title")
             .task(id: session.profile?.id) { await load() }
             .refreshable { await load() }
             .sheet(item: $selected, onDismiss: { Task { await load() } }) { selection in

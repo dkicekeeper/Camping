@@ -208,25 +208,25 @@
         }
       }
     },
-    "account.title" : {
+    "account.name.placeholder" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Account"
+            "value" : "Your name"
           }
         },
         "kk" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Аккаунт"
+            "value" : "Атыңыз"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Аккаунт"
+            "value" : "Как вас зовут"
           }
         }
       }
@@ -2803,29 +2803,6 @@
         }
       }
     },
-    "common.soon" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Soon"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Жақында"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скоро"
-          }
-        }
-      }
-    },
     "community.error.checkinRequired" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3401,75 +3378,6 @@
         }
       }
     },
-    "feed.all" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "See all"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Барлық лента"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Вся лента"
-          }
-        }
-      }
-    },
-    "feed.empty.description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your friends' trips, reports and new places will appear here. Add friends by name or QR code."
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Мұнда достардың сапарлары, есептері және жаңа орындары пайда болады. Достарды аты немесе QR-код арқылы қосыңыз."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Здесь появятся поездки, отчёты и новые места друзей. Добавьте друзей — по имени или QR-коду."
-          }
-        }
-      }
-    },
-    "feed.empty.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The feed is empty for now"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Лента әзірге бос"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Лента пока пустая"
-          }
-        }
-      }
-    },
     "feed.failed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3516,29 +3424,6 @@
         }
       }
     },
-    "feed.recent" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Friends lately"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Достар жақында"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Друзья недавно"
-          }
-        }
-      }
-    },
     "feed.review" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3558,29 +3443,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отзыв"
-          }
-        }
-      }
-    },
-    "feed.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Friends feed"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Достар лентасы"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Лента друзей"
           }
         }
       }
@@ -5026,6 +4888,186 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Моя экипировка"
+          }
+        }
+      }
+    },
+    "home.empty.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your trips, reports and places, your friends' posts and fresh discussions will appear here. Add friends by name or QR code."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Мұнда сіздің сапарларыңыз, есептеріңіз бен орындарыңыз, достардың жазбалары және жаңа талқылаулар шығады. Достарды аты немесе QR-код арқылы қосыңыз."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Здесь появятся ваши поездки, отчёты и места, записи друзей и свежие обсуждения. Добавьте друзей — по имени или QR-коду."
+          }
+        }
+      }
+    },
+    "home.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your feed is empty"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Лента әзірге бос"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Лента пока пустая"
+          }
+        }
+      }
+    },
+    "home.guest.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No discussions yet"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Әзірге талқылау жоқ"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обсуждений пока нет"
+          }
+        }
+      }
+    },
+    "home.kind.checkin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Есеп"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отчёт"
+          }
+        }
+      }
+    },
+    "home.kind.thread" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discussion"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Талқылау"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обсуждение"
+          }
+        }
+      }
+    },
+    "home.replies %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld reply"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld replies"
+                }
+              }
+            }
+          }
+        },
+        "kk" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%lld жауап"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ответа"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ответов"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ответ"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ответа"
+                }
+              }
+            }
           }
         }
       }
@@ -12520,6 +12562,29 @@
         }
       }
     },
+    "profile.catches.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catches from your reports will appear here."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Мұнда есептеріңіздегі олжалар шығады."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Здесь появятся уловы из ваших отчётов."
+          }
+        }
+      }
+    },
     "profile.catches.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -12589,6 +12654,29 @@
         }
       }
     },
+    "profile.friends.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My friends"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Менің достарым"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мои друзья"
+          }
+        }
+      }
+    },
     "profile.menu" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -12631,6 +12719,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Без имени"
+          }
+        }
+      }
+    },
+    "profile.settings.privacyZonesFooter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Others don't see the parts of your tracks near your home, dacha and other places you mark."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Басқалар сіздің тректеріңіздің үй, саяжай және сіз белгілеген басқа орындар маңындағы бөліктерін көрмейді."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другие не видят участки ваших треков у дома, дачи и других мест, которые вы отметите."
+          }
+        }
+      }
+    },
+    "profile.settings.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile settings"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Профиль баптаулары"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Настройки профиля"
           }
         }
       }
@@ -12769,144 +12903,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не пропустите ответы"
-          }
-        }
-      }
-    },
-    "quick.catch" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Catch"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Олжа"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Улов"
-          }
-        }
-      }
-    },
-    "quick.checkin" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Check in"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Чекин"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Чекин"
-          }
-        }
-      }
-    },
-    "quick.photo" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Photo"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Фото"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Фото"
-          }
-        }
-      }
-    },
-    "quick.place" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New place"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Жаңа орын"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Новое место"
-          }
-        }
-      }
-    },
-    "quick.signInRequired" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign in first"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Кіру қажет"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нужен вход"
-          }
-        }
-      }
-    },
-    "quick.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quick actions"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Жылдам әрекеттер"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Быстрые действия"
           }
         }
       }
@@ -14563,29 +14559,6 @@
         }
       }
     },
-    "tab.add" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Қосу"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Добавить"
-          }
-        }
-      }
-    },
     "tab.close" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -14605,6 +14578,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрыть"
+          }
+        }
+      }
+    },
+    "tab.home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Басты бет"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Главная"
           }
         }
       }
@@ -15765,19 +15761,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Others see the trip without the first and last few hundred meters of the track and without your privacy zones (Profile → More → Privacy zones)."
+            "value" : "Others see the trip without the first and last few hundred meters of the track and without your privacy zones (Profile → Profile settings → Privacy zones)."
           }
         },
         "kk" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Басқалар сапарды тректің алғашқы және соңғы бірнеше жүз метрінсіз және құпиялық аймақтарыңызсыз көреді (Профиль → «Тағы» → «Құпиялық аймақтары»)."
+            "value" : "Басқалар сапарды тректің алғашқы және соңғы бірнеше жүз метрінсіз және құпиялық аймақтарыңызсыз көреді (Профиль → профиль баптаулары → «Құпиялық аймақтары»)."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Другие видят поездку без первых и последних сотен метров трека и без ваших зон приватности (Профиль → «Ещё» → «Зоны приватности»)."
+            "value" : "Другие видят поездку без первых и последних сотен метров трека и без ваших зон приватности (Профиль → настройки профиля → «Зоны приватности»)."
           }
         }
       }
@@ -16248,19 +16244,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Start a trip from “+” — the track and stats will be saved here."
+            "value" : "Start a trip from the Map or Home tab — the track and stats will be saved here."
           }
         },
         "kk" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "«+» арқылы сапарды бастаңыз — трек пен қорытынды осында сақталады."
+            "value" : "Сапарды картадан немесе «Басты беттен» бастаңыз — трек пен қорытынды осында сақталады."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Начните поездку в «+» — трек и итоги сохранятся здесь."
+            "value" : "Начните поездку на карте или на «Главной» — трек и итоги сохранятся здесь."
           }
         }
       }
