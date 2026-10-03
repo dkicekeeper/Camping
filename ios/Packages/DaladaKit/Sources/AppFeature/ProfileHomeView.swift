@@ -333,23 +333,27 @@ private struct MyCatchRow: View {
     @Environment(SpeciesStore.self) private var speciesStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-            CatchSummaryRow(
-                speciesName: speciesStore.name(for: item.speciesID),
-                count: item.count,
-                weightGrams: item.weightGrams,
-                lengthMillimeters: item.lengthMillimeters,
-                released: item.released
-            )
-            HStack(spacing: AppSpacing.xs) {
-                if let placeName = item.placeName {
-                    Text(verbatim: placeName)
-                    Text(verbatim: "·")
+        HStack(alignment: .center, spacing: AppSpacing.sm) {
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                CatchSummaryRow(
+                    speciesName: speciesStore.name(for: item.speciesID),
+                    count: item.count,
+                    weightGrams: item.weightGrams,
+                    lengthMillimeters: item.lengthMillimeters,
+                    released: item.released
+                )
+                HStack(spacing: AppSpacing.xs) {
+                    if let placeName = item.placeName {
+                        Text(verbatim: placeName)
+                        Text(verbatim: "·")
+                    }
+                    Text(item.at, format: .dateTime.day().month().year())
                 }
-                Text(item.at, format: .dateTime.day().month().year())
+                .font(AppTypography.caption)
+                .foregroundStyle(AppColors.textSecondary)
             }
-            .font(AppTypography.caption)
-            .foregroundStyle(AppColors.textSecondary)
+            // Картинка улова для Stories и Telegram.
+            CatchShareCardButton(catchID: item.id)
         }
         .task { await speciesStore.loadIfNeeded() }
     }

@@ -643,6 +643,10 @@ struct TripDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if let trip, trip.isOwn {
+                // Картинка для Stories: трек без начала и конца, как у гостя.
+                ToolbarItem(placement: .topBarTrailing) {
+                    TripShareCardButton(tripID: trip.summary.id, environment: environment)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     visibilityMenu(trip)
                 }

@@ -58,6 +58,29 @@
           }
         }
       }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To save a picture of your trip, catch or place to Photos."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Сапардың, олжаның немесе орынның суретін Фотоға сақтау үшін."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чтобы сохранить картинку поездки, улова или места в Фото."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

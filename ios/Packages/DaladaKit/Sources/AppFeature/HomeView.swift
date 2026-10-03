@@ -506,35 +506,41 @@ struct TrackPreviewView: View {
     let segments: [[GeoPoint]]
 
     var body: some View {
-        let lines = TrackPreview.normalized(segments)
-        let color = AppColors.accent
-        Canvas { context, size in
-            let points = lines.flatMap { $0 }
-            guard let minX = points.map(\.x).min(), let maxX = points.map(\.x).max(),
-                  let minY = points.map(\.y).min(), let maxY = points.map(\.y).max()
-            else { return }
-            let inset: CGFloat = 20
-            let width = CGFloat(max(maxX - minX, 0.000_001))
-            let height = CGFloat(max(maxY - minY, 0.000_001))
-            let scale = min((size.width - inset * 2) / width, (size.height - inset * 2) / height)
-            let offsetX = (size.width - width * scale) / 2
-            let offsetY = (size.height - height * scale) / 2
-            func position(_ point: TrackPreview.Point) -> CGPoint {
-                CGPoint(x: offsetX + CGFloat(point.x - minX) * scale, y: offsetY + CGFloat(point.y - minY) * scale)
-            }
-            var path = Path()
-            for line in lines {
-                guard let first = line.first else { continue }
-                path.move(to: position(first))
-                for point in line.dropFirst() {
-                    path.addLine(to: position(point))
-                }
-            }
-            context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+        TrackLineShape(lines: TrackPreview.normalized(segments))
+            .stroke(AppColors.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+            .frame(maxWidth: .infinity)
+            .frame(height: 160)
+            .background(AppColors.bgMuted, in: RoundedRectangle(cornerRadius: AppRadius.md))
+            .accessibilityHidden(true)
+    }
+}
+
+/// Линия трека, вписанная в прямоугольник с отступом `inset` (точки — из `TrackPreview.normalized`).
+struct TrackLineShape: Shape {
+    let lines: [[TrackPreview.Point]]
+    var inset: CGFloat = 20
+
+    func path(in rect: CGRect) -> Path {
+        let points = lines.flatMap { $0 }
+        guard let minX = points.map(\.x).min(), let maxX = points.map(\.x).max(),
+              let minY = points.map(\.y).min(), let maxY = points.map(\.y).max()
+        else { return Path() }
+        let width = CGFloat(max(maxX - minX, 0.000_001))
+        let height = CGFloat(max(maxY - minY, 0.000_001))
+        let scale = min((rect.width - inset * 2) / width, (rect.height - inset * 2) / height)
+        let offsetX = rect.minX + (rect.width - width * scale) / 2
+        let offsetY = rect.minY + (rect.height - height * scale) / 2
+        func position(_ point: TrackPreview.Point) -> CGPoint {
+            CGPoint(x: offsetX + CGFloat(point.x - minX) * scale, y: offsetY + CGFloat(point.y - minY) * scale)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 160)
-        .background(AppColors.bgMuted, in: RoundedRectangle(cornerRadius: AppRadius.md))
-        .accessibilityHidden(true)
+        var path = Path()
+        for line in lines {
+            guard let first = line.first else { continue }
+            path.move(to: position(first))
+            for point in line.dropFirst() {
+                path.addLine(to: position(point))
+            }
+        }
+        return path
     }
 }

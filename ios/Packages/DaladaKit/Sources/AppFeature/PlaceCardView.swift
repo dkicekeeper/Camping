@@ -5,6 +5,7 @@ import DesignTokens
 import Persistence
 import SwiftUI
 import Sync
+import UIKit
 
 /// Карточка места (RPC `place_card`): тип, название, видимость, описание, автор, маршрут,
 /// «Я здесь», свежие отчёты (RPC `place_reports`) со сводкой за 7 дней и «респектом», «Информация»,
@@ -36,6 +37,8 @@ struct PlaceCardView: View {
     @State private var pendingSuggestions: Set<PlaceSuggestionKind> = []
     /// Место из «Рядом» — открывается поверх карточки.
     @State private var nearbySelection: PlaceSelection?
+    /// Картинка места для Stories и Telegram.
+    @State private var showsShareCard = false
 
     /// Отчётов загружаем больше, чем показываем, — для сводки за 7 дней.
     private static let reportsLimit = 50
@@ -88,14 +91,23 @@ struct PlaceCardView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Поделиться ссылкой на место (приватное — некому).
+                // Поделиться ссылкой на место (приватное — некому) или картинкой (только публичное).
                 if case .loaded(let place) = state, place.visibility != .private {
                     ToolbarItem(placement: .topBarTrailing) {
-                        ShareLink(
-                            item: PlaceLink.url(placeID: place.id),
-                            subject: Text(verbatim: place.name),
-                            message: shareMessage(place)
-                        ) {
+                        Menu {
+                            ShareLink(
+                                item: PlaceLink.url(placeID: place.id),
+                                subject: Text(verbatim: place.name),
+                                message: shareMessage(place)
+                            ) {
+                                Label("place.share.link", systemImage: "link")
+                            }
+                            if place.visibility == .public, place.status == .published {
+                                Button("share.title", systemImage: "photo") {
+                                    showsShareCard = true
+                                }
+                            }
+                        } label: {
                             Image(systemName: "square.and.arrow.up")
                                 .accessibilityLabel(Text("place.share"))
                         }
@@ -160,10 +172,40 @@ struct PlaceCardView: View {
                 .environment(rules)
                 .environment(places)
         }
+        .sheet(isPresented: $showsShareCard) {
+            if case .loaded(let place) = state {
+                ShareCardSheet(
+                    load: { await placeShareCard(place) },
+                    message: { _ in String(localized: "share.message.place \(place.name) \(ShareCardLink.site.absoluteString)") }
+                ) { card, format in
+                    PlaceShareCardView(card: card, format: format)
+                }
+            }
+        }
     }
 
     /// Текст к ссылке: название, а у чужого публичного места с точной точкой — и ссылка на карту
     /// для тех, у кого нет приложения.
+    /// Данные для картинки места: первое фото посетителей и оценка.
+    private func placeShareCard(_ place: PlaceDetails) async -> PlaceShareCard {
+        var photo: UIImage?
+        if let first = placePhotos.first {
+            if let cached = PhotoCache.shared.cached(first.path) {
+                photo = cached
+            } else if let url = photoURLs[first.path] {
+                photo = await PhotoCache.shared.image(path: first.path, url: url)
+            }
+        }
+        let summary = try? await backend?.reviewSummary(place.id)
+        return PlaceShareCard(
+            name: place.name,
+            type: place.type,
+            rating: summary?.ratingAverage,
+            reviewsCount: summary?.reviewsCount ?? 0,
+            photo: photo
+        )
+    }
+
     private func shareMessage(_ place: PlaceDetails) -> Text {
         if let map = PlaceLink.mapURL(for: place) {
             Text("place.share.messageWithMap \(place.name) \(map.absoluteString)")

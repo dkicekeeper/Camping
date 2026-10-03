@@ -54,6 +54,8 @@ targets:
         # без него приложение обязано поддерживать все ориентации ради многозадачности iPad).
         INFOPLIST_KEY_UIRequiresFullScreen: YES
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Чтобы показать вас на карте, отмечаться в местах и записывать поездки."
+        # «Сохранить изображение» в меню «Поделиться» (картинки для Stories): только запись в Фото.
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Чтобы сохранить картинку поездки, улова или места в Фото."
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
