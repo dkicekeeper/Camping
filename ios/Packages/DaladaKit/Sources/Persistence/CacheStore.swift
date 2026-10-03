@@ -73,6 +73,11 @@ public struct CacheKey: Hashable, Sendable {
         CacheKey(rawValue: userPrefix(user) + "my_trips")
     }
 
+    /// Значки профиля.
+    public static func achievements(_ user: UUID) -> CacheKey {
+        CacheKey(rawValue: userPrefix(user) + "achievements")
+    }
+
     /// Первая страница ленты «Главной».
     public static func homeFeed(viewer: UUID?) -> CacheKey {
         CacheKey(rawValue: viewerPrefix(viewer) + "home_feed")

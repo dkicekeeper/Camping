@@ -8,7 +8,7 @@ import SwiftUI
 import Sync
 
 /// Вкладка «Профиль»: шапка (нажатие — настройки профиля), статистика, очередь отправки, мои друзья,
-/// уловы, места и поездки. Гостю — вход. Карточка сервера — только когда с ним проблема.
+/// уловы, места, поездки и достижения. Гостю — вход. Карточка сервера — только когда с ним проблема.
 struct ProfileHomeView: View {
     let environment: AppEnvironment
 
@@ -73,6 +73,7 @@ struct ProfileHomeView: View {
                 MyCatchesSection(environment: environment, userID: profile.id)
                 MyPlacesSection(environment: environment, userID: profile.id)
                 MyTripsSection(environment: environment, userID: profile.id)
+                AchievementsSection(environment: environment, userID: profile.id)
             } else {
                 historyPlaceholder
             }
@@ -154,7 +155,7 @@ struct ProfileSection<Content: View, Destination: View>: View {
 }
 
 /// Подсказка в пустом разделе профиля.
-private struct ProfileSectionHint: View {
+struct ProfileSectionHint: View {
     let text: String
 
     var body: some View {

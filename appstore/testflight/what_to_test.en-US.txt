@@ -1,6 +1,7 @@
 Browse places on the Map tab (editorial places from OpenStreetMap), open a place card, sign in with Apple, add your own place, check in with a catch and a photo, record a trip (Start a trip on the map), add a friend by username, write a review or start a discussion, open checklists and articles in the Tips tab.
 
 New:
+• Achievements: Profile → Achievements at the bottom — 10 badges for trips, catches, places and contributions, each showing how far you are. New badges come with a congratulations screen.
 • Notifications: Profile → tap the header with your name → Notifications — choose what to get (replies, friends, comments, bans near your places, reviews and reports at your places) and set quiet hours.
 • Pictures for Stories and Telegram: Share on your trip page, on a catch in My catches and on a public place card. Stories or post format.
 • Profile photo: Profile → tap the header with your name → Add photo.
@@ -11,6 +12,5 @@ New:
 • Place card: a 7-day summary and an Info block (fish, access, price, amenities, season) — Edit on your place, Suggest an edit and Report a problem on others; Nearby at the bottom and Share in the toolbar.
 • Visitor photos on a place card: a photo row, All photos and a full-screen viewer.
 • The Places tab: search, sections (nearby, popular, editors’ picks) and saved places — the bookmark on a place card.
-• Directions on a place card — 2GIS, Yandex or Google.
 
 Feedback: the Send Beta Feedback button in TestFlight or dakacom@gmail.com.
