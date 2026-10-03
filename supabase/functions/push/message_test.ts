@@ -77,3 +77,45 @@ Deno.test("пост друга: поездка — на поездку, отчё
   });
   assertEquals(report, { title: "Отчёт друга", body: "Айгерім — Озеро S", url: "dalada://place/aaaaaaaa-0000-0000-0000-000000000001" });
 });
+
+Deno.test("запрет завтра — зона на языке устройства, даты, ссылка на место", () => {
+  const payload = {
+    zone_ru: "Капшагайское водохранилище",
+    zone_kk: "Қапшағай су қоймасы",
+    zone_en: "Kapshagay Reservoir",
+    starts: "2027-05-10",
+    ends: "2027-06-20",
+    place_id: "aaaaaaaa-0000-0000-0000-000000000001",
+  };
+  const ru = buildMessage({ ...reply, kind: "ban_start", payload });
+  assertEquals(ru.title, "Завтра запрет: Капшагайское водохранилище");
+  assertEquals(ru.body, "С 10.05 по 20.06 рыбалка запрещена. Проверьте правила перед поездкой.");
+  assertEquals(ru.url, "dalada://place/aaaaaaaa-0000-0000-0000-000000000001");
+  assertEquals(buildMessage({ ...reply, kind: "ban_end", language: "kk", payload }).title, "Тыйым аяқталды: Қапшағай су қоймасы");
+  assertEquals(buildMessage({ ...reply, kind: "ban_start", language: "de", payload }).title, "Завтра запрет: Капшагайское водохранилище");
+});
+
+Deno.test("новый отзыв в моём месте — оценка, ссылка на место", () => {
+  const message = buildMessage({
+    ...reply,
+    kind: "place_activity",
+    language: "en",
+    payload: { actor: "@bob", username: "bob", activity: "review", rating: 5, place_id: "aaaaaaaa-0000-0000-0000-000000000001", place_name: "Kapshagay" },
+  });
+  assertEquals(message, { title: "New review: Kapshagay", body: "@bob: 5 ★", url: "dalada://place/aaaaaaaa-0000-0000-0000-000000000001" });
+});
+
+Deno.test("решения модерации: правка — на место, жалоба — без ссылки", () => {
+  const suggestion = buildMessage({
+    ...reply,
+    kind: "moderation",
+    payload: { topic: "suggestion", status: "accepted", place_id: "aaaaaaaa-0000-0000-0000-000000000001", place_name: "Коса" },
+  });
+  assertEquals(suggestion, {
+    title: "Правка принята",
+    body: "Спасибо! Ваша правка к «Коса» принята.",
+    url: "dalada://place/aaaaaaaa-0000-0000-0000-000000000001",
+  });
+  const report = buildMessage({ ...reply, kind: "moderation", payload: { topic: "report", status: "dismissed" } });
+  assertEquals(report, { title: "Жалоба рассмотрена", body: "Нарушений не нашли.", url: undefined });
+});

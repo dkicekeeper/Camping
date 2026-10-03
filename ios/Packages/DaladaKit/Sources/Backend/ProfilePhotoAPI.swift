@@ -32,12 +32,12 @@ extension BackendClient {
         return profile
     }
 
-    /// Уведомления о новых поездках и отчётах друзей.
-    public func setNotifyFriendPosts(_ isOn: Bool) async throws -> UserProfile {
+    /// Какие уведомления присылать и «тихие часы».
+    public func updateNotificationSettings(_ settings: NotificationSettings) async throws -> UserProfile {
         guard let userID = supabase.auth.currentUser?.id else { throw AuthError.sessionMissing }
         return try await supabase
             .from("profiles")
-            .update(["notify_friend_posts": isOn])
+            .update(settings)
             .eq("id", value: userID)
             .select()
             .single()

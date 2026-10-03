@@ -6868,19 +6868,157 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Replies in your discussions, friend requests and packing reminders."
+            "value" : "iPhone permission: without it, neither Dalada notifications nor packing reminders arrive."
           }
         },
         "kk" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Талқылауларыңыздағы жауаптар, достық сұраулары және жиналу туралы еске салулар."
+            "value" : "iPhone рұқсаты: онсыз Dalada хабарландырулары да, жиналу туралы еске салулар да келмейді."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ответы в ваших обсуждениях, запросы в друзья и напоминания о сборах."
+            "value" : "Разрешение iPhone: без него не придут ни уведомления Dalada, ни напоминания о сборах."
+          }
+        }
+      }
+    },
+    "notifications.kind.bans" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bans near my places"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Орындарым маңындағы тыйымдар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запреты рядом с моими местами"
+          }
+        }
+      }
+    },
+    "notifications.kind.comments" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comments on my posts"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жазбаларыма түсініктемелер"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Комментарии к моим записям"
+          }
+        }
+      }
+    },
+    "notifications.kind.friendPosts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends’ trips and reports"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Достардың сапарлары мен есептері"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поездки и отчёты друзей"
+          }
+        }
+      }
+    },
+    "notifications.kind.friendRequests" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friend requests"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Достық сұраулары"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запросы в друзья"
+          }
+        }
+      }
+    },
+    "notifications.kind.placeActivity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reviews and reports at my places"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Орындарымдағы пікірлер мен есептер"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отзывы и отчёты в моих местах"
+          }
+        }
+      }
+    },
+    "notifications.kind.replies" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replies in discussions"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Талқылаулардағы жауаптар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ответы в обсуждениях"
           }
         }
       }
@@ -6927,6 +7065,236 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "В Настройках"
+          }
+        }
+      }
+    },
+    "notifications.people.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends’ trips and reports: at most once every 3 hours per friend."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Достардың сапарлары мен есептері туралы — бір достан 3 сағатта бір реттен жиі емес."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "О поездках и отчётах друзей — не чаще раза в 3 часа от одного друга."
+          }
+        }
+      }
+    },
+    "notifications.places.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About a ban: the day before it starts and the day after it ends, if your own or saved place is in its zone. About reports at your public place: at most once every 6 hours. The team’s decisions on your suggested edits and reports always arrive."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Тыйым туралы — басталар алдындағы күні және аяқталғаннан кейінгі күні, егер оның аймағында сіздің немесе сақталған орныңыз болса. Жария орныңыздағы есептер туралы — 6 сағатта бір реттен жиі емес. Түзетулеріңіз бен шағымдарыңыз бойынша редакция шешімдері әрқашан келеді."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "О запрете — накануне начала и на следующий день после конца, если в его зоне есть ваше или сохранённое место. Об отчётах в вашем публичном месте — не чаще раза в 6 часов. Решения редакции по вашим правкам и жалобам приходят всегда."
+          }
+        }
+      }
+    },
+    "notifications.quiet.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Almaty time. Notifications during these hours arrive when quiet hours end."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Алматы уақытымен. Бұл уақыттағы хабарландырулар тыныш сағаттар біткенде келеді."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По времени Алматы. Уведомления в это время придут, когда тихие часы закончатся."
+          }
+        }
+      }
+    },
+    "notifications.quiet.from" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Басталуы"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Начало"
+          }
+        }
+      }
+    },
+    "notifications.quiet.same" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start and end are the same, so there are no quiet hours."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Басы мен соңы бірдей — тыныш сағаттар жоқ."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Начало и конец совпадают — тихих часов нет."
+          }
+        }
+      }
+    },
+    "notifications.quiet.to" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ends"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Аяқталуы"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Конец"
+          }
+        }
+      }
+    },
+    "notifications.quiet.toggle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quiet hours"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Тыныш сағаттар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тихие часы"
+          }
+        }
+      }
+    },
+    "notifications.section.people" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Friends and discussions"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Достар мен талқылаулар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Друзья и обсуждения"
+          }
+        }
+      }
+    },
+    "notifications.section.places" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Places"
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Орындар"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Места"
+          }
+        }
+      }
+    },
+    "notifications.settings.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replies, friends, bans near your places, quiet hours."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Жауаптар, достар, орындарыңыз маңындағы тыйымдар, тыныш сағаттар."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ответы, друзья, запреты рядом с вашими местами, тихие часы."
           }
         }
       }
@@ -13060,52 +13428,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить фото"
-          }
-        }
-      }
-    },
-    "profile.settings.friendPosts" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Friends’ trips and reports"
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Достардың сапарлары мен есептері"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Поездки и отчёты друзей"
-          }
-        }
-      }
-    },
-    "profile.settings.friendPostsFooter" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A notification when a friend records a trip or checks in — at most once every 3 hours per friend."
-          }
-        },
-        "kk" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Дос сапар жазғанда немесе орында белгі қойғанда хабарландыру — бір достан 3 сағатта бір реттен жиі емес."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Уведомление, когда друг записал поездку или отметился на месте, — не чаще раза в 3 часа от одного друга."
           }
         }
       }

@@ -1,6 +1,16 @@
 // Тексты уведомлений на языке устройства и запрос к APNs.
 
-export type PushKind = "thread_reply" | "friend_request" | "friend_accept" | "comment" | "friend_post" | "test";
+export type PushKind =
+  | "thread_reply"
+  | "friend_request"
+  | "friend_accept"
+  | "comment"
+  | "friend_post"
+  | "ban_start"
+  | "ban_end"
+  | "place_activity"
+  | "moderation"
+  | "test";
 
 export type PushRow = {
   outbox_id: number;
@@ -16,6 +26,18 @@ export type PushRow = {
     target_id?: string;
     place_id?: string;
     place_name?: string;
+    // Запрет: зона на трёх языках и даты (ГГГГ-ММ-ДД).
+    zone_ru?: string;
+    zone_kk?: string;
+    zone_en?: string;
+    starts?: string;
+    ends?: string;
+    // Новое в вашем месте: checkin или review; оценка отзыва.
+    activity?: string;
+    rating?: number;
+    // Решение модерации: suggestion или report; accepted, rejected, resolved, dismissed.
+    topic?: string;
+    status?: string;
   };
   token: string;
   environment: "sandbox" | "production";
@@ -24,7 +46,13 @@ export type PushRow = {
 
 export type Message = { title: string; body: string; url?: string };
 
-type Payload = PushRow["payload"];
+type Payload = PushRow["payload"] & { zone?: string };
+
+/// «2027-05-10» → «10.05».
+function day(value?: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value ?? "");
+  return match ? `${match[3]}.${match[2]}` : "";
+}
 
 const texts: Record<string, Record<PushKind, (p: Payload) => { title: string; body: string }>> = {
   ru: {
@@ -36,6 +64,23 @@ const texts: Record<string, Record<PushKind, (p: Payload) => { title: string; bo
       p.target_kind === "trip"
         ? { title: "Поездка друга", body: `${p.actor}: ${p.title ?? "новая поездка"}` }
         : { title: "Отчёт друга", body: `${p.actor} — ${p.place_name ?? "новый отчёт"}` },
+    ban_start: (p) => ({
+      title: `Завтра запрет: ${p.zone}`,
+      body: `С ${day(p.starts)} по ${day(p.ends)} рыбалка запрещена. Проверьте правила перед поездкой.`,
+    }),
+    ban_end: (p) => ({ title: `Запрет закончился: ${p.zone}`, body: `Рыбалка снова разрешена — запрет действовал до ${day(p.ends)}.` }),
+    place_activity: (p) =>
+      p.activity === "review"
+        ? { title: `Новый отзыв: ${p.place_name ?? ""}`, body: `${p.actor}: ${p.rating ?? ""} ★` }
+        : { title: `Новый отчёт: ${p.place_name ?? ""}`, body: `${p.actor} — новый отчёт в вашем месте` },
+    moderation: (p) =>
+      p.topic === "suggestion"
+        ? p.status === "accepted"
+          ? { title: "Правка принята", body: `Спасибо! Ваша правка к «${p.place_name ?? ""}» принята.` }
+          : { title: "Правка не принята", body: `Редакция не приняла правку к «${p.place_name ?? ""}».` }
+        : p.status === "resolved"
+        ? { title: "Жалоба рассмотрена", body: "Спасибо! Мы приняли меры." }
+        : { title: "Жалоба рассмотрена", body: "Нарушений не нашли." },
     test: () => ({ title: "Dalada", body: "Уведомления работают — это проверка." }),
   },
   kk: {
@@ -47,6 +92,23 @@ const texts: Record<string, Record<PushKind, (p: Payload) => { title: string; bo
       p.target_kind === "trip"
         ? { title: "Достың сапары", body: `${p.actor}: ${p.title ?? "жаңа сапар"}` }
         : { title: "Достың есебі", body: `${p.actor} — ${p.place_name ?? "жаңа есеп"}` },
+    ban_start: (p) => ({
+      title: `Ертең тыйым: ${p.zone}`,
+      body: `${day(p.starts)}–${day(p.ends)} аралығында балық аулауға тыйым салынады. Сапар алдында ережелерді тексеріңіз.`,
+    }),
+    ban_end: (p) => ({ title: `Тыйым аяқталды: ${p.zone}`, body: `Балық аулауға қайта рұқсат — тыйым ${day(p.ends)} дейін болды.` }),
+    place_activity: (p) =>
+      p.activity === "review"
+        ? { title: `Жаңа пікір: ${p.place_name ?? ""}`, body: `${p.actor}: ${p.rating ?? ""} ★` }
+        : { title: `Жаңа есеп: ${p.place_name ?? ""}`, body: `${p.actor} — сіздің орныңызда жаңа есеп` },
+    moderation: (p) =>
+      p.topic === "suggestion"
+        ? p.status === "accepted"
+          ? { title: "Түзету қабылданды", body: `Рақмет! «${p.place_name ?? ""}» орнына түзетуіңіз қабылданды.` }
+          : { title: "Түзету қабылданбады", body: `Редакция «${p.place_name ?? ""}» орнына түзетуді қабылдамады.` }
+        : p.status === "resolved"
+        ? { title: "Шағым қаралды", body: "Рақмет! Шара қолданылды." }
+        : { title: "Шағым қаралды", body: "Бұзушылық табылмады." },
     test: () => ({ title: "Dalada", body: "Хабарландырулар жұмыс істейді — бұл тексеру." }),
   },
   en: {
@@ -58,6 +120,23 @@ const texts: Record<string, Record<PushKind, (p: Payload) => { title: string; bo
       p.target_kind === "trip"
         ? { title: "Friend’s trip", body: `${p.actor}: ${p.title ?? "a new trip"}` }
         : { title: "Friend’s report", body: `${p.actor} — ${p.place_name ?? "a new report"}` },
+    ban_start: (p) => ({
+      title: `Ban from tomorrow: ${p.zone}`,
+      body: `Fishing is banned from ${day(p.starts)} to ${day(p.ends)}. Check the rules before your trip.`,
+    }),
+    ban_end: (p) => ({ title: `Ban is over: ${p.zone}`, body: `Fishing is allowed again — the ban lasted until ${day(p.ends)}.` }),
+    place_activity: (p) =>
+      p.activity === "review"
+        ? { title: `New review: ${p.place_name ?? ""}`, body: `${p.actor}: ${p.rating ?? ""} ★` }
+        : { title: `New report: ${p.place_name ?? ""}`, body: `${p.actor} posted a report at your place` },
+    moderation: (p) =>
+      p.topic === "suggestion"
+        ? p.status === "accepted"
+          ? { title: "Edit accepted", body: `Thanks! Your edit to “${p.place_name ?? ""}” was accepted.` }
+          : { title: "Edit not accepted", body: `The editors didn’t accept your edit to “${p.place_name ?? ""}”.` }
+        : p.status === "resolved"
+        ? { title: "Report reviewed", body: "Thanks! We took action." }
+        : { title: "Report reviewed", body: "We found no violation." },
     test: () => ({ title: "Dalada", body: "Notifications work — this is a test." }),
   },
 };
@@ -67,18 +146,23 @@ const texts: Record<string, Record<PushKind, (p: Payload) => { title: string; bo
 /// (dalada://comments/<checkin|review>/<id>), иначе профиль автора (dalada://u/<username>).
 export function buildMessage(row: PushRow): Message {
   const p = row.payload;
-  const payload = { ...p, actor: p.actor ?? "Dalada" };
-  const { title, body } = (texts[row.language] ?? texts.ru)[row.kind](payload);
+  const language = texts[row.language] ? row.language : "ru";
+  const zones: Record<string, string | undefined> = { ru: p.zone_ru, kk: p.zone_kk, en: p.zone_en };
+  const payload = { ...p, actor: p.actor ?? "Dalada", zone: zones[language] ?? p.zone_ru ?? "" };
+  const { title, body } = texts[language][row.kind](payload);
   let url: string | undefined;
   if (row.kind === "thread_reply" && p.thread_id) {
     url = `dalada://thread/${p.thread_id}`;
   } else if ((row.kind === "comment" || row.kind === "friend_post") && p.target_kind === "trip" && p.target_id) {
     url = `dalada://trip/${p.target_id}`;
-  } else if (row.kind === "friend_post" && p.place_id) {
+  } else if (
+    (row.kind === "friend_post" || row.kind === "ban_start" || row.kind === "ban_end" ||
+      row.kind === "place_activity" || (row.kind === "moderation" && p.topic === "suggestion")) && p.place_id
+  ) {
     url = `dalada://place/${p.place_id}`;
   } else if (row.kind === "comment" && p.target_kind && p.target_id) {
     url = `dalada://comments/${p.target_kind}/${p.target_id}`;
-  } else if (p.username) {
+  } else if (p.username && row.kind !== "moderation") {
     url = `dalada://u/${p.username}`;
   }
   return { title, body, url };

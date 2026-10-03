@@ -19,8 +19,6 @@ struct ProfileSettingsView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var isSavingPhoto = false
     @State private var photoError: String?
-    @State private var friendPosts = true
-    @State private var friendPostsError: String?
 
     var body: some View {
         List {
@@ -86,22 +84,14 @@ struct ProfileSettingsView: View {
                 Text("profile.settings.privacyZonesFooter")
             }
 
-            NotificationsSection()
-
-            if session.profile != nil {
-                Section {
-                    Toggle("profile.settings.friendPosts", isOn: Binding(
-                        get: { friendPosts },
-                        set: { isOn in Task { await setFriendPosts(isOn) } }
-                    ))
-                } footer: {
-                    if let friendPostsError {
-                        Text(verbatim: friendPostsError)
-                            .foregroundStyle(AppColors.destructive)
-                    } else {
-                        Text("profile.settings.friendPostsFooter")
-                    }
+            Section {
+                NavigationLink {
+                    NotificationSettingsView()
+                } label: {
+                    Label("notifications.title", systemImage: "bell")
                 }
+            } footer: {
+                Text("notifications.settings.footer")
             }
 
             Section {
@@ -148,7 +138,6 @@ struct ProfileSettingsView: View {
         }
         .onAppear {
             name = session.profile?.displayName ?? ""
-            friendPosts = session.profile?.notifyFriendPosts ?? true
         }
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
@@ -206,16 +195,6 @@ struct ProfileSettingsView: View {
         photoError = nil
         defer { isSavingPhoto = false }
         photoError = await session.removeAvatar()
-    }
-
-    /// Переключатель меняется сразу; если сервер не принял — возвращается обратно.
-    private func setFriendPosts(_ isOn: Bool) async {
-        let before = friendPosts
-        friendPosts = isOn
-        friendPostsError = await session.setNotifyFriendPosts(isOn)
-        if friendPostsError != nil {
-            friendPosts = before
-        }
     }
 
     private func deleteAccount() async {

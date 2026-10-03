@@ -1,9 +1,10 @@
 Browse places on the Map tab (editorial places from OpenStreetMap), open a place card, sign in with Apple, add your own place, check in with a catch and a photo, record a trip (Start a trip on the map), add a friend by username, write a review or start a discussion, open checklists and articles in the Tips tab.
 
 New:
+• Notifications: Profile → tap the header with your name → Notifications — choose what to get (replies, friends, comments, bans near your places, reviews and reports at your places) and set quiet hours.
 • Pictures for Stories and Telegram: Share on your trip page, on a catch in My catches and on a public place card. Stories or post format.
 • Profile photo: Profile → tap the header with your name → Add photo.
-• Comments on trips, reports and reviews — the speech-bubble button under a post. Notifications about comments and about friends’ new trips and reports (can be turned off in Profile settings).
+• Comments on trips, reports and reviews — the speech-bubble button under a post. Notifications about comments and about friends’ new trips and reports.
 • Home — a feed of posts: your and your friends’ trips with the track, reports with photos, new places and reviews, fresh discussions.
 • Tabs: Home, Map, Places, Tips, Profile. The “+” tab is gone: start a trip with the button on the map, add a place on the map, check in from a place card.
 • Profile: tap the header with your name for Profile settings (name, privacy zones, notifications, account); below are friends, catches, places and trips.

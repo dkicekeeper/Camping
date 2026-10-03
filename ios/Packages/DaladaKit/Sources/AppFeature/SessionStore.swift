@@ -275,9 +275,9 @@ final class SessionStore {
         await updateProfile { try await $0.removeAvatar() }
     }
 
-    /// Уведомления о новых поездках и отчётах друзей. Возвращает текст ошибки или `nil`.
-    func setNotifyFriendPosts(_ isOn: Bool) async -> String? {
-        await updateProfile { try await $0.setNotifyFriendPosts(isOn) }
+    /// Какие уведомления присылать и «тихие часы». Возвращает текст ошибки или `nil`.
+    func updateNotificationSettings(_ settings: NotificationSettings) async -> String? {
+        await updateProfile { try await $0.updateNotificationSettings(settings) }
     }
 
     private func updateProfile(_ change: (BackendClient) async throws -> UserProfile) async -> String? {
